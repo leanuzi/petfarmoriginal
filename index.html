@@ -709,7 +709,8 @@ table.fat tr.desc td{color:var(--verde-txt)}
 .fab-menu button{display:flex;align-items:center;gap:12px;text-align:left;padding:11px 12px;border-radius:12px;font-weight:800;font-size:14px;color:var(--marrom)}
 .fab-menu button:hover{background:var(--amarelo-suave);color:var(--marrom-escuro)}
 .fab-menu .ic{width:26px;text-align:center;font-size:17px}
-.fab-menu .fechar-menu{margin-top:4px;border-top:1px solid var(--bege);border-radius:0 0 14px 14px;color:#A38560;justify-content:center}
+.fab-menu .fechar-menu{margin-top:2px;padding:7px 12px;font-size:13px;border-top:1px solid var(--bege);border-radius:0 0 14px 14px;color:#A38560;justify-content:center;gap:6px}
+.fab-menu .fechar-menu .ic{width:auto;font-size:13px}
 .fab-menu .fechar-menu:hover{background:var(--bege-claro);color:var(--marrom-escuro)}
 /* ===== renovação no card ===== */
 .renov{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:6px;font-size:12px;font-weight:800}
@@ -1194,7 +1195,10 @@ a.maps-link:hover{text-decoration:underline}
       estica a caixa inteira e vaza a tela no celular. */
 .fi-grid>*,.ge-grid>*,.in-grid>*,.pn-grid>*,.bo-layout>*,.hsec,.in-box,.card{min-width:0}
 
-@media (max-width:1000px){.deco{display:none}}   /* enfeites de fundo vazavam no tablet */
+/* enfeites de fundo: a faixa central (.wrap) tem 1240px, entao abaixo de 1280px
+   nao sobra margem e as figurinhas vazavam pra fora, criando rolagem de lado.
+   O corte estava em 1000px e deixava escapar 1024px (tablet deitado e notebook). */
+@media (max-width:1279px){.deco{display:none}}
 
 
 /* =====================================================================
@@ -1884,7 +1888,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.0.3</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.0.4</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -4772,8 +4776,8 @@ function st(id,extra=''){return `<svg class="st" ${extra}><use href="#${id}"/></
 function avatar(p,extra=''){return p.foto?`<img src="${p.foto}" alt="Foto de ${p.nome}">`:st(RACAS[p.raca].st,extra)}
 function telDigits(t){let d=(t||'').replace(/\D/g,'');if(d&&!d.startsWith('55'))d='55'+d;return d}
 function telFmt(t){const d=(t||'').replace(/\D/g,'').replace(/^55/,'');return d.length>=10?`(${d.slice(0,2)}) ${d.slice(2,-4)}-${d.slice(-4)}`:(t||'')}
-const MOBILE=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-function wa(tel,msg){const t=encodeURIComponent(msg);return MOBILE?`https://wa.me/${telDigits(tel)}?text=${t}`:`https://web.whatsapp.com/send?phone=${telDigits(tel)}&text=${t}`}
+const MOBILE=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
+function wa(tel,msg){const t=encodeURIComponent(msg);return `https://api.whatsapp.com/send?phone=${telDigits(tel)}&text=${t}`}
 function abrirZap(tel,msg,meta){try{navigator.clipboard?.writeText(msg)}catch(e){}if(meta)registrarMsg(Object.assign({tel},meta));window.open(wa(tel,msg),'_blank')}
 const primeiroNome=n=>{const w=(n||'').trim().split(/\s+/)[0]||'';return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()}
 const ICO_ZAP='<svg class="st" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.4 2 11.8c0 1.9.5 3.6 1.5 5.2L2 22l5.2-1.4c1.5.8 3.1 1.2 4.8 1.2 5.5 0 10-4.4 10-9.9S17.5 2 12 2zm4.6 13.9c-.2.6-1.2 1.1-1.7 1.2-.4.1-1 .1-1.6-.1-.4-.2-.9-.3-1.5-.6-2.7-1.1-4.4-3.7-4.5-3.9-.2-.2-1.1-1.4-1.1-2.7s.7-1.9.9-2.2c.2-.2.5-.3.7-.3h.5c.2 0 .4-.1.6.4l.8 1.9c.1.1.1.3 0 .5-.1.2-.2.3-.3.5l-.4.5c-.1.1-.2.2-.1.5.2.2.7 1 1.4 1.7.9.8 1.7 1.1 2 1.2.2.1.4.1.5-.1.1-.2.6-.7.8-1 .2-.2.4-.2.6-.1.2.1 1.4.7 1.7.8.3.1.5.1.6.4 0 .1 0 .6-.2 1.2z"/></svg>';
@@ -4868,7 +4872,9 @@ function trocarAba(v,manterPosicao){
   document.querySelectorAll('.nav [data-view], .tabbar [data-view]').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
   VIEWS.forEach(x=>{const el=$('#view-'+x);if(el)el.classList.toggle('hidden',x!==v)});
   if(v==='inicio')renderInicio();if(v==='hotel')renderHotel();if(v==='transporte')renderTransporte();if(v==='financeiro')renderFinanceiro();if(v==='mensagens')renderMensagens();if(v==='gestao'){renderPainel();renderGestao()}if(v==='pets')renderPets();if(v==='fintransp')renderFinTransp();if(v==='boletim')renderBoletim();
-  if(!manterPosicao)window.scrollTo({top:0,behavior:'smooth'});
+  // sobe na hora. o 'instant' e necessario porque o CSS tem html{scroll-behavior:smooth},
+  // que fazia cada troca de aba esperar meio segundo de rolagem animada
+  if(!manterPosicao){try{window.scrollTo({top:0,behavior:'instant'})}catch(e){window.scrollTo(0,0)}}
 }
 /* ====== inicialização ====== */
 function migrarChaves(){[['petcall.cfg','petfarm.cfg'],['petcall.turma.v2','petfarm.turma'],['petcall.hotel','petfarm.hotel'],['petcall.rotas','petfarm.rotas']].forEach(([a,b])=>{try{if(!localStorage.getItem(b)&&localStorage.getItem(a))localStorage.setItem(b,localStorage.getItem(a))}catch(e){}})}
@@ -4989,8 +4995,8 @@ $('#btn-notif').onclick=()=>{
 
 </script>
 <script>
-/* Pet Farm · pdf.js — PIX copia e cola, QR, PDFs e configurações */
-/* ====== PIX (copia e cola) + QR + PDF ====== */
+/* Pet Farm · pdf.js — PIX (chave e QR), PDFs e configurações */
+/* ====== PIX (chave + QR) + PDF ====== */
 function crc16(str){let crc=0xFFFF;for(let i=0;i<str.length;i++){crc^=str.charCodeAt(i)<<8;for(let j=0;j<8;j++){crc=(crc&0x8000)?((crc<<1)^0x1021):(crc<<1);crc&=0xFFFF}}return crc.toString(16).toUpperCase().padStart(4,'0')}
 function chavePix(px){const c=px.chave.trim();if(px.tipo==='cpf'||px.tipo==='cnpj')return c.replace(/\D/g,'');if(px.tipo==='celular'){const d=c.replace(/\D/g,'');return '+'+(d.startsWith('55')?d:'55'+d)}if(px.tipo==='email')return c.toLowerCase();return c}
 function pixPayload(px,valor,txid){
@@ -5063,8 +5069,6 @@ function pdfCobranca(r,pixId){
   doc.text(`Favorecido: ${px.nome}${px.banco?'  ·  '+px.banco:''}`,20,y+17);
   doc.text(`Chave (${({email:'e-mail',cpf:'CPF',cnpj:'CNPJ',celular:'celular',aleatoria:'aleatória'})[px.tipo]||px.tipo}): ${px.chave}`,20,y+23);
   doc.text(`Valor: ${brl(c.restante)}`,20,y+29);
-  doc.setFontSize(7.5);doc.setTextColor(140,115,85);doc.text('PIX copia e cola:',20,y+36);
-  doc.text(doc.splitTextToSize(payload,125),20,y+40);doc.setTextColor(62,48,39);
   if(qr)doc.addImage(qr,'PNG',152,y+4,44,44);
   y+=62;doc.setFontSize(10);doc.text(`Obrigado por confiar o(a) ${h.nome} para a gente! Equipe ${cfg.nome}.`,14,y);
   entregarPdf(doc,`cobranca-${h.nome.toLowerCase().replace(/\s+/g,'-')}-${r.checkout}.pdf`,msgCobranca(r));
@@ -5402,6 +5406,13 @@ function abrirEntrada(){
     <div class="modal form" role="dialog" aria-labelledby="f-t">
       <button class="fechar" data-fechar aria-label="Fechar">✕</button>
       <h2 id="f-t">${st('dog-labrador')} Adicionar à turma de hoje</h2>
+      <div class="foto-edit">
+        <div class="foto" id="f-prev" title="Escolher a foto do aumigo">${st('dog-labrador')}</div>
+        <div class="acoes">
+          <label class="btn-mini">📷 Escolher foto<input type="file" id="f-file" accept="image/*"></label>
+          <small>JPG ou PNG · dá pra colocar ou trocar depois também</small>
+        </div>
+      </div>
       <div class="campo"><label for="f-nome">Nome do aumigo</label><input id="f-nome" placeholder="Ex.: Bolt" autofocus></div>
       <div class="row2">
         <div class="campo"><label for="f-raca">Raça</label><select id="f-raca">${ops}</select></div>
@@ -5425,12 +5436,17 @@ function abrirEntrada(){
   </div>`;
   lock();
   $('#ov').addEventListener('change',e=>{const c=e.target.closest('[data-tipo]');if(c)c.closest('label').classList.toggle('on',c.checked)});
+  let fotoNova=null;
+  $('#f-file').onchange=e=>{lerFoto(e.target.files[0],320,d=>{fotoNova=d;$('#f-prev').innerHTML=`<img src="${d}" alt="">`});e.target.value=''};
+  $('#f-prev').onclick=()=>$('#f-file').click();
+  $('#f-raca').onchange=()=>{if(!fotoNova)$('#f-prev').innerHTML=st(RACAS[$('#f-raca').value].st)};
   $('#f-ok').onclick=()=>{
     const nome=$('#f-nome').value.trim(),tutor=$('#f-tutor').value.trim(),tel=$('#f-tel').value.replace(/\D/g,'');
     if(!nome){$('#f-nome').focus();$('#f-nome').style.borderColor='var(--vermelho)';return}
     if(!tutor){$('#f-tutor').focus();$('#f-tutor').style.borderColor='var(--vermelho)';return}
     if(tel.length<10){$('#f-tel').focus();$('#f-tel').style.borderColor='var(--vermelho)';return}
     const p={id:Date.now(),nome,raca:$('#f-raca').value,porte:$('#f-porte').value,tutor,telefone:tel,pagamentoDia:parseInt($('#f-pag').value)||10,previsto:$('#f-hora').value||horaAgora(),presencas:[],faltas:[],chegadas:{}};
+    if(fotoNova)p.foto=fotoNova;
     p.log=[{d:HOJE,h:horaAgora(),ico:'🐾',txt:'Cadastrado na turma'}];p.tipos=[...document.querySelectorAll('[data-tipo]:checked')].map(c=>c.dataset.tipo);if(!p.tipos.length)p.tipos=['outro'];if(!p.tipos.includes('creche'))p.ativo=false;lerPlano(p);p.aniversario=lerNiver($('#f-niver').value);p.endereco=$('#f-end').value.trim();p.obs=$('#f-obs').value.trim();sincronizarHoje(p);pets.push(p);fecharModal();render();toast(p,`${nome} entrou na chamada 🐾`,'Já dá pra marcar a presença.');
   };
   $('#ov').onclick=e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()};
@@ -5978,14 +5994,11 @@ Chave (${tipo}): ${px.chave}
 Favorecido: ${px.nome}${px.banco?` · ${px.banco}`:''}
 Valor: ${brl(c.restante)}
 
-Ou o copia e cola:
-${pixPayload(px,c.restante,'HOTEL'+r.id)}
-
 Assim que cair, me avisa por aqui? Qualquer dúvida é só chamar. Obrigada! 😊`;
 }
 function msgCobranca(r){
   const c=contaHotel(r);const px=pixDe(r.pixId||cfg.pixPadrao);
-  return `💳 *Cobrança da hospedagem de ${c.h.nome}* (${fmtData(r.checkin)} a ${fmtData(r.checkout)})\n${r.sinalPago?'Restante a pagar':'Total'}: *${brl(c.restante)}*\n\nPIX (${px.nome}${px.banco?' · '+px.banco:''}):\n${px.chave}\n\nCopia e cola:\n${pixPayload(px,c.restante,'HOTEL'+r.id)}\n\nO PDF da cobrança segue em anexo. Obrigado! 🐾💛`;
+  return `💳 *Cobrança da hospedagem de ${c.h.nome}* (${fmtData(r.checkin)} a ${fmtData(r.checkout)})\n${r.sinalPago?'Restante a pagar':'Total'}: *${brl(c.restante)}*\n\nPIX (${px.nome}${px.banco?' · '+px.banco:''}):\n${px.chave}\n\nO PDF da cobrança segue em anexo. Obrigado! 🐾💛`;
 }
 function msgFatura(r){
   const c=contaHotel(r);const h=c.h;
@@ -6384,7 +6397,7 @@ function renderTransporte(){
   if(stops.length){
     const links=mapsRotaLinks(ends);
     if(ends.length)acoes+=links.map((u,i)=>`<a class="btn maps" href="${u}" target="_blank" rel="noopener">🗺 Abrir rota no Google Maps${links.length>1?` · parte ${i+1} de ${links.length}`:''} (${ends.length} ${ends.length===1?'parada':'paradas'}, na sua ordem)</a>`).join('');
-    acoes+=`<div class="duplo" style="max-width:none"><button class="btn cinza" data-rcopy="1">📋 Copiar endereços na ordem</button><button class="btn cinza" data-rprint="1">🖨 Ver folha da rota</button></div>`;
+    acoes+=`<div class="duplo" style="max-width:none"><button class="btn cinza" data-rprint="1">🖨 Ver folha da rota</button></div>`;
   }
   acoes+=`<div class="duplo" style="max-width:none"><button class="btn primario" id="btn-rota2">${rotas[d]?'✏️ Editar rota deste dia':'＋ Fazer rota deste dia'}</button>${rotas[d]?`<button class="btn cinza" data-rrm="1">Voltar pra rota automática</button>`:stops.length?`<button class="btn cinza" data-rfix="1">📌 Fixar esta ordem pra editar</button>`:''}</div>`;
   $('#tr-acoes').innerHTML=acoes;
@@ -6700,9 +6713,6 @@ Chave (${tipo}): ${px.chave}
 Favorecido: ${px.nome}${px.banco?` · ${px.banco}`:''}
 Valor: ${brl(total)}
 
-Ou o copia e cola:
-${pixPayload(px,total,'CRECHE'+p.id+ym.replace('-',''))}
-
 Assim que cair, me avisa por aqui? Qualquer dúvida é só chamar. Obrigada! 😊`;
 }
 function pdfCobrancaCreche(p,ym,pixId){
@@ -6722,7 +6732,6 @@ function pdfCobrancaCreche(p,ym,pixId){
   doc.setFillColor(255,249,239);doc.setDrawColor(232,213,181);doc.roundedRect(14,y,182,52,4,4,'FD');
   doc.setFontSize(13);doc.setFont('helvetica','bold');doc.text('Pagamento via PIX',20,y+9);doc.setFontSize(10);doc.setFont('helvetica','normal');
   doc.text(`Favorecido: ${px.nome}${px.banco?'  ·  '+px.banco:''}`,20,y+17);doc.text(`Chave: ${px.chave}`,20,y+23);doc.text(`Valor: ${brl(total)}`,20,y+29);
-  doc.setFontSize(7.5);doc.setTextColor(140,115,85);doc.text('PIX copia e cola:',20,y+36);doc.text(doc.splitTextToSize(payload,125),20,y+40);doc.setTextColor(62,48,39);
   if(qr)doc.addImage(qr,'PNG',152,y+4,44,44);
   y+=62;doc.setFontSize(10);doc.text(`Obrigado por confiar o(a) ${p.nome} para a gente! Equipe ${cfg.nome}.`,14,y);
   entregarPdf(doc,`creche-${p.nome.toLowerCase().replace(/\s+/g,'-')}-${ym}.pdf`,msgCobrancaCreche(p,ym));
@@ -7560,7 +7569,6 @@ function pfPix(doc,px,valor,txid){
   doc.text(semAcento(`Chave (${tipo}): ${px.chave}`),22,y+23);
   doc.setFont('helvetica','bold');doc.text(`Valor: ${brl(valor)}`,22,y+29);doc.setFont('helvetica','normal');
   const payload=pixPayload(px,valor,txid);const qr=qrDataUrl(payload);
-  doc.setFontSize(7);doc.setTextColor(...PDF_COR.cinza);doc.text('PIX copia e cola:',22,y+36);doc.text(doc.splitTextToSize(payload,118),22,y+40);doc.setTextColor(...PDF_COR.escuro);
   if(qr){doc.setFillColor(255,255,255);doc.roundedRect(148,y+4,46,46,3,3,'F');doc.addImage(qr,'PNG',150,y+6,42,42)}
   doc._pf.y=y+60;
 }
