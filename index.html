@@ -224,6 +224,13 @@ input,select{font-family:inherit;color:inherit}
 .foto-edit .foto .st{width:84px;height:84px}
 .foto-edit .acoes{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .btn-mini{padding:8px 14px;border-radius:999px;font-weight:800;font-size:13px;background:var(--amarelo);color:var(--marrom-escuro);display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.btn-mini.perigo{background:#C7553A;color:#fff}
+.zona-perigo{border:1px solid #E8B4A0;background:#FDF2EE;border-radius:14px;padding:12px 14px;margin-top:4px}
+.zona-perigo p{font-size:13px;font-weight:700;color:#8C5A44;margin-bottom:10px}
+.perm-bloco{border:1px solid var(--bege);background:var(--bege-claro);border-radius:16px;padding:2px 14px 14px;margin-top:10px}
+.perm-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px;margin-top:8px}
+.perm-grade .mini-check{font-size:13px}
+.perm-grade .mini-check.alerta{color:#B4552E}
 .btn-mini.cinza{background:var(--bege-claro);border:1px solid var(--bege);color:var(--marrom)}
 .btn-mini input{display:none}
 .foto-edit small{font-size:11px;font-weight:700;color:#B59B7B}
@@ -696,22 +703,24 @@ table.fat tr.desc td{color:var(--verde-txt)}
 .sit{font-size:11px;font-weight:800;border-radius:999px;padding:3px 9px;white-space:nowrap}
 .sit.s-v{background:var(--verde-bg);color:var(--verde-txt)}.sit.s-a{background:var(--amarelo-suave);color:var(--marrom)}.sit.s-l{background:#FFF1DC;color:#9A6212}.sit.s-r{background:var(--vermelho-bg);color:var(--vermelho-txt)}
 /* ===== fab ===== */
-#fab{position:fixed;right:22px;bottom:22px;z-index:65;background:var(--marrom-escuro);color:var(--creme);border-radius:999px;padding:14px 20px;font-family:var(--display);font-weight:600;font-size:17px;box-shadow:0 10px 30px rgba(62,48,39,.35);display:flex;align-items:center;gap:8px}
+#fab{background:var(--marrom-escuro);color:var(--creme);border-radius:999px;padding:10px 18px;font-family:var(--display);font-weight:600;font-size:17px;box-shadow:0 4px 14px rgba(62,48,39,.22);display:flex;align-items:center;justify-content:center;gap:8px;flex:none;white-space:nowrap;min-height:44px}
 #fab:hover{background:var(--marrom)}
-.fab-menu{position:fixed;right:22px;bottom:80px;z-index:66;background:#fff;border:1px solid var(--bege);border-radius:20px;box-shadow:var(--sombra-forte);padding:8px;min-width:240px;display:flex;flex-direction:column;gap:2px;animation:pop .2s}
+.fab-menu{position:fixed;right:22px;top:72px;bottom:auto;z-index:66;background:#fff;border:1px solid var(--bege);border-radius:20px;box-shadow:var(--sombra-forte);padding:8px;min-width:240px;max-width:calc(100vw - 24px);display:flex;flex-direction:column;gap:2px;animation:pop .2s}
 .fab-menu button{display:flex;align-items:center;gap:12px;text-align:left;padding:11px 12px;border-radius:12px;font-weight:800;font-size:14px;color:var(--marrom)}
 .fab-menu button:hover{background:var(--amarelo-suave);color:var(--marrom-escuro)}
 .fab-menu .ic{width:26px;text-align:center;font-size:17px}
+.fab-menu .fechar-menu{margin-top:4px;border-top:1px solid var(--bege);border-radius:0 0 14px 14px;color:#A38560;justify-content:center}
+.fab-menu .fechar-menu:hover{background:var(--bege-claro);color:var(--marrom-escuro)}
 /* ===== renovação no card ===== */
 .renov{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:6px;font-size:12px;font-weight:800}
 .renov.acabando{color:var(--vermelho-txt)}
 .renov button{font-size:11px;text-decoration:underline;text-underline-offset:2px;color:inherit;font-weight:800}
-@media (max-width:700px){#fab{right:14px;bottom:14px;padding:12px 16px;font-size:15px}.fab-menu{right:14px;bottom:70px}}
+@media (max-width:700px){.fab-menu{right:14px;top:68px}}
 
 /* ===== PWA ===== */
 body.app .topbar{padding-top:env(safe-area-inset-top)}
 body.app .wrap{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
-body.app #fab{bottom:calc(22px + env(safe-area-inset-bottom))}
+body.app .fab-menu{top:calc(72px + env(safe-area-inset-top))}
 .iconbtn.instalar{width:auto;border-radius:999px;padding:0 14px;gap:6px;background:var(--amarelo);border-color:var(--amarelo);font-weight:800;font-size:13px;color:var(--marrom-escuro);white-space:nowrap}
 .iconbtn.instalar:hover{background:#FFD25A}
 #offline{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));z-index:70;background:var(--marrom-escuro);color:var(--creme);border-radius:999px;padding:9px 18px;font-size:13px;font-weight:800;box-shadow:var(--sombra-forte)}
@@ -763,9 +772,8 @@ body.travado{overflow:hidden}
   .tabbar button.on{color:var(--marrom-escuro);background:var(--amarelo-suave)}
   .tabbar.hidden{display:none}
   .wrap{padding-bottom:calc(96px + env(safe-area-inset-bottom))!important}
-  #fab{bottom:calc(74px + env(safe-area-inset-bottom));right:14px;padding:12px 16px;font-size:15px}
-  .fab-menu{bottom:calc(132px + env(safe-area-inset-bottom))}
-  .fab-menu.baixo{bottom:calc(74px + env(safe-area-inset-bottom));right:14px;left:14px;min-width:0}
+  .fab-menu{top:calc(68px + env(safe-area-inset-top))}
+  .fab-menu.baixo{top:auto;bottom:calc(74px + env(safe-area-inset-bottom));right:14px;left:14px;min-width:0}
   #offline{bottom:calc(78px + env(safe-area-inset-bottom))}
   .toasts{top:auto;bottom:calc(76px + env(safe-area-inset-bottom));left:12px;right:12px}
   .toast{min-width:0}
@@ -1174,6 +1182,13 @@ a.maps-link:hover{text-decoration:underline}
   .nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
   .nav::-webkit-scrollbar{display:none}
 }
+/* entre 761 e 1100px (tablet) as 10 abas + o botao Nova acao quebravam em varias
+   linhas e a barra do topo passava de 300px de altura. Aqui ela rola de lado,
+   igual ao celular: as abas continuam do mesmo tamanho, so mudam de arrumacao. */
+@media (min-width:761px) and (max-width:1100px){
+  .nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+}
 
 /* 2) itens de grade/flex precisam poder encolher, senão a tabela de 520px
       estica a caixa inteira e vaza a tela no celular. */
@@ -1218,8 +1233,6 @@ a.maps-link:hover{text-decoration:underline}
 
   /* --- barra de abas de baixo não cobre o conteúdo --- */
   .wrap{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
-  #fab{bottom:calc(78px + env(safe-area-inset-bottom))}
-  .fab-menu{bottom:calc(136px + env(safe-area-inset-bottom))}
   #nuvem-dot{bottom:calc(78px + env(safe-area-inset-bottom))}
 
   /* --- rolagem lateral com pista visível (o usuário percebe que rola) --- */
@@ -1602,6 +1615,7 @@ img,svg,video,canvas{max-width:100%}
     <nav class="nav" id="nav" aria-label="Seções"></nav>
     <div class="right">
       <span class="date" id="data-hoje"></span>
+      <button id="fab" aria-label="Nova ação">＋ Nova ação</button>
       <button class="iconbtn instalar hidden" id="btn-instalar" title="Instalar na tela inicial">📲<span class="txt">Instalar app</span></button>
       <button class="iconbtn" id="btn-cfg" aria-label="Configurações" title="PIX, WhatsApps e dados da creche"><span style="font-size:20px;line-height:1">⚙️</span></button>
       <button class="iconbtn" id="btn-notif" aria-label="Notificações">
@@ -1878,7 +1892,6 @@ img,svg,video,canvas{max-width:100%}
 </main>
 
 <nav class="tabbar hidden" id="tabbar" aria-label="Seções"></nav>
-<button id="fab" aria-label="Nova ação">＋ Nova ação</button>
 <div id="offline" class="hidden">📴 Sem internet · o sistema continua funcionando</div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <div id="modais"></div>
@@ -4642,16 +4655,7 @@ Com carinho, equipe {creche}.`},
   fimDeAno:{nome:'Prospecção de fim de ano',uso:'aba Pets · 🎄',texto:`Oi {tutor}, tudo bem? 🎄🐾 Aqui é da {creche}! Estamos abrindo a agenda de fim de ano e lembramos com carinho do(a) {pet}. As vagas de dezembro e janeiro costumam lotar rápido, então quer que eu já separe os dias dele(a)? Me manda as datas que eu reservo com prioridade. 💛🐶`},
 };
 /* Dados de demonstração (aparecem só no primeiro uso, antes de você cadastrar) */
-const DEMO_PETS=[
-  {id:1,nome:'Thor',aniversario:'__HOJE__',obs:'Alérgico a frango. Adora bolinha.',endereco:'Rua 1500, 320 - Centro, Balneário Camboriú - SC',telefone:'47999110001',pagamentoDia:10,raca:'golden',porte:'G',peso:32,plano:'3x',transporte:'bc',tutor:'Mariana',previsto:'08:30',status:'pendente',estrela:'Aniversariante'},
-  {id:2,nome:'Luna',demoQueda:true,aniversario:'03-12',obs:'Tímida no começo, depois solta.',endereco:'Rua Santa Catarina, 410 - Monte Alegre, Camboriú - SC',telefone:'47999110002',pagamentoDia:5,raca:'poodle',porte:'P',peso:6,plano:'2x',transporte:'',tutor:'Carlos',previsto:'08:00',status:'pendente'},
-  {id:3,nome:'Bidu',aniversario:'11-02',obs:'Toma remédio pra pele às 12h.',endereco:'Rua Coronel Bernardino, 210 - Centro, Camboriú - SC',telefone:'47999110003',pagamentoDia:15,raca:'dachshund',porte:'P',peso:9,plano:'5x',transporte:'camboriu',tutor:'Fernanda',previsto:'08:15',status:'presente',chegou:'08:12'},
-  {id:4,nome:'Frida',aniversario:'06-30',telefone:'47999110004',pagamentoDia:20,raca:'bulldog',porte:'M',peso:22,plano:'avulso',transporte:'',tutor:'Rafael',previsto:'08:00',status:'faltou'},
-  {id:5,nome:'Max',aniversario:'01-18',endereco:'Av. Alvin Bauer, 500 - Centro, Balneário Camboriú - SC',telefone:'47999110005',pagamentoDia:10,raca:'labrador',porte:'G',peso:30,plano:'6x',transporte:'',tutor:'Juliana',previsto:'08:00',status:'presente',chegou:'08:04'},
-  {id:6,nome:'Mel',aniversario:'09-09',endereco:'Av. Brasil, 2200 - Centro, Balneário Camboriú - SC',telefone:'47999110006',pagamentoDia:1,raca:'shihtzu',porte:'P',peso:5,plano:'2x',transporte:'bc',tutor:'Beatriz',previsto:'08:45',status:'pendente',estrela:'Primeiro dia'},
-  {id:7,nome:'Pipoca',demoSumiu:true,aniversario:'05-21',telefone:'',pagamentoDia:5,raca:'beagle',porte:'M',peso:12,plano:'avulso',transporte:'',tutor:'Diego',previsto:'09:00',status:'pendente'},
-  {id:8,nome:'Nina',aniversario:'12-05',obs:'Muito ativa, precisa de espaço.',endereco:'Rua João Pereira dos Santos, 85 - Tabuleiro, Camboriú - SC',telefone:'47999110008',pagamentoDia:10,raca:'collie',porte:'M',peso:18,plano:'4x',transporte:'camboriu',tutor:'Camila',previsto:'08:15',status:'presente',chegou:'08:20'},
-];
+const DEMO_PETS=[]; // sem pets de exemplo: o sistema comeca vazio
 
 </script>
 <!-- módulos -->
@@ -4859,19 +4863,19 @@ function avisarRenovacao(id){const p=pets.find(x=>x.id===id);const rn=renovacao(
 function avisarFrequencia(id){const p=pets.find(x=>x.id===id);if(!p.telefone){abrirEditar(id);return}p.crm=p.crm||{contatos:[]};p.crm.ultimo=HOJE;p.crm.contatos.push({d:HOJE,tipo:'frequencia'});abrirZap(p.telefone,tpl('frequencia',varsPet(p)),{tipo:'frequencia',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});salvar()}
 /* ====== abas ====== */
 const VIEWS=['inicio','creche','pets','hotel','transporte','financeiro','fintransp','boletim','mensagens','gestao'];
-function trocarAba(v){
+function trocarAba(v,manterPosicao){
   if(usuario&&!podeVer(v))v=viewsPermitidas()[0];
   document.querySelectorAll('.nav [data-view], .tabbar [data-view]').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
   VIEWS.forEach(x=>{const el=$('#view-'+x);if(el)el.classList.toggle('hidden',x!==v)});
   if(v==='inicio')renderInicio();if(v==='hotel')renderHotel();if(v==='transporte')renderTransporte();if(v==='financeiro')renderFinanceiro();if(v==='mensagens')renderMensagens();if(v==='gestao'){renderPainel();renderGestao()}if(v==='pets')renderPets();if(v==='fintransp')renderFinTransp();if(v==='boletim')renderBoletim();
-  window.scrollTo({top:0,behavior:'smooth'});
+  if(!manterPosicao)window.scrollTo({top:0,behavior:'smooth'});
 }
 /* ====== inicialização ====== */
 function migrarChaves(){[['petcall.cfg','petfarm.cfg'],['petcall.turma.v2','petfarm.turma'],['petcall.hotel','petfarm.hotel'],['petcall.rotas','petfarm.rotas']].forEach(([a,b])=>{try{if(!localStorage.getItem(b)&&localStorage.getItem(a))localStorage.setItem(b,localStorage.getItem(a))}catch(e){}})}
 function iniciar(){
   migrarChaves();
   try{const sv=localStorage.getItem('petfarm.cfg');if(sv)cfg=Object.assign(cfg,JSON.parse(sv))}catch(e){}
-  CRECHE_NOME=cfg.nome;aplicarPrecos();
+  CRECHE_NOME=cfg.nome;aplicarPrecos();aplicarPerfisSalvos();
   try{const sv=localStorage.getItem('petfarm.turma');pets=sv?JSON.parse(sv):JSON.parse(JSON.stringify(DEMO_PETS))}catch(e){pets=JSON.parse(JSON.stringify(DEMO_PETS))}
   pets.forEach(p=>{if(p.aniversario==='__HOJE__')p.aniversario=MMDD});
   pets.forEach(p=>{semearHistorico(p);sincronizarHoje(p)});
@@ -4905,6 +4909,7 @@ document.addEventListener('click',e=>{
   if(b=g('view')){trocarAba(b.dataset.view);if(b.dataset.iniciar)setTimeout(iniciarChamada,150);return}
   if(b=g('acao')){novaAcao(b.dataset.acao);return}
   if(b=g('maisviews')){abrirMaisViews();return}
+  if(b=g('fechamais')){const m=$('#fab-menu');if(m)m.remove();return}
   if(b=g('painel')){const m=$('#fab-menu');if(m)m.remove();abrirRecepcao();return}
   if(b=g('sair')){sair();return}
   if(b=g('freq')){avisarFrequencia(+b.dataset.freq);return}
@@ -4976,7 +4981,7 @@ $('#btn-notif').onclick=()=>{
   ativos().filter(p=>!p.telefone).forEach(p=>avisos.push([p,`${p.nome} sem telefone do tutor`,'Cadastro obrigatório: WhatsApp e dia de pagamento.']));
   ativos().filter(p=>p.status==='presente'&&!p.midias.includes(HOJE)).forEach(p=>avisos.push([p,`📸 ${p.nome} sem foto/vídeo hoje`,`Tutor ${p.tutor} ainda não recebeu.`]));
   pendentes().filter(p=>minutosAtraso(p.previsto)>=30).forEach(p=>avisos.push([p,`${p.nome} ainda sem presença`,`Previsto às ${p.previsto}.`]));
-  avisos.length?avisos.slice(0,5).forEach(a=>toast(...a)):toast(pets[0],'Tudo em dia! 🐾','Nenhuma pendência.',true)};
+  avisos.length?avisos.slice(0,5).forEach(a=>toast(...a)):toast(pets[0]||{raca:'golden'},'Tudo em dia! 🐾','Nenhuma pendência.',true)};
 
 
   render();renderInicio();checarAmbiente();trocarAba('inicio');
@@ -5121,6 +5126,11 @@ function abrirConfig(){
       ${pode('config')?`<div class="cfg-h">🔒 Logins <button class="btn-mini" id="cf-logins" type="button">Gerenciar acessos</button></div>`:''}
       <div class="cfg-h">💾 Backup <span style="font-size:11px;font-weight:700;color:#A38560">exporte de vez em quando e guarde o arquivo</span></div>
       <div class="row2"><button class="btn-mini" id="cf-exp" type="button">⬇ Exportar backup (.json)</button><label class="btn-mini cinza" style="justify-content:center">⬆ Importar backup<input type="file" id="cf-imp" accept="application/json" style="display:none"></label></div>
+      ${pode('config')?`<div class="cfg-h">🧹 Começar do zero</div>
+      <div class="zona-perigo">
+        <p>Apaga <b>todos os pets, reservas, rotas, mensagens e ocorrências</b>, no aparelho e na nuvem. Os logins, os preços e as configurações continuam como estão.</p>
+        <button class="btn-mini perigo" id="cf-zerar" type="button">Zerar os dados do sistema</button>
+      </div>`:''}
       <label class="check" style="justify-content:flex-start;margin-top:14px"><input type="checkbox" id="cf-fatura" ${cfg.faturaUnica!==false?'checked':''}> 🧾 Juntar hotel e creche numa fatura só no fim do mês (para alunos da creche)</label>
       <div class="cfg-h">💳 Chaves PIX <button class="btn-mini" id="cf-addpix">＋ chave</button></div>
       <div class="cfg-lista" id="cf-pix">${cfg.pix.map(rowPix).join('')}</div>
@@ -5144,6 +5154,7 @@ function abrirConfig(){
   };
   const bl=$('#cf-logins');if(bl)bl.onclick=abrirLogins;const bp=$('#cf-precos');if(bp)bp.onclick=abrirPrecos;const bcb=$('#cf-comb');if(bcb)bcb.onclick=abrirCombustivel;const bmo=$('#cf-mot');if(bmo)bmo.onclick=abrirCfgMotorista;
   $('#cf-exp').onclick=exportarBackup;$('#cf-imp').onchange=e=>importarBackup(e.target.files[0]);
+  const bz=$('#cf-zerar');if(bz)bz.onclick=abrirZerar;
   $('#cf-addpix').onclick=()=>{ler();cfg.pix.push({id:Date.now(),nome:'',chave:'',tipo:'email',banco:''});abrirConfig()};
   $('#cf-addzap').onclick=()=>{ler();cfg.zaps.push({id:Date.now(),nome:'',numero:''});abrirConfig()};
   $('#ov').addEventListener('click',e=>{const a=e.target.closest('[data-rmpix]');const b=e.target.closest('[data-rmzap]');
@@ -5745,19 +5756,13 @@ function timelineHtml(p){
 let reservas=[];
 function iniciarHotel(){
   try{const sv=localStorage.getItem('petfarm.hotel');if(sv)reservas=JSON.parse(sv)}catch(e){}
-  if(!reservas.length){const d=n=>{const x=new Date();x.setDate(x.getDate()+n);return isoLocal(x)};reservas=[
-    {id:1,petId:1,horaIn:'08:30',horaOut:'18:00',checkin:d(-2),checkout:d(1),transporteCidade:'bc',transporteVezes:1,sinalPago:true,status:'hospedado',obs:'Leva a caminha dele.',pertences:[{id:1,nome:'Guia azul'},{id:2,nome:'Pote de comida'},{id:3,nome:'Caminha'}],msgs:[{tipo:'checkin',quando:d(-2),via:'WhatsApp Pet Farm'}]},
-    {id:2,petId:null,nome:'Bolt',raca:'collie',peso:19,tutor:'Renata',telefone:'47999220001',checkin:d(-3),checkout:d(0),transporteCidade:'',transporteVezes:0,sinalPago:true,status:'hospedado'},
-    {id:3,petId:null,nome:'Mia',raca:'poodle',peso:7,tutor:'Paulo',telefone:'47999220002',checkin:d(0),checkout:d(3),transporteCidade:'camboriu',transporteVezes:0,sinalPago:true,status:'reservado'},
-    {id:4,petId:6,checkin:d(2),checkout:d(5),transporteCidade:'',transporteVezes:0,sinalPago:false,status:'reservado'},
-    {id:5,petId:null,nome:'Rex',raca:'labrador',peso:28,tutor:'Sandra',telefone:'47999220003',checkin:d(-9),checkout:d(-6),transporteCidade:'bc',transporteVezes:2,sinalPago:true,status:'finalizado',pago:true},
-  ]}
+  // sem reservas de exemplo: o hotel comeca vazio
 }
 function salvarHotel(){salvarSeguro('petfarm.hotel',JSON.stringify(reservas))}
 function hospede(r){ // dados do pet (da creche ou visitante)
   const p=r.petId?pets.find(x=>x.id===r.petId):null;
   const aluno=!!(p&&p.ativo!==false);
-  return {p,aluno,nome:p?p.nome:r.nome,raca:p?p.raca:r.raca,peso:p?p.peso:r.peso,tutor:p?p.tutor:r.tutor,telefone:p?p.telefone:r.telefone,avatar:p?avatar(p):st(RACAS[r.raca].st)};
+  return {p,aluno,nome:p?p.nome:r.nome,raca:p?p.raca:r.raca,peso:p?p.peso:r.peso,tutor:p?p.tutor:r.tutor,telefone:p?p.telefone:r.telefone,avatar:p?avatar(p):st((RACAS[r.raca]||RACAS.golden).st)};
 }
 function diarias(r){const a=new Date(r.checkin),b=new Date(r.checkout);return Math.max(1,Math.round((b-a)/86400000))}
 function diariaValor(h){return h.aluno?HOTEL.aluno:(h.peso<=10?HOTEL.pequeno:HOTEL.grande)}
@@ -5902,7 +5907,7 @@ function abrirReserva(id,diaSugerido){
   const ler=(validar)=>{
     const isAluno=!$('#r-aluno').classList.contains('hidden');
     const o={...r};
-    if(isAluno){o.petId=parseInt($('#r-pet').value)||null;if(!o.petId){if(validar)toast(pets[0],'Escolha um aluno','Ou cadastre como visitante.');return null}}
+    if(isAluno){o.petId=parseInt($('#r-pet').value)||null;if(!o.petId){if(validar)toast(pets[0]||{raca:'golden'},'Escolha um aluno','Ou cadastre como visitante.');return null}}
     else{o.petId=null;o.nome=$('#r-nome').value.trim();o.raca=$('#r-raca').value;o.peso=parseFloat($('#r-peso').value)||0;o.tutor=$('#r-tutor').value.trim();o.telefone=$('#r-tel').value.replace(/\D/g,'');
       if(validar){for(const [k,id2] of [['nome','r-nome'],['peso','r-peso'],['tutor','r-tutor']]){if(!o[k]){$('#'+id2).focus();$('#'+id2).style.borderColor='var(--vermelho)';return null}}
         if(o.telefone.length<10){$('#r-tel').focus();$('#r-tel').style.borderColor='var(--vermelho)';return null}}}
@@ -6873,6 +6878,43 @@ function importarBackup(file){
   fr.readAsText(file);
 }
 
+/* ---- começar do zero: apaga o movimento, mantém logins, preços e ajustes ---- */
+function abrirZerar(){
+  if(!pode('config')){toast(pets[0]||{raca:'golden'},'Sem permissão','Só o acesso master pode zerar o sistema.');return}
+  $('#modais').innerHTML=`
+  <div class="overlay" id="ov"><div class="modal confirma perigo" role="dialog" aria-labelledby="zr-t">
+    <button class="fechar" data-fechar aria-label="Fechar">✕</button>
+    <div class="ilus">${st('dog-dormindo')}</div>
+    <h2 id="zr-t">Zerar os dados do sistema?</h2>
+    <p>Vão embora <b>${pets.length} ${pets.length===1?'pet':'pets'}</b>, <b>${reservas.length} ${reservas.length===1?'reserva':'reservas'}</b> e todas as rotas, mensagens e ocorrências — no aparelho <b>e na nuvem</b>. Não dá pra desfazer.</p>
+    <p style="margin-top:8px">Continuam salvos: logins e PINs, preços, PIX, WhatsApps e os dados da creche.</p>
+    <button class="btn-mini" id="zr-bkp" type="button" style="margin:12px auto 0">⬇ Exportar backup antes</button>
+    <div class="campo" style="margin-top:14px;text-align:left"><label for="zr-txt">Para confirmar, escreva ZERAR</label><input id="zr-txt" autocomplete="off" placeholder="ZERAR"></div>
+    <div class="duplo" style="margin-top:14px">
+      <button class="btn cinza" data-fechar>Voltar</button>
+      <button class="btn perigo" id="zr-ok" disabled>Zerar tudo</button>
+    </div>
+  </div></div>`;
+  lock();
+  const txt=$('#zr-txt'), ok=$('#zr-ok');
+  txt.oninput=()=>{ok.disabled=txt.value.trim().toUpperCase()!=='ZERAR'};
+  txt.focus();
+  $('#zr-bkp').onclick=exportarBackup;
+  ok.onclick=()=>{ok.disabled=true;ok.textContent='Zerando…';zerarSistema()};
+  $('#ov').onclick=e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()};
+  document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
+}
+function zerarSistema(){
+  pets=[];reservas=[];rotas={};msgLog=[];ops={};
+  salvarSeguro('petfarm.turma','[]');
+  salvarSeguro('petfarm.hotel','[]');
+  salvarSeguro('petfarm.rotas','{}');
+  salvarSeguro('petfarm.msgs','[]');
+  salvarSeguro('petfarm.ops','{}');
+  if(typeof nuvemFlushTudo==='function')nuvemFlushTudo();
+  setTimeout(()=>location.reload(),1800);
+}
+
 </script>
 <script>
 /* Pet Farm · gestao.js — indicadores, painel de clientes, ocorrências, nova ação */
@@ -6932,6 +6974,11 @@ function abrirNovaAcao(){
   const menu=document.createElement('div');menu.id='fab-menu';menu.className='fab-menu';
   menu.innerHTML=[['presenca','🔔','Registrar presença'],['pet','🐶','Cadastrar pet'],['reserva','🏡','Nova reserva'],['pagamento','💳','Registrar pagamento'],['transporte','🚐','Adicionar transporte'],['mensagem','💬','Enviar mensagem'],['ocorrencia','📝','Registrar ocorrência']].filter(([k])=>podeVer({presenca:'creche',pet:'creche',reserva:'hotel',pagamento:'financeiro',transporte:'transporte',mensagem:'mensagens',ocorrencia:'creche'}[k])).map(([k,i,l])=>`<button data-acao="${k}"><span class="ic">${i}</span>${l}</button>`).join('');
   document.body.appendChild(menu);
+  if(fab){const r=fab.getBoundingClientRect();menu.style.top=Math.round(r.bottom+8)+'px';
+    let dir=Math.max(12,Math.round(innerWidth-r.right));                 // alinha pela direita do botao
+    const larg=menu.offsetWidth;
+    if(innerWidth-dir-larg<12)dir=Math.max(12,innerWidth-larg-12);       // em tela estreita, puxa pra caber
+    menu.style.right=dir+'px'}
   setTimeout(()=>document.addEventListener('click',e=>{if(!e.target.closest('#fab-menu')&&!e.target.closest('#fab'))menu.remove()},{once:true}),0);
 }
 function escolherPet(titulo,cb,filtro){
@@ -7755,10 +7802,73 @@ function abrirMaisViews(){
   const m=$('#fab-menu');if(m)m.remove();
   const menu=document.createElement('div');menu.id='fab-menu';menu.className='fab-menu baixo';
   menu.innerHTML=vs.map(v=>`<button data-view="${v}"><span class="ic">${VIEW_INFO[v][0]}</span>${VIEW_INFO[v][1]}</button>`).join('')+(podeVer('creche')?`<button data-painel="1"><span class="ic">📺</span>Painel do dia (TV)</button>`:'')+`<button data-sair="1"><span class="ic">🚪</span>Sair (${usuario.nome})</button>`;
+  menu.insertAdjacentHTML('beforeend','<button class="fechar-menu" data-fechamais="1"><span class="ic">'+String.fromCharCode(10005)+'</span>Fechar</button>');
   document.body.appendChild(menu);
   setTimeout(()=>document.addEventListener('click',e=>{if(!e.target.closest('#fab-menu')&&!e.target.closest('[data-maisviews]'))menu.remove()},{once:true}),0);
 }
 /* ---- gestão de logins (só master) ---- */
+/* ---- permissões editáveis pelo acesso master ---- */
+const PODERES={
+  cadastro:['🐶','Cadastrar e editar pets'],
+  financeiro:['💳','Ver valores e cobranças'],
+  descontos:['🏷️','Dar descontos'],
+  config:['⚙️','Abrir as configurações'],
+  equipe:['🔒','Criar e editar logins'],
+  meu_pagamento:['💰','Financeiro do transporte (valores da van)']
+};
+function aplicarPerfisSalvos(){
+  const sv=(typeof cfg!=='undefined')&&cfg.perfis;if(!sv)return;
+  Object.keys(PERFIS).forEach(k=>{
+    const s=sv[k];if(!s)return;
+    if(Array.isArray(s.views)){const vs=s.views.filter(v=>VIEW_INFO[v]);PERFIS[k].views=vs.length?vs:['inicio']}
+    if(Array.isArray(s.pode))PERFIS[k].pode=s.pode.filter(p=>PODERES[p]);
+  });
+  if(!PERFIS.master.pode.includes('config'))PERFIS.master.pode.push('config');
+}
+function abrirPermissoes(){
+  if(!pode('config')){toast(pets[0]||{raca:'golden'},'Sem permissão','Só o acesso master edita permissões.');return}
+  const ks=Object.keys(PERFIS);
+  $('#modais').innerHTML=`
+  <div class="overlay" id="ov"><div class="modal form" role="dialog" aria-labelledby="pm-t">
+    <button class="fechar" data-fechar aria-label="Fechar">✕</button>
+    <h2 id="pm-t">${st('dog-collie')} O que cada perfil pode ver</h2>
+    <div class="nota" style="font-size:12px;font-weight:700;color:#A38560">Marque as telas e as permissões de cada perfil. Vale para todas as pessoas que usam aquele acesso.</div>
+    ${ks.map(k=>`
+      <div class="perm-bloco" data-permperfil="${k}">
+        <div class="cfg-h">${PERFIS[k].nome}</div>
+        <div class="perm-grade">
+          ${Object.keys(VIEW_INFO).map(v=>`<label class="mini-check"><input type="checkbox" data-permv="${v}" ${PERFIS[k].views.includes(v)?'checked':''}> ${VIEW_INFO[v][0]} ${VIEW_INFO[v][1]}</label>`).join('')}
+        </div>
+        <div class="perm-grade">
+          ${Object.keys(PODERES).map(p=>{
+            const trava=(k==='master'&&p==='config');
+            return `<label class="mini-check ${p==='meu_pagamento'?'alerta':''}"><input type="checkbox" data-permp="${p}" ${PERFIS[k].pode.includes(p)?'checked':''} ${trava?'checked disabled':''}> ${PODERES[p][0]} ${PODERES[p][1]}${trava?' (fixo)':''}</label>`;
+          }).join('')}
+        </div>
+      </div>`).join('')}
+    <div class="nota" style="margin-top:12px;font-size:12px;font-weight:700;color:#B4552E">⚠️ O "Financeiro do transporte" mostra o faturamento da van. Marcando para outro perfil além do Motorista, essa pessoa passa a enxergar os valores do Ramon.</div>
+    <div class="duplo" style="margin-top:16px">
+      <button class="btn cinza" id="pm-reset" type="button">Voltar ao padrão</button>
+      <button class="btn primario" id="pm-ok">${st('check')} Salvar permissões</button>
+    </div>
+  </div></div>`;
+  lock();
+  const ler=()=>{
+    document.querySelectorAll('.perm-bloco').forEach(bl=>{
+      const k=bl.dataset.permperfil;
+      const vs=[...bl.querySelectorAll('[data-permv]')].filter(c=>c.checked).map(c=>c.dataset.permv);
+      PERFIS[k].views=vs.length?vs:['inicio'];
+      PERFIS[k].pode=[...bl.querySelectorAll('[data-permp]')].filter(c=>c.checked).map(c=>c.dataset.permp);
+    });
+    if(!PERFIS.master.pode.includes('config'))PERFIS.master.pode.push('config');
+    cfg.perfis={};
+    Object.keys(PERFIS).forEach(k=>{cfg.perfis[k]={views:PERFIS[k].views.slice(),pode:PERFIS[k].pode.slice()}});
+  };
+  $('#pm-reset').onclick=()=>{delete cfg.perfis;salvarCfg();location.reload()};
+  $('#pm-ok').onclick=()=>{ler();salvarCfg();montarNav();fecharModal();toast(pets[0]||{raca:'golden'},'Permissões salvas 🔒','Cada pessoa vê as telas que você marcou.',true)};
+  $('#ov').onclick=e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()};
+  document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
+}
 function abrirLogins(){
   if(!pode('config')){toast(pets[0]||{raca:'golden'},'Sem permissão','Só o acesso master edita logins.');return}
   const l=usuarios();
@@ -7776,12 +7886,13 @@ function abrirLogins(){
       </div>`).join('')}</div>
     <button class="btn-mini" id="lg-add" style="margin-top:10px">＋ Novo login</button>
     <div class="nota" style="margin-top:12px;font-size:12px;font-weight:700;color:#A38560">O PIN serve pra separar o que cada um vê no aparelho, não é uma senha de banco. Para dados sensíveis, use um aparelho por pessoa.</div>
-    <div class="cfg-h">O que cada perfil vê</div>
+    <div class="cfg-h">O que cada perfil vê <button class="btn-mini" id="lg-perm" type="button">Editar permissões</button></div>
     <div class="perfis">${Object.entries(PERFIS).map(([k,v])=>`<div><b>${v.nome}</b><span>${v.views.map(x=>VIEW_INFO[x][1]).join(' · ')}${k==='motorista'?' · sem valores':''}</span></div>`).join('')}</div>
     <button class="btn primario" id="lg-ok" style="margin-top:16px">${st('check')} Salvar logins</button>
   </div></div>`;
   lock();
   const ler=()=>{cfg.usuarios=[...document.querySelectorAll('#lg-lista .login-row')].map(r=>({id:+r.dataset.u,nome:r.querySelector('[data-k=nome]').value.trim()||'Sem nome',perfil:r.querySelector('[data-k=perfil]').value,pin:(r.querySelector('[data-k=pin]').value.replace(/\D/g,'')||'1234').slice(0,4).padEnd(4,'0'),ativo:r.querySelector('[data-k=ativo]').checked}))};
+  $('#lg-perm').onclick=abrirPermissoes;
   $('#lg-add').onclick=()=>{ler();cfg.usuarios.push({id:Date.now(),nome:'',perfil:'recepcao',pin:'',ativo:true});abrirLogins()};
   $('#ov').addEventListener('click',e=>{const b=e.target.closest('[data-rmu]');if(b){ler();cfg.usuarios=cfg.usuarios.filter(u=>u.id!==+b.dataset.rmu);abrirLogins();return}if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()});
   $('#lg-ok').onclick=()=>{ler();salvarCfg();const eu=cfg.usuarios.find(u=>u.id===usuario.id);if(eu){usuario=eu;montarNav()}fecharModal();toast(pets[0]||{raca:'golden'},'Logins salvos 🔒',`${cfg.usuarios.filter(u=>u.ativo!==false).length} pessoas com acesso.`,true)};
@@ -7932,7 +8043,7 @@ function nuvemAplicar(chave,dados){
 function nuvemRender(){
   try{
     const v=VIEWS.find(x=>{const el=document.getElementById('view-'+x);return el&&!el.classList.contains('hidden')});
-    if(v)trocarAba(v);
+    if(v)trocarAba(v,true);   // repinta no lugar: quem estava lendo nao volta pro topo
   }catch(e){}
 }
 function nuvemAoVivo(){
