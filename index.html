@@ -702,6 +702,30 @@ table.fat tr.desc td{color:var(--verde-txt)}
 .kv div b{color:var(--marrom-escuro);text-align:right}
 .sit{font-size:11px;font-weight:800;border-radius:999px;padding:3px 9px;white-space:nowrap}
 .sit.s-v{background:var(--verde-bg);color:var(--verde-txt)}.sit.s-a{background:var(--amarelo-suave);color:var(--marrom)}.sit.s-l{background:#FFF1DC;color:#9A6212}.sit.s-r{background:var(--vermelho-bg);color:var(--vermelho-txt)}
+/* ===== escolha da unidade (tela inicial) ===== */
+.unidades{position:fixed;inset:0;z-index:120;background:var(--creme);display:grid;place-items:center;padding:24px;overflow:auto}
+.un-caixa{width:min(920px,100%)}
+.un-topo{display:flex;align-items:center;gap:14px;margin-bottom:22px;justify-content:center}
+.un-topo .st{width:56px;height:56px}
+.un-topo b{font-family:var(--display);font-size:30px;font-weight:600;color:var(--marrom-escuro);display:block;line-height:1}
+.un-topo b span{color:var(--amarelo-escuro,#D9A41E)}
+.un-topo small{font-size:13px;font-weight:800;color:#A38560}
+.un-badge{background:var(--amarelo-suave);border:1px solid var(--amarelo);border-radius:999px;padding:7px 14px;font-weight:800;font-size:13px;color:var(--marrom-escuro);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;min-height:36px}
+.un-badge:hover{background:var(--amarelo)}
+.cid.itj{background:#E4EEF7;color:#2F5BA8}
+.un-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.un-card{background:#fff;border:2px solid var(--bege);border-radius:22px;padding:26px 20px;text-align:center;cursor:pointer;transition:.18s;display:flex;flex-direction:column;align-items:center;gap:8px;min-height:190px;justify-content:center}
+.un-card:hover{border-color:var(--amarelo);transform:translateY(-4px);box-shadow:var(--sombra-forte)}
+.un-card .un-ico{font-size:44px;line-height:1}
+.un-card b{font-family:var(--display);font-size:24px;font-weight:600;color:var(--marrom-escuro)}
+.un-card small{font-size:13px;font-weight:700;color:#A38560;line-height:1.35}
+@media (max-width:760px){
+  .un-cards{grid-template-columns:1fr}
+  .un-card{min-height:0;padding:20px;flex-direction:row;text-align:left;gap:14px}
+  .un-card b{flex:none}
+  .un-card .un-ico{font-size:38px}
+  .un-card small{flex:1 1 100%}
+}
 /* ===== fab ===== */
 #fab{background:var(--marrom-escuro);color:var(--creme);border-radius:999px;padding:10px 18px;font-family:var(--display);font-weight:600;font-size:17px;box-shadow:0 4px 14px rgba(62,48,39,.22);display:flex;align-items:center;justify-content:center;gap:8px;flex:none;white-space:nowrap;min-height:44px}
 #fab:hover{background:var(--marrom)}
@@ -709,7 +733,7 @@ table.fat tr.desc td{color:var(--verde-txt)}
 .fab-menu button{display:flex;align-items:center;gap:12px;text-align:left;padding:11px 12px;border-radius:12px;font-weight:800;font-size:14px;color:var(--marrom)}
 .fab-menu button:hover{background:var(--amarelo-suave);color:var(--marrom-escuro)}
 .fab-menu .ic{width:26px;text-align:center;font-size:17px}
-.fab-menu .fechar-menu{margin-top:2px;padding:7px 12px;font-size:13px;border-top:1px solid var(--bege);border-radius:0 0 14px 14px;color:#A38560;justify-content:center;gap:6px}
+.fab-menu .fechar-menu{margin-top:2px;padding:10px 12px;font-size:13px;border-top:1px solid var(--bege);border-radius:0 0 14px 14px;color:#A38560;justify-content:center;gap:6px}
 .fab-menu .fechar-menu .ic{width:auto;font-size:13px}
 .fab-menu .fechar-menu:hover{background:var(--bege-claro);color:var(--marrom-escuro)}
 /* ===== renovação no card ===== */
@@ -1182,6 +1206,9 @@ a.maps-link:hover{text-decoration:underline}
 @media (max-width:760px){                       /* no celular rola de lado, ocupa menos altura */
   .nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
   .nav::-webkit-scrollbar{display:none}
+  /* com o selo da unidade a fileira da direita passava da tela em nomes
+     longos ("Camboriú"). Aqui ela quebra pra linha de baixo em vez de vazar. */
+  .topbar .right{flex-wrap:wrap;justify-content:flex-end;row-gap:6px;flex:1 1 auto;max-width:100%}
 }
 /* entre 761 e 1100px (tablet) as 10 abas + o botao Nova acao quebravam em varias
    linhas e a barra do topo passava de 300px de altura. Aqui ela rola de lado,
@@ -1618,6 +1645,7 @@ img,svg,video,canvas{max-width:100%}
     </a>
     <nav class="nav" id="nav" aria-label="Seções"></nav>
     <div class="right">
+      <button class="un-badge hidden" id="un-atual" title="Trocar de unidade"></button>
       <span class="date" id="data-hoje"></span>
       <button id="fab" aria-label="Nova ação">＋ Nova ação</button>
       <button class="iconbtn instalar hidden" id="btn-instalar" title="Instalar na tela inicial">📲<span class="txt">Instalar app</span></button>
@@ -1888,7 +1916,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.0.4</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.0.5</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -4760,7 +4788,7 @@ function resumoMes(p,ym=MES){
 }
 let filtro='todos', busca='', porte='', planoF='';
 /* persistência local (fotos e marcações ficam salvas no navegador) */
-function salvar(){salvarSeguro('petfarm.turma',JSON.stringify(pets))}
+function salvar(){if(ehTransporte())return salvarTurmaDasUnidades();salvarSeguro('petfarm.turma',JSON.stringify(pets))}
 const ativos=()=>pets.filter(p=>p.ativo!==false&&(!p.tipos||!p.tipos.length||p.tipos.includes('creche')));
 const cancelados=()=>pets.filter(p=>p.ativo===false);
 let sequencia=null; // fila da chamada sequencial
@@ -4809,7 +4837,45 @@ function checarAmbiente(){
   else if(!ls)avisos.push('Este navegador não está salvando dados (modo anônimo ou restrito). Fotos e marcações somem ao fechar a página.');
   if(avisos.length){$('#aviso-txt').textContent=avisos[0];$('#aviso-ambiente').classList.remove('hidden')}
 }
-function salvarSeguro(chave,valor){try{localStorage.setItem(chave,valor);return true}catch(e){if(!salvarSeguro.avisou){salvarSeguro.avisou=true;toast(pets[0]||{raca:'golden'},'Memória do navegador cheia','Reduza fotos ou exclua pets antigos; o que já estava salvo continua.')}return false}}
+/* ===== unidades: Camboriú, Itajaí e o Transporte do Ramon =====
+   Cada unidade guarda o que é dela com o nome na frente da chave
+   (camboriu:petfarm.turma, itajai:petfarm.turma). O Transporte guarda as
+   rotas e enxerga os pets das duas. Enquanto UN for nulo nada muda: as
+   chaves saem exatamente como sempre foram. */
+const UNIDADES={
+  camboriu:{nome:'Camboriú',ico:'🏠',st:'dog-golden',desc:'Chamada, hotel, financeiro e mensagens de Camboriú'},
+  itajai:{nome:'Itajaí',ico:'🏡',st:'dog-labrador',desc:'Chamada, hotel, financeiro e mensagens de Itajaí'},
+  transporte:{nome:'Transporte',ico:'🚐',st:'dog-beagle',desc:'Rota da van, com os pets das duas unidades'}
+};
+const UN_PETS=['camboriu','itajai'];
+const UN_INFRA=['petfarm.device','petfarm.fila','petfarm.unidade'];
+let UN=null;
+const ehTransporte=()=>UN==='transporte';
+const nomeUnidade=u=>(UNIDADES[u||UN]||{}).nome||'';
+function chaveReal(k){
+  if(!UN||!k||k.indexOf(':')>=0||UN_INFRA.indexOf(k)>=0)return k;
+  return UN+':'+k;
+}
+function lerLocal(k){try{return localStorage.getItem(chaveReal(k))}catch(e){return null}}
+function definirUnidade(u){UN=u;try{localStorage.setItem('petfarm.unidade',u)}catch(e){}}
+function unidadeSalva(){try{return localStorage.getItem('petfarm.unidade')}catch(e){return null}}
+/* a turma do Transporte é a soma das duas unidades; cada pet carrega de onde veio */
+function turmaDasUnidades(){
+  const juntos=[];
+  UN_PETS.forEach(u=>{
+    let arr=[];try{arr=JSON.parse(localStorage.getItem(u+':petfarm.turma')||'[]')}catch(e){arr=[]}
+    if(Array.isArray(arr))arr.forEach(p=>{p._un=u;juntos.push(p)});
+  });
+  return juntos;
+}
+/* devolve cada pet pra turma da unidade dele */
+function salvarTurmaDasUnidades(){
+  UN_PETS.forEach(u=>{
+    const arr=pets.filter(p=>p._un===u).map(p=>{const c=Object.assign({},p);delete c._un;return c});
+    salvarSeguro(u+':petfarm.turma',JSON.stringify(arr));
+  });
+}
+function salvarSeguro(chave,valor){try{localStorage.setItem(chaveReal(chave),valor);return true}catch(e){if(!salvarSeguro.avisou){salvarSeguro.avisou=true;toast(pets[0]||{raca:'golden'},'Memória do navegador cheia','Reduza fotos ou exclua pets antigos; o que já estava salvo continua.')}return false}}
 
 
 /* ====== INÍCIO: o que precisa ser feito agora ====== */
@@ -4880,13 +4946,14 @@ function trocarAba(v,manterPosicao){
 function migrarChaves(){[['petcall.cfg','petfarm.cfg'],['petcall.turma.v2','petfarm.turma'],['petcall.hotel','petfarm.hotel'],['petcall.rotas','petfarm.rotas']].forEach(([a,b])=>{try{if(!localStorage.getItem(b)&&localStorage.getItem(a))localStorage.setItem(b,localStorage.getItem(a))}catch(e){}})}
 function iniciar(){
   migrarChaves();
-  try{const sv=localStorage.getItem('petfarm.cfg');if(sv)cfg=Object.assign(cfg,JSON.parse(sv))}catch(e){}
+  cfg=JSON.parse(JSON.stringify(CFG_PADRAO));            // sem herdar nada da unidade anterior
+  try{const sv=lerLocal('petfarm.cfg');if(sv)cfg=Object.assign(cfg,JSON.parse(sv))}catch(e){}
   CRECHE_NOME=cfg.nome;aplicarPrecos();aplicarPerfisSalvos();
-  try{const sv=localStorage.getItem('petfarm.turma');pets=sv?JSON.parse(sv):JSON.parse(JSON.stringify(DEMO_PETS))}catch(e){pets=JSON.parse(JSON.stringify(DEMO_PETS))}
+  try{const sv=lerLocal('petfarm.turma');pets=ehTransporte()?turmaDasUnidades():(sv?JSON.parse(sv):JSON.parse(JSON.stringify(DEMO_PETS)))}catch(e){pets=JSON.parse(JSON.stringify(DEMO_PETS))}
   pets.forEach(p=>{if(p.aniversario==='__HOJE__')p.aniversario=MMDD});
   pets.forEach(p=>{semearHistorico(p);sincronizarHoje(p)});
-  try{const sv=localStorage.getItem('petfarm.msgs');if(sv)msgLog=JSON.parse(sv)}catch(e){}
-  try{const sv=localStorage.getItem('petfarm.ops');if(sv)ops=JSON.parse(sv)}catch(e){}
+  try{const sv=lerLocal('petfarm.msgs');if(sv)msgLog=JSON.parse(sv)}catch(e){}
+  try{const sv=lerLocal('petfarm.ops');if(sv)ops=JSON.parse(sv)}catch(e){}
   iniciarHotel();iniciarTransporte();
   $('#data-hoje').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
 
@@ -5132,7 +5199,7 @@ function abrirConfig(){
       <div class="row2"><button class="btn-mini" id="cf-exp" type="button">⬇ Exportar backup (.json)</button><label class="btn-mini cinza" style="justify-content:center">⬆ Importar backup<input type="file" id="cf-imp" accept="application/json" style="display:none"></label></div>
       ${pode('config')?`<div class="cfg-h">🧹 Começar do zero</div>
       <div class="zona-perigo">
-        <p>Apaga <b>todos os pets, reservas, rotas, mensagens e ocorrências</b>, no aparelho e na nuvem. Os logins, os preços e as configurações continuam como estão.</p>
+        <p>Apaga os dados <b>desta unidade</b> — pets, reservas, mensagens e ocorrências —, no aparelho e na nuvem. Os logins, os preços e as configurações continuam como estão, e a outra unidade não é tocada.</p>
         <button class="btn-mini perigo" id="cf-zerar" type="button">Zerar os dados do sistema</button>
       </div>`:''}
       <label class="check" style="justify-content:flex-start;margin-top:14px"><input type="checkbox" id="cf-fatura" ${cfg.faturaUnica!==false?'checked':''}> 🧾 Juntar hotel e creche numa fatura só no fim do mês (para alunos da creche)</label>
@@ -5771,7 +5838,7 @@ function timelineHtml(p){
 /* ====== HOTEL ====== */
 let reservas=[];
 function iniciarHotel(){
-  try{const sv=localStorage.getItem('petfarm.hotel');if(sv)reservas=JSON.parse(sv)}catch(e){}
+  try{const sv=lerLocal('petfarm.hotel');if(sv)reservas=JSON.parse(sv)}catch(e){}
   // sem reservas de exemplo: o hotel comeca vazio
 }
 function salvarHotel(){salvarSeguro('petfarm.hotel',JSON.stringify(reservas))}
@@ -6305,8 +6372,10 @@ const dAdd=(d,n)=>{const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+n);retu
 const dNome=d=>new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
 let rotas={};let rotaDia=null;
 const podeFinTransp=()=>pode('meu_pagamento'); // financeiro do transporte: só o dono da van (perfil Motorista)
-function iniciarTransporte(){rotaDia=HOJE;try{const sv=localStorage.getItem('petfarm.rotas');if(sv)rotas=JSON.parse(sv)}catch(e){}}
-function salvarRotas(){salvarSeguro('petfarm.rotas',JSON.stringify(rotas))}
+function iniciarTransporte(){rotaDia=HOJE;try{const sv=lerRotas();if(sv)rotas=JSON.parse(sv)}catch(e){}}
+/* as rotas são sempre do Transporte: as unidades leem as mesmas, só que filtradas na tela */
+function lerRotas(){try{return localStorage.getItem('transporte:petfarm.rotas')}catch(e){return null}}
+function salvarRotas(){salvarSeguro('transporte:petfarm.rotas',JSON.stringify(rotas))}
 const cidadeDe=p=>p.transporte||(/(balne[aá]rio|bc\b)/i.test(p.endereco||'')?'bc':'camboriu');
 /* peso só serve pra ordem AUTOMÁTICA (opcional). A ordem padrão é a que você escolhe. */
 const DISTANCIA={bc:2,'':1,camboriu:1};
@@ -6374,7 +6443,7 @@ function renderTransporte(){
       <span class="hora">${x.hora||p.previsto}<span class="prev">${pe.embarcou?'embarcou '+pe.embarcou:pe.cheguei?'chegou '+pe.cheguei:ex&&ex.iniciada?'prev. '+previsaoHora(inicioPrev,i+1):''}</span></span>
       <div class="mini">${avatar(p)}</div>
       <div style="min-width:0;flex:1">
-        <b class="nome">${p.nome} <span class="cid ${cid==='bc'?'bc':'cam'}">${cid==='bc'?'Bal. Camboriú':'Camboriú'}${p.transporte&&podeFinTransp()?' · '+brl(tp.preco):''}</span></b>
+        <b class="nome">${p.nome} <span class="cid ${ehTransporte()&&p._un?(p._un==='itajai'?'itj':'cam'):(cid==='bc'?'bc':'cam')}">${ehTransporte()&&p._un?nomeUnidade(p._un):(cid==='bc'?'Bal. Camboriú':'Camboriú')}${p.transporte&&podeFinTransp()?' · '+brl(tp.preco):''}</span></b>
         <div class="end">${p.endereco?`📍 ${p.endereco} · <a class="maps-link" href="${mapsUrl(p.endereco)}" target="_blank" rel="noopener">🗺 mapa</a>`:`<span class="semend">⚠ sem endereço — </span><button class="alterar" style="margin:0" data-editar="${p.id}">cadastrar</button>`} · tutor ${p.tutor}${p.telefone?` · <a href="${wa(p.telefone,tpl('vanACaminho',{tutor:primeiroNome(p.tutor),pet:p.nome,hora:x.hora||p.previsto}))}" target="_blank" rel="noopener">avisar tutor</a>`:''}</div>
       </div>
       <div class="acoes">
@@ -6894,8 +6963,8 @@ function abrirZerar(){
   <div class="overlay" id="ov"><div class="modal confirma perigo" role="dialog" aria-labelledby="zr-t">
     <button class="fechar" data-fechar aria-label="Fechar">✕</button>
     <div class="ilus">${st('dog-dormindo')}</div>
-    <h2 id="zr-t">Zerar os dados do sistema?</h2>
-    <p>Vão embora <b>${pets.length} ${pets.length===1?'pet':'pets'}</b>, <b>${reservas.length} ${reservas.length===1?'reserva':'reservas'}</b> e todas as rotas, mensagens e ocorrências — no aparelho <b>e na nuvem</b>. Não dá pra desfazer.</p>
+    <h2 id="zr-t">Zerar os dados de ${nomeUnidade()}?</h2>
+    <p>Vão embora <b>${pets.length} ${pets.length===1?'pet':'pets'}</b>, <b>${reservas.length} ${reservas.length===1?'reserva':'reservas'}</b> e as mensagens e ocorrências <b>de ${nomeUnidade()}</b> — no aparelho <b>e na nuvem</b>. Não dá pra desfazer.</p>
     <p style="margin-top:8px">Continuam salvos: logins e PINs, preços, PIX, WhatsApps e os dados da creche.</p>
     <button class="btn-mini" id="zr-bkp" type="button" style="margin:12px auto 0">⬇ Exportar backup antes</button>
     <div class="campo" style="margin-top:14px;text-align:left"><label for="zr-txt">Para confirmar, escreva ZERAR</label><input id="zr-txt" autocomplete="off" placeholder="ZERAR"></div>
@@ -6914,12 +6983,16 @@ function abrirZerar(){
   document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
 }
 function zerarSistema(){
-  pets=[];reservas=[];rotas={};msgLog=[];ops={};
-  salvarSeguro('petfarm.turma','[]');
-  salvarSeguro('petfarm.hotel','[]');
-  salvarSeguro('petfarm.rotas','{}');
-  salvarSeguro('petfarm.msgs','[]');
-  salvarSeguro('petfarm.ops','{}');
+  pets=[];reservas=[];msgLog=[];ops={};
+  if(ehTransporte()){
+    rotas={};salvarSeguro('transporte:petfarm.rotas','{}');   // no card do Ramon, zerar limpa as rotas
+  }else{
+    // zerar uma unidade não apaga a rota da van: ela é do Transporte e tem pets das duas
+    salvarSeguro('petfarm.turma','[]');
+    salvarSeguro('petfarm.hotel','[]');
+    salvarSeguro('petfarm.msgs','[]');
+    salvarSeguro('petfarm.ops','{}');
+  }
   if(typeof nuvemFlushTudo==='function')nuvemFlushTudo();
   setTimeout(()=>location.reload(),1800);
 }
@@ -7734,22 +7807,65 @@ let usuario=null;
 const pode=x=>!!(usuario&&PERFIS[usuario.perfil]&&PERFIS[usuario.perfil].pode.includes(x));
 const podeVer=v=>!!(usuario&&PERFIS[usuario.perfil]&&PERFIS[usuario.perfil].views.includes(v));
 const viewsPermitidas=()=>usuario?PERFIS[usuario.perfil].views:[];
-function usuarios(){if(!cfg.usuarios||!cfg.usuarios.length)cfg.usuarios=[{id:1,nome:'Marcelle',perfil:'master',pin:'1234',ativo:true}];return cfg.usuarios}
-function salvarSessao(){try{localStorage.setItem('petfarm.sessao',JSON.stringify({id:usuario.id,em:Date.now()}))}catch(e){}}
-function sair(){usuario=null;try{localStorage.removeItem('petfarm.sessao')}catch(e){};telaLogin()}
+function usuarios(){
+  if(!cfg.usuarios||!cfg.usuarios.length)cfg.usuarios=[{id:1,nome:'Marcelle',perfil:'master',pin:'1234',ativo:true}];
+  if(ehTransporte()&&!cfg.usuarios.some(u=>u.perfil==='motorista'))cfg.usuarios.push({id:4,nome:'Ramon',perfil:'motorista',pin:'4444',ativo:true});
+  return cfg.usuarios;
+}
+function salvarSessao(){try{localStorage.setItem(chaveReal('petfarm.sessao'),JSON.stringify({id:usuario.id,em:Date.now()}))}catch(e){}}
+function sair(){usuario=null;try{localStorage.removeItem(chaveReal('petfarm.sessao'))}catch(e){};telaLogin()}
 function iniciarSessao(u){
   usuario=u;salvarSessao();
   const t=$('#login');if(t)t.remove();
   document.body.classList.remove('travado');
   montarNav();
+  const bu=$('#un-atual');
+  if(bu&&UN){bu.textContent=(UNIDADES[UN]||{}).ico+' '+nomeUnidade();bu.classList.remove('hidden');
+    bu.onclick=()=>confirmar({titulo:'Trocar de unidade?',texto:'Você volta pra tela de escolha entre Camboriú, Itajaí e Transporte. O que já foi salvo continua salvo.',botao:'Trocar',onOk:trocarUnidade})}
   $('#eu').textContent=(u.nome||'?').trim().charAt(0).toUpperCase();
   $('#eu').title=`${u.nome} · ${PERFIS[u.perfil].nome} (toque pra sair)`;
   const inicial=viewsPermitidas()[0];
   trocarAba(podeVer('inicio')?'inicio':inicial);
-  if(u.pin==='1234'&&u.perfil==='master')setTimeout(()=>toast(pets[0]||{raca:'golden'},'Troque a senha padrão 🔒','Abra ⚙ Configurações › Logins e defina um PIN só seu.'),900);
+  if((u.pin==='1234'&&u.perfil==='master')||(u.pin==='4444'&&u.perfil==='motorista'))setTimeout(()=>toast(pets[0]||{raca:'golden'},'Troque a senha padrão 🔒','Abra ⚙ Configurações › Logins e defina um PIN só seu.'),900);
+}
+/* ---- tela inicial: escolher Camboriú, Itajaí ou Transporte ---- */
+function telaUnidade(){
+  return new Promise(resolve=>{
+    document.body.classList.add('travado');
+    const antigo=document.getElementById('unidades');if(antigo)antigo.remove();
+    const el=document.createElement('div');el.id='unidades';el.className='unidades';
+    el.innerHTML=`
+      <div class="un-caixa">
+        <div class="un-topo">
+          <svg class="st"><use href="#dog-golden"/></svg>
+          <div><b>Pet<span>Farm</span></b><small>escolha onde você vai trabalhar</small></div>
+        </div>
+        <div class="un-cards">
+          ${Object.entries(UNIDADES).map(([k,u])=>`
+            <button class="un-card" data-un="${k}">
+              <span class="un-ico">${u.ico}</span>
+              <b>${u.nome}</b>
+              <small>${u.desc}</small>
+            </button>`).join('')}
+        </div>
+      </div>`;
+    document.body.appendChild(el);
+    el.addEventListener('click',e=>{
+      const b=e.target.closest('[data-un]');if(!b)return;
+      definirUnidade(b.dataset.un);
+      el.remove();document.body.classList.remove('travado');
+      resolve(b.dataset.un);
+    });
+  });
+}
+/* volta pra escolha das unidades */
+function trocarUnidade(){
+  try{localStorage.removeItem('petfarm.unidade')}catch(e){}
+  location.reload();
 }
 function telaLogin(erro){
-  const lista=usuarios().filter(u=>u.ativo!==false);
+  const lista=usuarios().filter(u=>u.ativo!==false)
+    .filter(u=>ehTransporte()?u.perfil==='motorista':u.perfil!=='motorista');
   document.body.classList.add('travado');
   const antigo=$('#login');if(antigo)antigo.remove();
   const el=document.createElement('div');el.id='login';el.className='login';
@@ -7789,7 +7905,7 @@ function telaLogin(erro){
 }
 function iniciarAuth(){
   usuarios();
-  let s=null;try{s=JSON.parse(localStorage.getItem('petfarm.sessao')||'null')}catch(e){}
+  let s=null;try{s=JSON.parse(lerLocal('petfarm.sessao')||'null')}catch(e){}
   const u=s&&usuarios().find(x=>x.id===s.id&&x.ativo!==false);
   const validade=1000*60*60*12;
   if(u&&s.em&&Date.now()-s.em<validade)iniciarSessao(u);else telaLogin();
@@ -7977,6 +8093,37 @@ function iniciarPwa(){
 const NUVEM_URL='https://ryohfxrfipenwkcbwdca.supabase.co';
 const NUVEM_KEY='sb_publishable_v8ICE51EVaQqmy07R4NfpQ_ihNoHB-3';
 const NUVEM_CHAVES=['petfarm.cfg','petfarm.turma','petfarm.hotel','petfarm.rotas','petfarm.msgs','petfarm.ops'];
+/* ---- quais chaves da nuvem interessam pra unidade aberta agora ---- */
+const chaveBase=k=>{const i=String(k).indexOf(':');return i<0?k:k.slice(i+1)};
+const prefixoDe=k=>{const i=String(k).indexOf(':');return i<0?'':k.slice(0,i)};
+function chaveMinha(k){
+  const b=chaveBase(k), p=prefixoDe(k);
+  if(NUVEM_CHAVES.indexOf(b)<0)return false;
+  if(!UN)return p==='';
+  if(ehTransporte())return p==='transporte'||(b==='petfarm.turma'&&UN_PETS.indexOf(p)>=0);
+  return p===UN||(b==='petfarm.rotas'&&p==='transporte');   // a unidade lê as rotas da van
+}
+/* as chaves que esta unidade envia pra nuvem */
+function chavesDaUnidade(){
+  if(ehTransporte())return ['transporte:petfarm.cfg','transporte:petfarm.rotas','camboriu:petfarm.turma','itajai:petfarm.turma'];
+  return NUVEM_CHAVES.filter(k=>k!=='petfarm.rotas').map(k=>UN?UN+':'+k:k);
+}
+/* dados antigos (sem unidade) viram Camboriú, sem apagar os originais */
+function migrarParaUnidades(){
+  try{
+    if(localStorage.getItem('petfarm.migrado.unidades'))return;
+    let mexeu=0;
+    NUVEM_CHAVES.forEach(k=>{
+      const antigo=localStorage.getItem(k);
+      if(antigo==null)return;
+      const destino=(k==='petfarm.rotas')?'transporte:'+k:'camboriu:'+k;
+      if(localStorage.getItem(destino)==null){localStorage.setItem(destino,antigo);mexeu++;
+        try{if(typeof nuvemEnviar==='function'&&nuvemOk)nuvemEnviar(destino,antigo)}catch(e){}}
+    });
+    localStorage.setItem('petfarm.migrado.unidades','1');
+    if(mexeu)console.log('[unidades] '+mexeu+' chave(s) antigas adotadas por Camboriú (as originais continuam salvas)');
+  }catch(e){}
+}
 let nuvem=null,nuvemOk=false,nuvemPend={},_nuvemTimers={},_aplicarDepois={};
 const DEVICE_ID=(()=>{try{let d=localStorage.getItem('petfarm.device');if(!d){d='d'+Math.random().toString(36).slice(2,10);localStorage.setItem('petfarm.device',d)}return d}catch(e){return 'd0'}})();
 
@@ -8029,16 +8176,18 @@ async function nuvemCarregar(){
       try{localStorage.setItem(x.chave,JSON.stringify(x.dados))}catch(e){}
     });
     // o que só existe neste aparelho sobe pra nuvem (primeira migração)
-    NUVEM_CHAVES.forEach(ch=>{
+    chavesDaUnidade().forEach(ch=>{
       if(!temNuvem.has(ch)){const v=localStorage.getItem(ch);if(v!=null)nuvemEnviar(ch,v)}
     });
     nuvemStatus(true);
   }catch(e){nuvemStatus(false)}
 }
 /* ---------- tempo real: outro aparelho mudou algo ---------- */
-function nuvemAplicar(chave,dados){
+function nuvemAplicar(chaveCompleta,dados){
   try{
-    if(document.getElementById('ov')){_aplicarDepois[chave]=dados;return}   // não atrapalha um modal aberto
+    if(document.getElementById('ov')){_aplicarDepois[chaveCompleta]=dados;return}   // não atrapalha um modal aberto
+    const chave=chaveBase(chaveCompleta);
+    if(ehTransporte()&&chave==='petfarm.turma'){pets=turmaDasUnidades();pets.forEach(p=>{try{sincronizarHoje(p)}catch(e){}});nuvemRender();return}
     if(chave==='petfarm.turma'&&typeof pets!=='undefined'){pets=dados;pets.forEach(p=>{try{sincronizarHoje(p)}catch(e){}})}
     else if(chave==='petfarm.hotel'&&typeof reservas!=='undefined')reservas=dados;
     else if(chave==='petfarm.rotas'&&typeof rotas!=='undefined')rotas=dados;
@@ -8058,7 +8207,7 @@ function nuvemAoVivo(){
   const cli=nuvemCliente();if(!cli)return;
   try{
     cli.channel('estado-ao-vivo').on('postgres_changes',{event:'*',schema:'public',table:'estado'},payload=>{
-      const r=payload.new;if(!r||!NUVEM_CHAVES.includes(r.chave))return;
+      const r=payload.new;if(!r||!chaveMinha(r.chave))return;
       if((r.atualizado_por||'').endsWith('·'+DEVICE_ID))return;               // fui eu mesmo
       try{localStorage.setItem(r.chave,JSON.stringify(r.dados))}catch(e){}
       nuvemAplicar(r.chave,r.dados);
@@ -8104,7 +8253,7 @@ function telaNuvem(erro){
   document.getElementById('nv-offline').onclick=()=>{el.remove();document.body.classList.remove('travado');bootLocal()};
 }
 /* ---------- inicialização ---------- */
-function bootLocal(){iniciar();iniciarPwa();iniciarAuth()}
+function bootLocal(){migrarParaUnidades();iniciar();iniciarPwa();iniciarAuth()}
 async function bootNuvemOk(){
   nuvemOk=true;nuvemFilaCarregar();
   await nuvemCarregar();
@@ -8115,6 +8264,7 @@ async function bootNuvemOk(){
   nuvemStatus(true);
 }
 async function bootPetFarm(){
+  if(!UN){const s=unidadeSalva();UN=(s&&UNIDADES[s])?s:await telaUnidade()}
   const cli=nuvemCliente();
   if(!cli){bootLocal();return}                       // sem internet no primeiro carregamento: segue local
   let sess=null;try{sess=(await cli.auth.getSession()).data.session}catch(e){}
@@ -8125,7 +8275,7 @@ window.addEventListener('load',()=>{
   // 1) todo salvamento também vai pra nuvem
   if(typeof salvarSeguro==='function'){
     const _salvarLocal=salvarSeguro;
-    salvarSeguro=function(chave,valor){const ok=_salvarLocal(chave,valor);if(NUVEM_CHAVES.includes(chave))nuvemEnviar(chave,valor);return ok};
+    salvarSeguro=function(chave,valor){const ok=_salvarLocal(chave,valor);const real=chaveReal(chave);if(NUVEM_CHAVES.indexOf(chaveBase(real))>=0)nuvemEnviar(real,valor);return ok};
   }
   // 2) mensagens: com o envio automático ligado, entram na fila do robô em vez de abrir o WhatsApp
   if(typeof abrirZap==='function'){
