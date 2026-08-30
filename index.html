@@ -511,6 +511,9 @@ body.lock{overflow:hidden}
 .cal .d.fds{opacity:.45}
 .cal .d.presente{background:var(--verde-bg);border-color:#CFE3CB;color:var(--verde-txt)}
 .cal .d.faltou{background:var(--vermelho-bg);border-color:#F1C9C9;color:var(--vermelho-txt)}
+.cal .d.hotel{background:#EAF0FA;border-color:#C6D6EE;color:#2F5BA8}
+.cal .d.hotel.presente{background:linear-gradient(135deg,var(--verde-bg) 50%,#EAF0FA 50%);border-color:#C6D6EE}
+.cal .d .h{font-size:9px;line-height:1}
 .cal .d.hoje{box-shadow:0 0 0 2px var(--amarelo)}
 .cal .d.futuro{opacity:.3;cursor:default;transform:none}
 .cal .d .st{width:13px;height:13px;color:currentColor}
@@ -1218,7 +1221,7 @@ html{-webkit-text-size-adjust:100%}
   .dias-rotas::-webkit-scrollbar{display:none}
   .lista-fin li{gap:8px;padding:10px}
   .tpls{grid-template-columns:1fr}
-  .cal .d{height:44px}
+  .cal .d{height:50px}   /* o dia é clicável e acumula pata, van, hotel e bolo: 44px já cortava */
   .perfil .kpis{gap:6px}
   .cancelados li{flex-wrap:wrap}
   .cancelados li .acoes{width:100%;margin-left:0;flex-wrap:wrap}
@@ -2003,7 +2006,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.2.1</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.2.2</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -6055,17 +6058,28 @@ function reiniciarChamada(){
 const NOMES_MES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const ymAdd=(ym,n)=>{const [y,m]=ym.split('-').map(Number);const d=new Date(y,m-1+n,1);return `${d.getFullYear()}-${pad(d.getMonth()+1)}`};
 const ymNome=ym=>{const [y,m]=ym.split('-').map(Number);return `${NOMES_MES[m-1]} ${y}`};
+/* dias do mês em que o pet estava no hotel (do check-in ao check-out) */
+function diasNoHotel(p,ym){
+  const set=new Set();
+  try{(reservas||[]).forEach(r=>{
+    if(r.petId!==p.id||r.status==='cancelado'||!r.checkin||!r.checkout)return;
+    const d=new Date(r.checkin+'T12:00:00'), fim=new Date(r.checkout+'T12:00:00');
+    while(d<=fim){const iso=isoLocal(d);if(iso.startsWith(ym))set.add(iso);d.setDate(d.getDate()+1)}
+  })}catch(e){}
+  return set;
+}
 function calendarioHtml(p,ym){
   const [y,m]=ym.split('-').map(Number);const primeiro=new Date(y,m-1,1);const dias=new Date(y,m,0).getDate();
+  const noHotel=diasNoHotel(p,ym);
   let h=['D','S','T','Q','Q','S','S'].map(d=>`<div class="dow">${d}</div>`).join('');
   for(let i=0;i<primeiro.getDay();i++)h+='<div class="d blank"></div>';
   for(let d=1;d<=dias;d++){
     const iso=`${ym}-${pad(d)}`;const dow=new Date(y,m-1,d).getDay();
-    const pres=p.presencas.includes(iso),falt=p.faltas.includes(iso),tr=p.transportes.includes(iso);
+    const pres=p.presencas.includes(iso),falt=p.faltas.includes(iso),tr=p.transportes.includes(iso),hot=noHotel.has(iso);
     const niver=p.aniversario&&iso.slice(5)===p.aniversario;
-    const cls=['d',pres?'presente':'',falt?'faltou':'',iso===HOJE?'hoje':'',iso>HOJE?'futuro':'',dow===0?'fds':'',niver?'niver':''].join(' ');
-    const tip=pres?`Presente${p.chegadas[iso]?' · chegou '+p.chegadas[iso]:''}${tr?' · usou transporte':''}`:falt?'Faltou':iso>HOJE?'':'Sem marcação · clique pra marcar';
-    h+=`<div class="${cls}" data-dia="${iso}" title="${tip}">${d}${pres?st('pata'):falt?'<span class="x">✕</span>':''}${tr?'<span class="t">🚐</span>':''}${niver?'<span class="bolo" title="Aniversário!">🎂</span>':''}</div>`;
+    const cls=['d',pres?'presente':'',falt?'faltou':'',hot?'hotel':'',iso===HOJE?'hoje':'',iso>HOJE?'futuro':'',dow===0?'fds':'',niver?'niver':''].join(' ');
+    const tip=(hot?'No hotel'+(pres||falt?' · ':''):'')+(pres?`Presente${p.chegadas[iso]?' · chegou '+p.chegadas[iso]:''}${tr?' · usou transporte':''}`:falt?'Faltou':(hot?'':iso>HOJE?'':'Sem marcação · clique pra marcar'));
+    h+=`<div class="${cls}" data-dia="${iso}" title="${tip}">${d}${pres?st('pata'):falt?'<span class="x">✕</span>':''}${hot?'<span class="h">🏡</span>':''}${tr?'<span class="t">🚐</span>':''}${niver?'<span class="bolo" title="Aniversário!">🎂</span>':''}</div>`;
   }
   return `<div class="cal">${h}</div>`;
 }
@@ -6115,7 +6129,7 @@ function abrirPerfil(id,ym){
         <div class="kpi"><b style="font-size:17px">${brl(m.total)}</b><span>${p.pagamentos[ym]?'Pago ✓':'Total do mês'}</span></div>
       </div>
       ${calendarioHtml(p,ym)}
-      <div class="legenda"><span><i style="background:var(--verde-bg)"></i>Presente</span><span><i style="background:var(--vermelho-bg)"></i>Faltou</span><span><i style="background:var(--bege-claro)"></i>Sem marcação</span><span>🚐 usou transporte</span><span>· clique num dia pra corrigir</span></div>
+      <div class="legenda"><span><i style="background:var(--verde-bg)"></i>Presente</span><span><i style="background:var(--vermelho-bg)"></i>Faltou</span><span><i style="background:#EAF0FA"></i>No hotel</span><span><i style="background:var(--bege-claro)"></i>Sem marcação</span><span>🚐 usou transporte</span><span>· clique num dia pra corrigir</span></div>
       <div class="heat"><h4>Últimos 12 meses <small>${p.presencas.length} presenças no total</small></h4>
         <div class="barras">${hist.map(h=>`<div class="${h.v?'on':''} ${h.cheio?'cheio':''}" title="${ymNome(h.ym)}: ${h.v} presenças"><i style="height:${Math.max(4,h.pct/mx*100)}%"></i></div>`).join('')}</div>
         <div class="rot">${hist.map(h=>`<span>${NOMES_MES[+h.ym.split('-')[1]-1].slice(0,3)}</span>`).join('')}</div>
