@@ -512,6 +512,17 @@ body.lock{overflow:hidden}
 .cal .d.presente{background:var(--verde-bg);border-color:#CFE3CB;color:var(--verde-txt)}
 .cal .d.faltou{background:var(--vermelho-bg);border-color:#F1C9C9;color:var(--vermelho-txt)}
 .cal .d.hotel{background:#EAF0FA;border-color:#C6D6EE;color:#2F5BA8}
+.dest-lista{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.dest-lista button{display:flex;align-items:center;gap:12px;text-align:left;background:var(--creme);border:1px solid var(--bege);border-radius:14px;padding:12px 14px;min-height:56px}
+.dest-lista button:hover{background:var(--amarelo-suave);border-color:var(--amarelo)}
+.dest-lista .ic{font-size:22px;flex:none}
+.dest-lista b{display:block;font-family:var(--display);font-weight:600;font-size:16px;color:var(--marrom-escuro);line-height:1.15}
+.dest-lista small{display:block;font-size:12px;font-weight:700;color:#A38560}
+.tipos-cad{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 4px;padding:10px 12px;background:var(--bege-claro);border:1px solid var(--bege);border-radius:14px}
+.tipos-cad .check{flex:1 1 200px;margin:0;justify-content:flex-start}
+.campo-qtd{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--marrom);flex:none}
+.campo-qtd select{background:#fff;border:1px solid var(--bege);border-radius:10px;padding:8px 10px;font-weight:800;color:var(--marrom);min-height:44px}
+.donos-tag{background:#E4EEF7;border:1px solid #C6D6EE;border-radius:999px;padding:1px 7px;font-size:10px;font-weight:800;color:#2F5BA8;white-space:nowrap}
 .irmaos-tag{background:var(--amarelo-suave);border:1px solid var(--amarelo);border-radius:999px;padding:1px 7px;font-size:10px;font-weight:800;color:var(--marrom-escuro);white-space:nowrap}
 .cal .d.hotel.presente{background:linear-gradient(135deg,var(--verde-bg) 50%,#EAF0FA 50%);border-color:#C6D6EE}
 .cal .d .h{font-size:9px;line-height:1}
@@ -2007,7 +2018,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.3.0</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.3.1</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -4943,18 +4954,62 @@ function minutosAtraso(hhmm){const [h,m]=hhmm.split(':').map(Number);return (AGO
 function horaAgora(){return `${String(AGORA.h).padStart(2,'0')}:${String(AGORA.m).padStart(2,'0')}`}
 function saudacao(){const h=new Date().getHours();return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'}
 function st(id,extra=''){return `<svg class="st" ${extra}><use href="#${id}"/></svg>`}
-/* ---- irmãos: dois cachorros da mesma casa num cadastro só ----
-   Um plano, um valor, um card na chamada. O segundo fica em p.irmao. */
-const temIrmao=p=>!!(p&&p.irmao&&p.irmao.nome);
-const nomeCompleto=p=>temIrmao(p)?p.nome+' + '+p.irmao.nome:(p?p.nome:'');
-function racasDoPet(p){
-  const a=(RACAS[p.raca]||{}).nome||'';
-  if(!temIrmao(p))return a;
-  const b=(RACAS[p.irmao.raca]||{}).nome||'';
-  return b&&b!==a?a+' · '+b:a;
+/* ---- irmãos: dois ou mais cachorros da mesma casa num cadastro só ----
+   Guardados em p.irmaos (lista). Cadastros antigos usavam p.irmao (um só),
+   e continuam funcionando. */
+function irmaosDe(p){
+  if(!p)return [];
+  if(Array.isArray(p.irmaos))return p.irmaos.filter(x=>x&&x.nome);
+  if(p.irmao&&p.irmao.nome)return [p.irmao];
+  return [];
 }
-/* quantos cachorros esse cadastro representa (conta na lotação da creche) */
-const qtdPets=p=>temIrmao(p)?2:1;
+const temIrmao=p=>irmaosDe(p).length>0;
+const temDois=p=>!!(p&&p.dono2&&(p.dono2.telefone||p.dono2.nome));
+/* os donos do cadastro, na ordem: o principal e o segundo */
+function donosDoPet(p){
+  const out=[{nome:p.tutor||'Tutor',telefone:p.telefone||'',telefoneTransporte:p.telefoneTransporte||''}];
+  if(temDois(p))out.push({nome:p.dono2.nome||'2º dono',telefone:p.dono2.telefone||'',telefoneTransporte:p.dono2.telefoneTransporte||''});
+  return out;
+}
+const qtdPets=p=>1+irmaosDe(p).length;
+const nomeCompleto=p=>{
+  if(!p)return '';
+  const i=irmaosDe(p);
+  return i.length?[p.nome].concat(i.map(x=>x.nome)).join(' + '):p.nome;
+};
+function racasDoPet(p){
+  const nomes=[(RACAS[p.raca]||{}).nome].concat(irmaosDe(p).map(x=>(RACAS[x.raca]||{}).nome)).filter(Boolean);
+  return nomes.filter((n,i)=>nomes.indexOf(n)===i).join(' · ');
+}
+/* monta os campos de nome e raça dos irmãos, conforme a quantidade escolhida */
+function pintarIrmaos(pre,qtd,dados){
+  const cx=document.getElementById(pre+'-irmao-box');
+  if(!cx)return;
+  const n=Math.max(2,Math.min(6,parseInt(qtd)||2))-1;   // quantos ALÉM do primeiro
+  const ops=r=>Object.entries(RACAS).map(([k,v])=>`<option value="${k}" ${r===k?'selected':''}>${v.nome}</option>`).join('');
+  let h='';
+  for(let i=0;i<n;i++){
+    const d=(dados&&dados[i])||{};
+    h+=`<div class="row2">
+      <div class="campo"><label>Nome do ${i+2}º aumigo</label><input data-irm-nome="${i}" value="${(d.nome||'').replace(/"/g,'&quot;')}" placeholder="Ex.: Luna"></div>
+      <div class="campo"><label>Raça do ${i+2}º aumigo</label><select data-irm-raca="${i}">${ops(d.raca)}</select></div>
+    </div>`;
+  }
+  cx.innerHTML=h;
+}
+/* lê os irmãos preenchidos no formulário */
+function lerIrmaos(pre){
+  const cx=document.getElementById(pre+'-irmao-box');
+  if(!cx)return [];
+  const out=[];
+  cx.querySelectorAll('[data-irm-nome]').forEach(inp=>{
+    const nome=inp.value.trim();
+    if(!nome)return;
+    const sel=cx.querySelector('[data-irm-raca="'+inp.dataset.irmNome+'"]');
+    out.push({nome,raca:sel?sel.value:Object.keys(RACAS)[0]});
+  });
+  return out;
+}
 function avatar(p,extra=''){return p.foto?`<img src="${p.foto}" alt="Foto de ${p.nome}">`:st(RACAS[p.raca].st,extra)}
 function telDigits(t){let d=(t||'').replace(/\D/g,'');if(d&&!d.startsWith('55'))d='55'+d;return d}
 function telFmt(t){const d=(t||'').replace(/\D/g,'').replace(/^55/,'');return d.length>=10?`(${d.slice(0,2)}) ${d.slice(2,-4)}-${d.slice(-4)}`:(t||'')}
@@ -4968,6 +5023,42 @@ function zapDoPet(p,assunto){
 }
 /* quando o cadastro tem grupo, a mensagem vai pro grupo: o WhatsApp não
    deixa abrir grupo com texto pronto, então a gente copia e abre o grupo */
+/* ---- com dois donos (ou grupo), pergunta pra quem vai a mensagem ---- */
+function enviarEscolhendo(p,msg,meta,assunto){
+  const tel=d=>(assunto==='transporte'&&d.telefoneTransporte)?d.telefoneTransporte:d.telefone;
+  const donos=donosDoPet(p).filter(d=>tel(d));
+  if(donos.length<2&&!p.zapGrupo){abrirZapPet(p,msg,meta,assunto);return}
+  const ops=[];
+  if(p.zapGrupo)ops.push({k:'grupo',ico:'💬',t:'Grupo do WhatsApp',s:'abre o grupo com a mensagem copiada'});
+  donos.forEach((d,i)=>ops.push({k:'d'+i,ico:'👤',t:d.nome,s:telFmt(tel(d)),tel:tel(d)}));
+  if(donos.length>1)ops.push({k:'todos',ico:'👥',t:'Os dois donos',s:'abre um de cada vez'});
+  $('#modais').innerHTML=`
+  <div class="overlay" id="ov"><div class="modal confirma" role="dialog" aria-labelledby="dz-t">
+    <button class="fechar" data-fechar aria-label="Fechar">✕</button>
+    <div class="ilus">${avatar(p)}</div>
+    <h2 id="dz-t">Mandar pra quem?</h2>
+    <p>${nomeCompleto(p)} tem mais de um contato.</p>
+    <div class="dest-lista">${ops.map(o=>`<button data-dest="${o.k}"><span class="ic">${o.ico}</span><b>${o.t}</b><small>${o.s}</small></button>`).join('')}</div>
+  </div></div>`;
+  lock();
+  $('#ov').addEventListener('click',e=>{
+    const b=e.target.closest('[data-dest]');
+    if(b){
+      const k=b.dataset.dest;
+      fecharModal();
+      if(k==='grupo'){abrirZapPet(p,msg,meta,assunto);return}
+      if(k==='todos'){
+        donos.forEach((d,i)=>setTimeout(()=>abrirZap(tel(d),msg,i===0?meta:null),i*900));
+        return;
+      }
+      const o=ops.find(x=>x.k===k);
+      if(o&&o.tel)abrirZap(o.tel,msg,meta);
+      return;
+    }
+    if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal();
+  });
+  document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
+}
 function abrirZapPet(p,msg,meta,assunto){
   if(p&&p.zapGrupo){
     try{navigator.clipboard&&navigator.clipboard.writeText(msg)}catch(e){}
@@ -5631,7 +5722,7 @@ function render(){
           <div class="foto">${avatar(p)}</div>
           <div class="c-info">
             <h3>${nomeCompleto(p)} ${selo}${p.obs?`<span class="obsx" title="${p.obs.replace(/"/g,'&quot;')}">📝</span>`:''}</h3>
-            <div class="raca">${racasDoPet(p)}${temIrmao(p)?' <span class="irmaos-tag">2 aumigos</span>':''}</div>
+            <div class="raca">${racasDoPet(p)}${temIrmao(p)?' <span class="irmaos-tag">'+qtdPets(p)+' aumigos</span>':''}</div>
             <span class="pill ${p.status}"><span class="dot"></span>${pill}</span>
           </div>
         </div>
@@ -5812,6 +5903,11 @@ function abrirEntrada(){
     <div class="modal form" role="dialog" aria-labelledby="f-t">
       <button class="fechar" data-fechar aria-label="Fechar">✕</button>
       <h2 id="f-t">${st('dog-labrador')} Adicionar à turma de hoje</h2>
+      <div class="tipos-cad">
+        <label class="check"><input type="checkbox" id="f-irmao-chk"> 🐶🐕 São irmãos</label>
+        <label class="campo-qtd hidden" id="f-qtd-box"><span>Quantos aumigos?</span><select id="f-irmao-qtd"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></label>
+        <label class="check"><input type="checkbox" id="f-dono2-chk"> 👥 Tem dois donos</label>
+      </div>
       <div class="foto-edit">
         <div class="foto" id="f-prev" title="Escolher a foto do aumigo">${st('dog-labrador')}</div>
         <div class="acoes">
@@ -5824,16 +5920,21 @@ function abrirEntrada(){
         <div class="campo"><label for="f-raca">Raça</label><select id="f-raca">${ops}</select></div>
         <div class="campo"><label for="f-porte">Porte</label><select id="f-porte"><option value="P">Pequeno</option><option value="M" selected>Médio</option><option value="G">Grande</option></select></div>
       </div>
+      <div class="hidden" id="f-irmao-box"></div>
       <div class="row2">
         <div class="campo obrig"><label for="f-tutor">Tutor</label><input id="f-tutor" placeholder="Nome do tutor"></div>
         <div class="campo obrig"><label for="f-tel">WhatsApp do tutor (cobrança)</label><input id="f-tel" placeholder="(47) 99999-9999" inputmode="tel"></div>
         <div class="campo"><label for="f-tel2">WhatsApp do transporte <small style="font-weight:700;color:#A38560">· opcional</small></label><input id="f-tel2" placeholder="Vazio = usa o mesmo" inputmode="tel"></div>
       </div>
+      <div class="hidden" id="f-dono2-box">
+        <div class="cfg-h">👥 Segundo dono</div>
+        <div class="row3">
+          <div class="campo"><label for="f-d2-nome">Nome</label><input id="f-d2-nome" placeholder="Nome do 2º dono"></div>
+          <div class="campo"><label for="f-d2-tel">WhatsApp (cobrança)</label><input id="f-d2-tel" placeholder="(47) 99999-9999" inputmode="tel"></div>
+          <div class="campo"><label for="f-d2-tel2">WhatsApp do transporte</label><input id="f-d2-tel2" placeholder="Vazio = usa o mesmo" inputmode="tel"></div>
+        </div>
+      </div>
       <div class="campo"><label for="f-grupo">Link do grupo no WhatsApp <small style="font-weight:700;color:#A38560">· opcional · quando houver, as mensagens vão pro grupo</small></label><input id="f-grupo" placeholder="https://chat.whatsapp.com/..." inputmode="url"></div>
-      <label class="check" style="justify-content:flex-start"><input type="checkbox" id="f-irmao-chk"> 🐶🐕 São dois irmãos no mesmo cadastro</label>
-      <div class="row2 hidden" id="f-irmao-box">
-        <div class="campo"><label for="f-irmao-nome">Nome do irmão</label><input id="f-irmao-nome" placeholder="Ex.: Luna"></div>
-        <div class="campo"><label for="f-irmao-raca">Raça do irmão</label><select id="f-irmao-raca"></select></div>
       </div>
       <div class="row2">
         <div class="campo obrig"><label for="f-pag">Dia do pagamento</label><input id="f-pag" type="number" min="1" max="31" value="10"></div>
@@ -5848,10 +5949,17 @@ function abrirEntrada(){
   </div>`;
   lock();
   $('#ov').addEventListener('change',e=>{const c=e.target.closest('[data-tipo]');if(c)c.closest('label').classList.toggle('on',c.checked)});
-  const opsIrmao=Object.entries(RACAS).map(([k,v])=>`<option value="${k}">${v.nome}</option>`).join('');
-  const selIrmao=$('#f-irmao-raca');if(selIrmao)selIrmao.innerHTML=opsIrmao;
-  const chkIrmao=$('#f-irmao-chk');
-  if(chkIrmao)chkIrmao.onchange=()=>{$('#f-irmao-box').classList.toggle('hidden',!chkIrmao.checked);if(chkIrmao.checked)$('#f-irmao-nome').focus()};
+  const chkIrmao=$('#f-irmao-chk'), qtdIrmao=$('#f-irmao-qtd');
+  const repintaIrm=()=>{
+    const on=chkIrmao.checked;
+    $('#f-irmao-box').classList.toggle('hidden',!on);
+    $('#f-qtd-box').classList.toggle('hidden',!on);
+    if(on){pintarIrmaos('f',qtdIrmao.value,lerIrmaos('f'));const p1=$('#f-irmao-box').querySelector('input');if(p1)p1.focus()}
+  };
+  if(chkIrmao)chkIrmao.onchange=repintaIrm;
+  if(qtdIrmao)qtdIrmao.onchange=repintaIrm;
+  const chkD2=$('#f-dono2-chk');
+  if(chkD2)chkD2.onchange=()=>{$('#f-dono2-box').classList.toggle('hidden',!chkD2.checked);if(chkD2.checked)$('#f-d2-nome').focus()};
   let fotoNova=null;
   $('#f-file').onchange=e=>{lerFoto(e.target.files[0],320,d=>{
     fotoNova=d;$('#f-prev').innerHTML=`<img src="${d}" alt="">`;      // mostra na hora
@@ -5867,8 +5975,13 @@ function abrirEntrada(){
     const p={id:Date.now(),nome,raca:$('#f-raca').value,porte:$('#f-porte').value,tutor,telefone:tel,pagamentoDia:parseInt($('#f-pag').value)||10,presencas:[],faltas:[],chegadas:{}};
     const gr=($('#f-grupo')||{value:''}).value.trim();
     if(gr.indexOf('http')===0)p.zapGrupo=gr;
-    const irm=($('#f-irmao-nome')||{value:''}).value.trim();
-    if(($('#f-irmao-chk')||{}).checked&&irm)p.irmao={nome:irm,raca:$('#f-irmao-raca').value};
+    if(($('#f-dono2-chk')||{}).checked){
+      const d2n=($('#f-d2-nome')||{value:''}).value.trim();
+      const d2t=($('#f-d2-tel')||{value:''}).value.replace(/[^0-9]/g,'');
+      const d2t2=($('#f-d2-tel2')||{value:''}).value.replace(/[^0-9]/g,'');
+      if(d2n||d2t.length>=10)p.dono2={nome:d2n||'2º dono',telefone:d2t,telefoneTransporte:d2t2.length>=10?d2t2:''};
+    }
+    if(($('#f-irmao-chk')||{}).checked){const li=lerIrmaos('f');if(li.length)p.irmaos=li}
     const tel2=($('#f-tel2')||{value:''}).value.replace(/\D/g,'');
     if(tel2.length>=10)p.telefoneTransporte=tel2;
     if(fotoNova)p.foto=fotoNova;
@@ -6029,6 +6142,21 @@ function abrirEditar(id){
         <div class="campo obrig"><label for="e-tel">WhatsApp do tutor (cobrança)</label><input id="e-tel" value="${p.telefone||''}" placeholder="(47) 99999-9999" inputmode="tel"></div>
         <div class="campo"><label for="e-tel2">WhatsApp do transporte <small style="font-weight:700;color:#A38560">· opcional</small></label><input id="e-tel2" value="${p.telefoneTransporte||''}" placeholder="Vazio = usa o mesmo" inputmode="tel"></div>
       </div>
+      <div class="tipos-cad">
+        <label class="check"><input type="checkbox" id="e-irmao-chk" ${temIrmao(p)?'checked':''}> 🐶🐕 São irmãos</label>
+        <label class="campo-qtd ${temIrmao(p)?'':'hidden'}" id="e-qtd-box"><span>Quantos aumigos?</span><select id="e-irmao-qtd">${[2,3,4,5,6].map(n=>`<option value="${n}" ${qtdPets(p)===n?'selected':''}>${n}</option>`).join('')}</select></label>
+        <label class="check"><input type="checkbox" id="e-dono2-chk" ${temDois(p)?'checked':''}> 👥 Tem dois donos</label>
+      </div>
+      <div class="${temIrmao(p)?'':'hidden'}" id="e-irmao-box"></div>
+      <div class="${temDois(p)?'':'hidden'}" id="e-dono2-box">
+        <div class="cfg-h">👥 Segundo dono</div>
+        <div class="row3">
+          <div class="campo"><label for="e-d2-nome">Nome</label><input id="e-d2-nome" value="${temDois(p)?(p.dono2.nome||'').replace(/"/g,'&quot;'):''}" placeholder="Nome do 2º dono"></div>
+          <div class="campo"><label for="e-d2-tel">WhatsApp (cobrança)</label><input id="e-d2-tel" value="${temDois(p)?(p.dono2.telefone||''):''}" placeholder="(47) 99999-9999" inputmode="tel"></div>
+          <div class="campo"><label for="e-d2-tel2">WhatsApp do transporte</label><input id="e-d2-tel2" value="${temDois(p)?(p.dono2.telefoneTransporte||''):''}" placeholder="Vazio = usa o mesmo" inputmode="tel"></div>
+        </div>
+      </div>
+      <div class="campo"><label for="e-grupo">Link do grupo no WhatsApp <small style="font-weight:700;color:#A38560">· opcional · quando houver, as mensagens vão pro grupo</small></label><input id="e-grupo" value="${p.zapGrupo||''}" placeholder="https://chat.whatsapp.com/..." inputmode="url"></div>
       <div class="row2">
         <div class="campo obrig"><label for="e-pag">Dia do pagamento</label><input id="e-pag" type="number" min="1" max="31" value="${p.pagamentoDia||10}"></div>
       </div>
@@ -6045,6 +6173,18 @@ function abrirEditar(id){
     </div>
   </div>`;
   lock();
+  const chkIrm=$('#e-irmao-chk'), qtdIrm=$('#e-irmao-qtd');
+  if(temIrmao(p))pintarIrmaos('e',qtdPets(p),irmaosDe(p));
+  const repintaIrmE=()=>{
+    const on=chkIrm.checked;
+    $('#e-irmao-box').classList.toggle('hidden',!on);
+    $('#e-qtd-box').classList.toggle('hidden',!on);
+    if(on){pintarIrmaos('e',qtdIrm.value,lerIrmaos('e'));const p1=$('#e-irmao-box').querySelector('input');if(p1)p1.focus()}
+  };
+  if(chkIrm)chkIrm.onchange=repintaIrmE;
+  if(qtdIrm)qtdIrm.onchange=repintaIrmE;
+  const chkD2e=$('#e-dono2-chk');
+  if(chkD2e)chkD2e.onchange=()=>{$('#e-dono2-box').classList.toggle('hidden',!chkD2e.checked);if(chkD2e.checked)$('#e-d2-nome').focus()};
   let novaFoto=p.foto||null, removeu=false;
   $('#ov').addEventListener('change',e=>{const c=e.target.closest('[data-tipo]');if(c)c.closest('label').classList.toggle('on',c.checked)});
   $('#e-file').onchange=e=>{lerFoto(e.target.files[0],320,d=>{
@@ -6064,8 +6204,14 @@ function abrirEditar(id){
     p.nome=nome;p.raca=$('#e-raca').value;p.porte=$('#e-porte').value;p.tutor=tutor;p.telefone=tel;if(tel2.length>=10)p.telefoneTransporte=tel2;else delete p.telefoneTransporte;p.pagamentoDia=Math.min(31,Math.max(1,parseInt($('#e-pag').value)||10));
     const gr2=($('#e-grupo')||{value:''}).value.trim();
     if(gr2.indexOf('http')===0)p.zapGrupo=gr2;else delete p.zapGrupo;
-    const irm2=($('#e-irmao-nome')||{value:''}).value.trim();
-    if(($('#e-irmao-chk')||{}).checked&&irm2)p.irmao={nome:irm2,raca:$('#e-irmao-raca').value};else delete p.irmao;
+    if(($('#e-irmao-chk')||{}).checked){const li=lerIrmaos('e');if(li.length)p.irmaos=li;else delete p.irmaos}else delete p.irmaos;
+    delete p.irmao;   // formato antigo, de um irmão só
+    if(($('#e-dono2-chk')||{}).checked){
+      const n2=($('#e-d2-nome')||{value:''}).value.trim();
+      const t2=($('#e-d2-tel')||{value:''}).value.replace(/[^0-9]/g,'');
+      const tt2=($('#e-d2-tel2')||{value:''}).value.replace(/[^0-9]/g,'');
+      if(n2||t2.length>=10)p.dono2={nome:n2||'2º dono',telefone:t2,telefoneTransporte:tt2.length>=10?tt2:''};else delete p.dono2;
+    }else delete p.dono2;
     p.estrela=$('#e-selo').value.trim()||undefined;lerPlano(p);
     p.tipos=[...document.querySelectorAll('[data-tipo]:checked')].map(c=>c.dataset.tipo);if(!p.tipos.length)p.tipos=['outro'];p.endereco=$('#e-end').value.trim();p.obs=$('#e-obs').value.trim();p.aniversario=lerNiver($('#e-niver').value);
     const dv=parseFloat($('#e-desc-valor').value)||0;const dAntes=JSON.stringify(p.descontoFixo||null);
@@ -7050,7 +7196,7 @@ function execRota(d){if(!rotas[d]){rotas[d]={stops:rotaDe(d).stops,criadaEm:HOJE
 const kmEstimado=stops=>{let km=0;stops.forEach(x=>{const p=pets.find(q=>q.id===x.petId);km+=cidadeDe(p)==='bc'?6:3.5});return Math.round(km+(stops.length?4:0))};
 function previsaoHora(base,i){const [h,m]=(base||'08:00').split(':').map(Number);let t=(h||0)*60+(m||0)+i*(cfg.minPorParada||12);t=((t%1440)+1440)%1440;return `${pad(Math.floor(t/60))}:${pad(t%60)}`}
 function iniciarRota(d){const ex=execRota(d);ex.iniciada=horaAgora();salvarRotas();renderTransporte();toast(pets[0]||{raca:'golden'},'Rota iniciada 🚐',`Saída da base às ${ex.iniciada}. Boa viagem!`,true)}
-function aCaminhoParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{acaminho:horaAgora()});salvarRotas();const p=pets.find(x=>x.id===petId);const s=(rotas[d].stops||[]).find(x=>x.petId===petId)||{};const tz=zapDoPet(p,'transporte');if(tz||p.zapGrupo)abrirZapPet(p,tpl('vanACaminho',{tutor:primeiroNome(p.tutor),pet:p.nome,hora:s.hora||''}),{tipo:'vanACaminho',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});else toast(p,`${p.nome} sem WhatsApp`,'Cadastre o telefone do tutor.');renderTransporte()}
+function aCaminhoParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{acaminho:horaAgora()});salvarRotas();const p=pets.find(x=>x.id===petId);const s=(rotas[d].stops||[]).find(x=>x.petId===petId)||{};const tz=zapDoPet(p,'transporte');if(tz||p.zapGrupo||temDois(p))enviarEscolhendo(p,tpl('vanACaminho',{tutor:primeiroNome(p.tutor),pet:nomeCompleto(p),hora:s.hora||''}),{tipo:'vanACaminho',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone},'transporte');else toast(p,`${p.nome} sem WhatsApp`,'Cadastre o telefone do tutor.');renderTransporte()}
 function chegueiParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{cheguei:horaAgora()});salvarRotas();renderTransporte()}
 function embarcouParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{embarcou:horaAgora()});const p=pets.find(x=>x.id===petId);
   if(!p.transportes.includes(d))p.transportes.push(d);if(!p.presencas.includes(d)){p.presencas.push(d);p.chegadas[d]=d===HOJE?horaAgora():'';p.faltas=p.faltas.filter(x=>x!==d)}sincronizarHoje(p);
@@ -7825,7 +7971,8 @@ function renderPets(){
       <button class="menubtn" data-menu="${p.id}" aria-label="Opções">···</button>
       <div class="c-linha" data-perfil="${p.id}">
         <div class="foto">${avatar(p)}</div>
-        <div class="c-info"><h3>${p.nome}</h3><div class="raca">${RACAS[p.raca].nome} · ${p.peso} kg · ${p.tutor}</div>
+        <div class="c-info"><h3>${nomeCompleto(p)}</h3><div class="raca">${racasDoPet(p)} · ${p.peso} kg · ${p.tutor}${temDois(p)?' e '+(p.dono2.nome||'2º dono'):''}</div>
+        ${temIrmao(p)||temDois(p)?`<div class="tags">${temIrmao(p)?'<span class="irmaos-tag">🐶🐕 '+qtdPets(p)+' irmãos</span>':''}${temDois(p)?'<span class="donos-tag">👥 dois donos</span>':''}</div>`:''}
         <div class="tags">${t.map(k=>`<span class="tag t-${k}">${TIPOS_PET[k][0]} ${TIPOS_PET[k][1]}</span>`).join('')}${fim&&!t.includes('fim-de-ano')?'<span class="tag t-fim-de-ano">🎄 vem no fim do ano</span>':''}${p.ativo===false?'<span class="tag t-off">💤 inativo na creche</span>':''}</div></div>
       </div>
       <div class="c-chips">${p.ativo!==false&&t.includes('creche')?`<span>🗓 ${PLANOS[p.plano].curto}</span>`:''}<span>${ult?'último dia '+fmtData(ult):'nunca veio'}</span>${est?`<span>🏡 ${est} ${est===1?'estadia':'estadias'}</span>`:''}${p.telefone?'':'<span class="ruim">📵 sem WhatsApp</span>'}</div>
