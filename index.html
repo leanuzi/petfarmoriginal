@@ -714,6 +714,19 @@ table.fat tr.desc td{color:var(--verde-txt)}
 .login-voltar:hover{color:var(--marrom-escuro)}
 .login-un{font-size:13px;font-weight:800;color:#A38560;margin:-6px 0 14px}
 .login-cx{position:relative}
+.raca-row{align-items:center}
+.raca-row .raca-fig{width:40px;height:40px;flex:none;display:inline-flex}
+.raca-row .raca-fig .st{width:40px;height:40px}
+.raca-row .raca-uso{font-size:11px;font-weight:800;color:#A38560;white-space:nowrap}
+.plano-row,.cidade-row{align-items:end}
+.mini-num{display:flex;flex-direction:column;gap:2px;flex:none}
+.mini-num span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#A38560}
+.mini-num input{width:96px}
+@media (max-width:760px){
+  .plano-row,.cidade-row{grid-template-columns:1fr 1fr}
+  .plano-row input[data-k=nome],.cidade-row input[data-k=nome]{grid-column:1/-1}
+  .mini-num input{width:100%}
+}
 .un-badge{background:var(--amarelo-suave);border:1px solid var(--amarelo);border-radius:999px;padding:7px 14px;font-weight:800;font-size:13px;color:var(--marrom-escuro);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;min-height:36px}
 .un-badge:hover{background:var(--amarelo)}
 .cid.itj{background:#E4EEF7;color:#2F5BA8}
@@ -1920,7 +1933,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.0.6</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.0.7</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -4771,6 +4784,8 @@ function sincronizarHoje(p){
   p.presencas=p.presencas||[];p.faltas=p.faltas||[];p.chegadas=p.chegadas||{};
   p.plano=p.plano||'avulso';p.transporte=p.transporte||'';p.peso=p.peso||(p.porte==='P'?8:p.porte==='M'?15:28);
   if(!RACAS[p.raca])p.raca=Object.keys(RACAS)[0]||'golden';   // raça apagada não derruba a tela
+  if(!PLANOS[p.plano])p.plano='avulso';
+  if(!TRANSPORTE[p.transporte||''])p.transporte='';
   if(!p.tipos||!p.tipos.length)p.tipos=['creche'];p.obs=p.obs||'';p.endereco=p.endereco||'';p.cobrancas=p.cobrancas||{};p.transportes=p.transportes||[];p.midias=p.midias||[];if(!p.pagamentos){p.pagamentos={};if([1,3,5,8].includes(p.id))p.pagamentos[MES]=true}p.telefone=p.telefone||'';p.pagamentoDia=p.pagamentoDia||10;
   if(p.transportes.length===0&&p.transporte&&!p._transpSemeado){p.transportes=p.presencas.filter(d=>d!==HOJE);p._transpSemeado=true}
   p.status=p.presencas.includes(HOJE)?'presente':p.faltas.includes(HOJE)?'faltou':'pendente';
@@ -4784,12 +4799,14 @@ function resumoMes(p,ym=MES){
   const diaria=p.plano==='avulso'?(p.peso<=10?AVULSO.ate10:AVULSO.acima10):0;
   const transp=TRANSPORTE[p.transporte].preco;
   const extras=meta?Math.max(0,vindas-meta):0;
-  const valorPlano=p.plano==='avulso'?vindas*diaria:pl.preco+extras*(p.peso<=10?AVULSO.ate10:AVULSO.acima10);
+  const combinado=temValorCombinado(p);
+  const valorPlano=combinado?(+p.precoMensal||0)
+    :(p.plano==='avulso'?vindas*diaria:pl.preco+extras*(p.peso<=10?AVULSO.ate10:AVULSO.acima10));
   const transpVezes=doMes(p.transportes,ym).length;
   const hosp=hospedagensNaFatura(p,ym);
   const valorHotel=hosp.reduce((a,r)=>a+contaHotel(r).restante,0);
   const bruto=valorPlano+transpVezes*transp+valorHotel;const desconto=descontoDe(p,ym);const abat=calcDesc(desconto,bruto);
-  return {vindas,faltas,meta,diaria,extras,transp,transpVezes,valorPlano,valorTransp:transpVezes*transp,hosp,valorHotel,bruto,desconto,abatimento:abat,total:Math.max(0,bruto-abat)};
+  return {vindas,faltas,meta:combinado?0:meta,diaria,extras:combinado?0:extras,combinado,transp,transpVezes,valorPlano,valorTransp:transpVezes*transp,hosp,valorHotel,bruto,desconto,abatimento:abat,total:Math.max(0,bruto-abat)};
 }
 let filtro='todos', busca='', porte='', planoF='';
 /* persistência local (fotos e marcações ficam salvas no navegador) */
@@ -4953,7 +4970,7 @@ function iniciar(){
   migrarChaves();
   cfg=JSON.parse(JSON.stringify(CFG_PADRAO));            // sem herdar nada da unidade anterior
   try{const sv=lerLocal('petfarm.cfg');if(sv)cfg=Object.assign(cfg,JSON.parse(sv))}catch(e){}
-  CRECHE_NOME=cfg.nome;aplicarPrecos();aplicarPerfisSalvos();aplicarRacasSalvas();
+  CRECHE_NOME=cfg.nome;aplicarPlanosSalvos();aplicarTransporteSalvo();aplicarPrecos();aplicarPerfisSalvos();aplicarRacasSalvas();
   try{const sv=lerLocal('petfarm.turma');pets=ehTransporte()?turmaDasUnidades():(sv?JSON.parse(sv):JSON.parse(JSON.stringify(DEMO_PETS)))}catch(e){pets=JSON.parse(JSON.stringify(DEMO_PETS))}
   pets.forEach(p=>{if(p.aniversario==='__HOJE__')p.aniversario=MMDD});
   pets.forEach(p=>{semearHistorico(p);sincronizarHoje(p)});
@@ -5038,7 +5055,15 @@ $('#btn-novo-pet').onclick=abrirEntrada;$('#ft-mes').onchange=e=>{ftMes=e.target
 let _tp=null;$('#pets-busca').addEventListener('input',e=>{petsBusca=e.target.value;clearTimeout(_tp);_tp=setTimeout(renderPets,140)});
 $('#bo-pet').onchange=e=>{boPet=+e.target.value;renderBoletim()};$('#bo-mes').onchange=e=>{boMes=e.target.value;renderBoletim()};
 $('#bo-cfg').onclick=abrirCfgBoletim;$('#bo-pdf').onclick=()=>{const p=pets.find(x=>x.id===boPet);if(p)pdfBoletim(p,boMes)};$('#bo-zap').onclick=()=>enviarBoletim(boPet,boMes);
-document.addEventListener('change',e=>{if(e.target.id==='bo-tia'){const p=pets.find(x=>x.id===boPet);if(p){boletimDe(p,boMes).tia=e.target.value;salvar()}}});
+document.addEventListener('change',e=>{
+  if(e.target.id==='x-tipocli'){
+    const comb=e.target.value!=='plano';
+    const cp=document.getElementById('x-cx-plano'), cv=document.getElementById('x-cx-preco');
+    if(cp)cp.classList.toggle('hidden',comb);
+    if(cv){cv.classList.toggle('hidden',!comb);if(comb){const i=document.getElementById('x-preco');if(i)i.focus()}}
+    return;
+  }
+  if(e.target.id==='bo-tia'){const p=pets.find(x=>x.id===boPet);if(p){boletimDe(p,boMes).tia=e.target.value;salvar()}}});
 document.addEventListener('input',e=>{if(e.target.id==='bo-coment'){const p=pets.find(x=>x.id===boPet);if(p){boletimDe(p,boMes).comentario=e.target.value;clearTimeout(_tp);_tp=setTimeout(salvar,400)}}});
 document.addEventListener('change',e=>{const m=e.target.closest('#tf-mes');if(m){tfMes=m.value;renderTransporteFin()}const h=e.target.closest('#hc-mes');if(h){hcMes=h.value;renderHotelCal()}});
 $('#eu').onclick=()=>confirmar({titulo:`Sair da conta de ${usuario.nome}?`,texto:'O sistema volta pra tela de escolha de usuário. Os dados ficam salvos.',botao:'Sair',onOk:sair});$('#ge-mes').onchange=e=>{gesMes=e.target.value;renderGestao()};
@@ -5615,17 +5640,38 @@ function confirmar({titulo,texto,pet,botao,perigo,onOk}){
   document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
 }
 
+/* ---- tipo de cliente: quem usa a tabela e quem tem valor combinado ---- */
+const TIPOS_CLIENTE={
+  plano:{nome:'Cliente',desc:'Escolhe um dos planos da tabela'},
+  mora:{nome:'Cliente que mora aqui',desc:'Valor combinado, digitado'},
+  diferenciado:{nome:'Cliente diferenciado',desc:'Valor combinado, digitado'}
+};
+const temValorCombinado=p=>!!(p&&p.tipoCliente&&p.tipoCliente!=='plano');
+const nomePlano=p=>temValorCombinado(p)?TIPOS_CLIENTE[p.tipoCliente].nome:((PLANOS[p.plano]||{}).nome||'Avulso');
 function camposPlano(p={}){
-  const opsP=Object.entries(PLANOS).map(([k,v])=>`<option value="${k}" ${k===(p.plano||'avulso')?'selected':''}>${v.nome}${v.preco?` · ${brl(v.preco)}`:' · R$ 60 / R$ 80 por dia'}</option>`).join('');
+  const tc=p.tipoCliente||'plano', comb=tc!=='plano';
+  const opsC=Object.entries(TIPOS_CLIENTE).map(([k,v])=>`<option value="${k}" ${k===tc?'selected':''}>${v.nome}</option>`).join('');
+  const opsP=Object.entries(PLANOS).map(([k,v])=>`<option value="${k}" ${k===(p.plano||'avulso')?'selected':''}>${v.nome}${v.preco?` · ${brl(v.preco)}`:` · ${brl(AVULSO.ate10)} / ${brl(AVULSO.acima10)} por dia`}</option>`).join('');
   const opsT=Object.entries(TRANSPORTE).map(([k,v])=>`<option value="${k}" ${k===(p.transporte||'')?'selected':''}>${v.nome}${v.preco?` · ${brl(v.preco)}/dia`:''}</option>`).join('');
-  return `<div class="row3">
-    <div class="campo"><label for="x-plano">Plano</label><select id="x-plano">${opsP}</select></div>
+  return `<div class="campo"><label for="x-tipocli">Tipo de cliente</label><select id="x-tipocli">${opsC}</select></div>
+  <div class="row3">
+    <div class="campo ${comb?'hidden':''}" id="x-cx-plano"><label for="x-plano">Plano</label><select id="x-plano">${opsP}</select></div>
+    <div class="campo ${comb?'':'hidden'}" id="x-cx-preco"><label for="x-preco">Valor combinado por mês (R$)</label><input id="x-preco" type="number" min="0" step="10" value="${p.precoMensal!=null?p.precoMensal:''}" placeholder="Ex.: 350"></div>
     <div class="campo"><label for="x-peso">Peso (kg)</label><input id="x-peso" type="number" min="1" step="0.5" value="${p.peso||''}" placeholder="Ex.: 12"></div>
     <div class="campo"><label for="x-transp">Transporte</label><select id="x-transp">${opsT}</select></div>
   </div>`;
 }
+function lerPlano(p){
+  const tc=$('#x-tipocli')?$('#x-tipocli').value:'plano';
+  p.tipoCliente=tc;
+  p.plano=$('#x-plano')?$('#x-plano').value:(p.plano||'avulso');
+  if(tc==='plano')delete p.precoMensal;
+  else p.precoMensal=Math.max(0,+($('#x-preco')||{}).value||0);
+  p.peso=parseFloat($('#x-peso').value)||p.peso||10;
+  p.transporte=$('#x-transp').value;
+}
 function lerNiver(v){const m=(v||'').match(/(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/);if(!m)return '';const d=+m[1],mm=+m[2];if(d<1||d>31||mm<1||mm>12)return '';return `${pad(mm)}-${pad(d)}`}
-function lerPlano(p){p.plano=$('#x-plano').value;p.peso=parseFloat($('#x-peso').value)||p.peso||10;p.transporte=$('#x-transp').value}
+
 
 /* ====== editar perfil + foto ====== */
 function abrirEditar(id){
@@ -7455,25 +7501,70 @@ function abrirPrecos(){
     <button class="fechar" data-fechar aria-label="Fechar">✕</button>
     <h2>${st('dog-labrador')} Planos e preços</h2>
     <div class="nota" style="font-size:12px;font-weight:700;color:#A38560;margin-top:4px">Vale pras próximas cobranças. Faturas já pagas não mudam.</div>
-    <div class="cfg-h">🏫 Creche · período integral (mensal)</div>
-    <div class="precos-grid">${['2x','3x','4x','5x','6x'].map(k=>`<label><span>${PLANOS[k].nome}</span><input type="number" min="0" data-pl="${k}" value="${PLANOS[k].preco}"></label>`).join('')}</div>
+    <div class="cfg-h">🏫 Creche · período integral (mensal) <button class="btn-mini" id="pr-addplano" type="button">＋ Novo plano</button></div>
+    <div class="cfg-lista" id="pr-planos">${Object.entries(PLANOS).filter(([k])=>k!=='avulso').map(([k,v])=>{
+      const uso=usoDoPlano(k);
+      return `<div class="row plano-row" data-plano="${k}">
+        <input placeholder="Nome do plano" value="${v.nome.replace(/"/g,'&quot;')}" data-k="nome">
+        <label class="mini-num"><span>vezes/sem</span><input type="number" min="0" max="7" value="${v.vezes}" data-k="vezes"></label>
+        <label class="mini-num"><span>R$/mês</span><input type="number" min="0" value="${v.preco}" data-k="preco"></label>
+        ${uso?`<span class="tag-master" title="${uso} pet(s) neste plano">em uso</span>`:`<button class="rm" data-rmplano="${k}">✕</button>`}
+      </div>`;}).join('')}</div>
+
     <div class="cfg-h">🎟 Avulso (por dia)</div>
     <div class="precos-grid"><label><span>Até 10 kg</span><input type="number" min="0" id="pr-a1" value="${AVULSO.ate10}"></label><label><span>Acima de 10 kg</span><input type="number" min="0" id="pr-a2" value="${AVULSO.acima10}"></label></div>
     <div class="cfg-h">🏡 Hotel (diária)</div>
     <div class="precos-grid"><label><span>Porte pequeno (até 10 kg)</span><input type="number" min="0" id="pr-h1" value="${HOTEL.pequeno}"></label><label><span>Porte grande (acima de 10 kg)</span><input type="number" min="0" id="pr-h2" value="${HOTEL.grande}"></label><label><span>Aluno da creche</span><input type="number" min="0" id="pr-h3" value="${HOTEL.aluno}"></label><label><span>Sinal na reserva (%)</span><input type="number" min="0" max="100" id="pr-h4" value="${Math.round(HOTEL.sinal*100)}"></label></div>
     <div class="cfg-h">🎄 Hotel · véspera e feriado <span style="font-size:11px;font-weight:700;color:#A38560">vale em 24/12, 25/12, 31/12 e 01/01</span></div>
     <div class="precos-grid"><label><span>Porte pequeno (feriado)</span><input type="number" min="0" id="pr-f1" value="${HOTEL.ferPequeno}"></label><label><span>Porte grande (feriado)</span><input type="number" min="0" id="pr-f2" value="${HOTEL.ferGrande}"></label><label><span>Aluno da creche (feriado)</span><input type="number" min="0" id="pr-f3" value="${HOTEL.ferAluno}"></label></div>
-    <div class="cfg-h">🚐 Transporte (por dia)</div>
-    <div class="precos-grid"><label><span>Camboriú</span><input type="number" min="0" id="pr-t1" value="${TRANSPORTE.camboriu.preco}"></label><label><span>Balneário Camboriú</span><input type="number" min="0" id="pr-t2" value="${TRANSPORTE.bc.preco}"></label></div>
+    <div class="cfg-h">🚐 Transporte · cidades (por dia) <button class="btn-mini" id="pr-addcidade" type="button">＋ Nova cidade</button></div>
+    <div class="cfg-lista" id="pr-cidades">${Object.entries(TRANSPORTE).filter(([k])=>k!=='').map(([k,v])=>{
+      const uso=usoDaCidade(k);
+      return `<div class="row cidade-row" data-cidade="${k}">
+        <input placeholder="Nome da cidade" value="${v.nome.replace(/"/g,'&quot;')}" data-k="nome">
+        <label class="mini-num"><span>R$/dia</span><input type="number" min="0" value="${v.preco}" data-k="preco"></label>
+        ${uso?`<span class="tag-master" title="${uso} pet(s) nesta cidade">em uso</span>`:`<button class="rm" data-rmcidade="${k}">✕</button>`}
+      </div>`;}).join('')}</div>
+
     <button class="btn primario" id="pr-ok" style="margin-top:16px">${st('check')} Salvar preços</button>
   </div></div>`;
   lock();
+  const lerCatalogos=()=>{
+    const pl={}, ci={};
+    document.querySelectorAll('#pr-planos .plano-row').forEach(r=>{
+      const nome=r.querySelector('[data-k=nome]').value.trim();if(!nome)return;
+      const vezes=Math.max(0,parseInt(r.querySelector('[data-k=vezes]').value)||0);
+      pl[r.dataset.plano]={nome,curto:vezes?vezes+'x/sem':nome.slice(0,12),vezes,preco:+r.querySelector('[data-k=preco]').value||0};
+    });
+    document.querySelectorAll('#pr-cidades .cidade-row').forEach(r=>{
+      const nome=r.querySelector('[data-k=nome]').value.trim();if(!nome)return;
+      ci[r.dataset.cidade]={nome,preco:+r.querySelector('[data-k=preco]').value||0};
+    });
+    cfg.planosLista=pl;cfg.cidades=ci;
+    aplicarPlanosSalvos();aplicarTransporteSalvo();
+  };
+  $('#pr-addplano').onclick=()=>{
+    lerCatalogos();
+    cfg.planosLista['p'+Date.now().toString(36)]={nome:'Novo plano',curto:'novo',vezes:0,preco:0};
+    aplicarPlanosSalvos();abrirPrecos();
+  };
+  $('#pr-addcidade').onclick=()=>{
+    lerCatalogos();
+    cfg.cidades['c'+Date.now().toString(36)]={nome:'Nova cidade',preco:0};
+    aplicarTransporteSalvo();abrirPrecos();
+  };
   $('#pr-ok').onclick=()=>{
-    cfg.precos={planos:{},avulso:{ate10:+$('#pr-a1').value,acima10:+$('#pr-a2').value},hotel:{pequeno:+$('#pr-h1').value,grande:+$('#pr-h2').value,aluno:+$('#pr-h3').value,sinal:+$('#pr-h4').value,ferPequeno:+$('#pr-f1').value,ferGrande:+$('#pr-f2').value,ferAluno:+$('#pr-f3').value},transporte:{camboriu:+$('#pr-t1').value,bc:+$('#pr-t2').value}};
-    document.querySelectorAll('[data-pl]').forEach(i=>cfg.precos.planos[i.dataset.pl]=+i.value);
+    lerCatalogos();
+    cfg.precos={avulso:{ate10:+$('#pr-a1').value,acima10:+$('#pr-a2').value},hotel:{pequeno:+$('#pr-h1').value,grande:+$('#pr-h2').value,aluno:+$('#pr-h3').value,sinal:+$('#pr-h4').value,ferPequeno:+$('#pr-f1').value,ferGrande:+$('#pr-f2').value,ferAluno:+$('#pr-f3').value}};
     aplicarPrecos();salvarCfg();fecharModal();render();toast(pets[0]||{raca:'golden'},'Preços salvos 💛','Já valem nas próximas faturas e reservas.',true);
   };
-  $('#ov').addEventListener('click',e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()});
+  $('#ov').addEventListener('click',e=>{
+    const bp=e.target.closest('[data-rmplano]');
+    if(bp){lerCatalogos();delete cfg.planosLista[bp.dataset.rmplano];aplicarPlanosSalvos();abrirPrecos();return}
+    const bc=e.target.closest('[data-rmcidade]');
+    if(bc){lerCatalogos();delete cfg.cidades[bc.dataset.rmcidade];aplicarTransporteSalvo();abrirPrecos();return}
+    if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal();
+  });
   document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
 }
 
@@ -8110,6 +8201,30 @@ function abrirRacas(){
   };
   document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
 }
+/* ---- planos e cidades da van: a Pet Farm pode criar os seus ---- */
+const PLANOS_PADRAO=JSON.parse(JSON.stringify(PLANOS));
+const TRANSPORTE_PADRAO=JSON.parse(JSON.stringify(TRANSPORTE));
+function aplicarPlanosSalvos(){
+  const sv=(typeof cfg!=='undefined')&&cfg.planosLista;
+  if(!sv||!Object.keys(sv).length)return;
+  Object.keys(PLANOS).forEach(k=>{if(k!=='avulso')delete PLANOS[k]});
+  Object.entries(sv).forEach(([k,v])=>{
+    if(k==='avulso'||!v||!v.nome)return;
+    const vezes=Math.max(0,parseInt(v.vezes)||0);
+    PLANOS[k]={nome:String(v.nome),curto:String(v.curto||v.nome).slice(0,12),vezes,preco:+v.preco||0};
+  });
+}
+function aplicarTransporteSalvo(){
+  const sv=(typeof cfg!=='undefined')&&cfg.cidades;
+  if(!sv||!Object.keys(sv).length)return;
+  Object.keys(TRANSPORTE).forEach(k=>{if(k!=='')delete TRANSPORTE[k]});
+  Object.entries(sv).forEach(([k,v])=>{
+    if(k===''||!v||!v.nome)return;
+    TRANSPORTE[k]={nome:String(v.nome),preco:+v.preco||0};
+  });
+}
+const usoDoPlano=k=>(typeof pets!=='undefined'?pets:[]).filter(p=>p.plano===k).length;
+const usoDaCidade=k=>(typeof pets!=='undefined'?pets:[]).filter(p=>(p.transporte||'')===k).length;
 function abrirLogins(){
   if(!pode('config')){toast(pets[0]||{raca:'golden'},'Sem permissão','Só o acesso master edita logins.');return}
   const l=usuarios();
