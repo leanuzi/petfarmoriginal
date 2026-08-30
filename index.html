@@ -558,7 +558,6 @@ body.lock{overflow:hidden}
 .rota .cid{font-size:11px;font-weight:800;border-radius:999px;padding:3px 9px;background:var(--bege-claro);border:1px solid var(--bege);color:var(--marrom);font-family:var(--body);vertical-align:middle}
 .rota .acoes{margin-left:auto;display:flex;gap:6px;align-items:center}
 .rota .tg{display:inline-flex;background:var(--bege-claro);border:1px solid var(--bege);border-radius:999px;padding:3px}
-.rota .tg-usou{background:var(--verde);color:#fff;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap}
 .rota .cnt{font-family:var(--display);font-weight:600;font-size:16px;color:#D9A41E;white-space:nowrap}
 .tabela-simples{width:100%;border-collapse:separate;border-spacing:0;background:var(--creme);border:1px solid var(--bege);border-radius:16px;overflow:hidden;font-size:13px}
 .tabela-simples th{text-align:left;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#A38560;background:var(--bege-claro);padding:10px 12px}
@@ -1721,9 +1720,9 @@ img,svg,video,canvas{max-width:100%}
   <div class="sec-head">
     <h2><svg class="st"><use href="#dog-beagle"/></svg> Chamada dos Aumigos</h2>
     <span class="sub" id="sub-turma">Turma da manhã</span>
-    <button class="iniciar" id="btn-iniciar"><svg class="st"><use href="#sino"/></svg> Iniciar chamada</button>
     <button class="ghost" id="btn-turma" data-editarturma="1" title="Escolher quem está na creche">👥 Quem está hoje</button>
     <button class="ghost" id="btn-reiniciar" title="Zera as marcações de hoje">↻ Reiniciar chamada</button>
+    <button class="ghost" id="btn-limpar" data-limparchamada="1" title="Desfaz a chamada do dia">🧹 Limpar chamada</button>
     <div class="rota-nav" style="margin-left:auto">
       <button class="seta" data-cdia="-1" aria-label="Dia anterior">‹</button>
       <span class="dia" id="ch-data"></span>
@@ -1963,7 +1962,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.1.0</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.1.1</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -4830,6 +4829,11 @@ const doMes=(arr,ym=MES)=>arr.filter(d=>d.startsWith(ym));
 /* ---- ciclo do pacote: vai de um vencimento ao outro, não do dia 1 ao 30 ----
    O plano renova quando o cliente paga, e o vencimento é o dia cadastrado
    no pet. Se o vencimento é dia 10, o ciclo vai de 10/09 a 09/10. */
+/* a Pet Farm começou a usar o sistema em setembro/2026: cobrança de mês
+   anterior não pode aparecer como vencida. Dá pra mudar em cfg.inicioCobranca. */
+const INICIO_COBRANCA='2026-09';
+const inicioCobranca=()=>((typeof cfg!=='undefined'&&cfg.inicioCobranca)||INICIO_COBRANCA).slice(0,7);
+const mesCobravel=ym=>(ym||MES)>=inicioCobranca();
 function cicloDe(p,ref){
   ref=ref||HOJE;
   const D=Math.min(28,Math.max(1,p.pagamentoDia||10));   // 28 pra não sumir em fevereiro
@@ -5014,7 +5018,7 @@ function pendencias(){
   const out=[];const hojeDia=new Date().getDate();const $fin=pode('financeiro');
   ativos().forEach(p=>{
     if(!p.telefone)out.push({n:2,ico:'📵',txt:`${p.nome} sem WhatsApp do tutor`,acao:()=>abrirEditar(p.id)});
-    if($fin&&!p.pagamentos[MES]&&hojeDia>p.pagamentoDia)out.push({n:1,ico:'💳',txt:`${p.nome}: pagamento venceu dia ${p.pagamentoDia} · ${brl(resumoMes(p).total)}`,acao:()=>abrirCobrancaCreche(p.id)});
+    if($fin&&mesCobravel(MES)&&!p.pagamentos[MES]&&hojeDia>p.pagamentoDia)out.push({n:1,ico:'💳',txt:`${p.nome}: pagamento venceu dia ${p.pagamentoDia} · ${brl(resumoMes(p).total)}`,acao:()=>abrirCobrancaCreche(p.id)});
     if(p.status==='pendente'&&minutosAtraso(p.previsto)>=30)out.push({n:2,ico:'⏱',txt:`${p.nome} ainda sem presença (previsto ${p.previsto})`,acao:()=>abrirChamada(p.id)});
     if(p.status==='presente'&&!p.midias.includes(HOJE))out.push({n:3,ico:'📸',txt:`${p.nome} sem foto/vídeo enviado hoje`,acao:()=>trocarAba('creche')});
     if(p.transporte&&!p.endereco)out.push({n:2,ico:'🚐',txt:`${p.nome} usa transporte e está sem endereço`,acao:()=>abrirEditar(p.id)});
@@ -5116,6 +5120,7 @@ document.addEventListener('click',e=>{
   if(b=g('cdia')){irParaDiaChamada(dAddS(diaChamada(),+b.dataset.cdia));return}
   if(b=g('fazerchamada')){abrirMontarChamada();return}
   if(b=g('editarturma')){abrirMontarChamada();return}
+  if(b=g('limparchamada')){limparChamada();return}
   if(b=g('fechamais')){const m=$('#fab-menu');if(m)m.remove();return}
   if(b=g('painel')){const m=$('#fab-menu');if(m)m.remove();abrirRecepcao();return}
   if(b=g('sair')){sair();return}
@@ -5190,7 +5195,7 @@ let _tb=null;$('#busca').addEventListener('input',e=>{busca=e.target.value;clear
 $('#porte').addEventListener('change',e=>{porte=e.target.value;render()});
 $('#plano-f').addEventListener('change',e=>{planoF=e.target.value;render()});
 $('#btn-add').onclick=abrirEntrada;
-$('#btn-iniciar').onclick=iniciarChamada;
+
 const _br=$('#btn-recepcao');if(_br)_br.onclick=abrirRecepcao;
 $('#btn-notif').onclick=()=>{
   const avisos=[];
@@ -5413,6 +5418,29 @@ function naChamada(){
   const base=ativos();
   return Array.isArray(t)?base.filter(p=>t.indexOf(p.id)>=0):base;
 }
+/* ---- desfaz a chamada do dia: some a lista e as marcações daquele dia ---- */
+function limparChamada(){
+  const D=diaChamada();
+  const quando=D===HOJE?'de hoje':D===dAddS(HOJE,-1)?'de ontem':'de '+fmtData(D);
+  const marcados=ativos().filter(p=>p.presencas.includes(D)||p.faltas.includes(D)).length;
+  confirmar({
+    titulo:`Limpar a chamada ${quando}?`,
+    texto:marcados?`A lista do dia é desfeita e ${marcados} ${marcados===1?'marcação some':'marcações somem'}. Dá pra fazer a chamada de novo depois.`
+                  :'A lista do dia é desfeita. Dá pra fazer a chamada de novo depois.',
+    botao:'Limpar',perigo:true,
+    onOk:()=>{
+      ativos().forEach(p=>{
+        p.presencas=(p.presencas||[]).filter(x=>x!==D);
+        p.faltas=(p.faltas||[]).filter(x=>x!==D);
+        if(p.chegadas)delete p.chegadas[D];
+        try{sincronizarHoje(p)}catch(e){}
+      });
+      const o=opDia(D);delete o.turma;delete o.chamadaFeita;delete o.chamadaInicio;delete o.chamadaFim;delete o.marcados;
+      salvarOps();salvar();sequencia=null;render();
+      toast(pets[0]||{raca:'golden'},'Chamada limpa 🧹','Toque em "Fazer chamada" pra montar o dia de novo.',true);
+    }
+  });
+}
 function abrirMontarChamada(){
   const D=diaChamada();
   const o=opDia(D);
@@ -5480,9 +5508,10 @@ function render(){
     $('#saudacao').textContent=D===HOJE?'Vamos começar a chamada de hoje? 🐾':'Chamada de '+fmtData(D)+' 🐾';
     $('#resumo').textContent='Toque em "Fazer chamada" pra abrir o dia e ver a turma.';
     $('#vazio').classList.add('hidden');
-    ['#btn-iniciar','#btn-reiniciar','#btn-turma'].forEach(s=>{const e=$(s);if(e)e.classList.add('hidden')});
+    ['#btn-reiniciar','#btn-turma','#btn-limpar'].forEach(s=>{const e=$(s);if(e)e.classList.add('hidden')});
     return;
   }
+  const bl=$('#btn-limpar');if(bl)bl.classList.remove('hidden');
   const bt=$('#btn-turma');
   if(bt){bt.classList.remove('hidden');const t=(ops[D]||{}).turma;bt.textContent='👥 Quem está hoje'+(Array.isArray(t)?' ('+t.length+')':'')}
   const pe=naChamada().filter(p=>p.status==='pendente').length;
@@ -5497,8 +5526,6 @@ function render(){
   if(semMidia&&pe>0)$('#resumo').textContent+=` 📸 ${semMidia} ainda sem foto/vídeo enviado.`;
   const semTel=ativos().filter(p=>!p.telefone).length;
   $('#notif-badge').textContent=semMidia+semTel;$('#notif-badge').classList.toggle('hidden',semMidia+semTel===0);
-  $('#btn-iniciar').classList.toggle('hidden',pe===0);
-  $('#btn-iniciar').innerHTML=`${st('sino')} Iniciar chamada (${pe})`;
   $('#btn-reiniciar').classList.toggle('hidden',pr+fa===0);
 
   const b=busca.trim().toLowerCase();
@@ -5554,7 +5581,7 @@ function render(){
   $('#fech-tot').innerHTML=`<span>A receber: <b>${brl(aReceber)}</b></span><span>Recebido: <b>${brl(recebido)}</b></span><span>Total do mês: <b>${brl(aReceber+recebido)}</b></span>`;
   const hojeDia=new Date().getDate();
   $('#fech-lista').innerHTML=fech.sort((a,b)=>(a.p.pagamentos[MES]?1:0)-(b.p.pagamentos[MES]?1:0)||a.p.pagamentoDia-b.p.pagamentoDia).map(({p,m})=>{
-    const pago=!!p.pagamentos[MES];const cls=pago?'pago':(hojeDia>p.pagamentoDia?'atrasado':'aberto');
+    const pago=!!p.pagamentos[MES];const cls=pago?'pago':((mesCobravel(MES)&&hojeDia>p.pagamentoDia)?'atrasado':'aberto');
     return `<li>
       <div class="mini">${avatar(p)}</div>
       <div><b>${p.nome}</b><span>${PLANOS[p.plano].nome} · ${m.vindas} dias${m.extras?` · +${m.extras} extras`:''}${m.transpVezes?` · transporte ${m.transpVezes}x`:''} · vence dia ${p.pagamentoDia}${p.cobrancas[MES]&&p.cobrancas[MES].enviada?' · cobrança enviada '+fmtData(p.cobrancas[MES].enviada):''}</span></div>
@@ -6758,7 +6785,7 @@ function renderTransporte(){
       <div class="acoes">
         ${manual&&!emExec?`<span class="mover"><button class="mv" data-rup="${i}" aria-label="Subir na ordem" ${i===0?'disabled':''}>↑</button><button class="mv" data-rdn="${i}" aria-label="Descer na ordem" ${i===stops.length-1?'disabled':''}>↓</button></span>`:''}
         <span class="cnt" title="Viagens em ${nomeMes}">${resumoMes(p).transpVezes}x no mês</span>
-        ${emExec?`<span class="exec">${pe.embarcou?`<span class="feito">✓ Embarcou às ${pe.embarcou}</span>`:pe.cheguei?`<button class="btn-mini" data-rembarcou="${p.id}">🐶 Pet embarcou</button>`:pe.acaminho?`<button class="btn-mini cinza" data-rcheguei="${p.id}">📍 Cheguei</button>`:`<button class="btn-mini zapbtn" data-racaminho="${p.id}">🚐 Estou a caminho</button>`}${p.endereco&&!pe.embarcou?`<a class="btn-mini maps2" href="${mapsUrl(p.endereco)}" target="_blank" rel="noopener">🗺 Navegar</a>`:''}</span>`:usou?`<span class="tg-usou">🚐 Usou a van</span>`:''}
+        ${emExec?`<span class="exec">${pe.embarcou?`<span class="feito">✓ Embarcou às ${pe.embarcou}</span>`:pe.cheguei?`<button class="btn-mini" data-rembarcou="${p.id}">🐶 Pet embarcou</button>`:pe.acaminho?`<button class="btn-mini cinza" data-rcheguei="${p.id}">📍 Cheguei</button>`:`<button class="btn-mini zapbtn" data-racaminho="${p.id}">🚐 Estou a caminho</button>`}${p.endereco&&!pe.embarcou?`<a class="btn-mini maps2" href="${mapsUrl(p.endereco)}" target="_blank" rel="noopener">🗺 Navegar</a>`:''}</span>`:''}
       </div>
     </li>`};
   $('#tr-rota').innerHTML=stops.length
