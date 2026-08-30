@@ -512,6 +512,7 @@ body.lock{overflow:hidden}
 .cal .d.presente{background:var(--verde-bg);border-color:#CFE3CB;color:var(--verde-txt)}
 .cal .d.faltou{background:var(--vermelho-bg);border-color:#F1C9C9;color:var(--vermelho-txt)}
 .cal .d.hotel{background:#EAF0FA;border-color:#C6D6EE;color:#2F5BA8}
+.irmaos-tag{background:var(--amarelo-suave);border:1px solid var(--amarelo);border-radius:999px;padding:1px 7px;font-size:10px;font-weight:800;color:var(--marrom-escuro);white-space:nowrap}
 .cal .d.hotel.presente{background:linear-gradient(135deg,var(--verde-bg) 50%,#EAF0FA 50%);border-color:#C6D6EE}
 .cal .d .h{font-size:9px;line-height:1}
 .cal .d.hoje{box-shadow:0 0 0 2px var(--amarelo)}
@@ -2006,7 +2007,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.2.2</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.3.0</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -4942,6 +4943,18 @@ function minutosAtraso(hhmm){const [h,m]=hhmm.split(':').map(Number);return (AGO
 function horaAgora(){return `${String(AGORA.h).padStart(2,'0')}:${String(AGORA.m).padStart(2,'0')}`}
 function saudacao(){const h=new Date().getHours();return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'}
 function st(id,extra=''){return `<svg class="st" ${extra}><use href="#${id}"/></svg>`}
+/* ---- irmãos: dois cachorros da mesma casa num cadastro só ----
+   Um plano, um valor, um card na chamada. O segundo fica em p.irmao. */
+const temIrmao=p=>!!(p&&p.irmao&&p.irmao.nome);
+const nomeCompleto=p=>temIrmao(p)?p.nome+' + '+p.irmao.nome:(p?p.nome:'');
+function racasDoPet(p){
+  const a=(RACAS[p.raca]||{}).nome||'';
+  if(!temIrmao(p))return a;
+  const b=(RACAS[p.irmao.raca]||{}).nome||'';
+  return b&&b!==a?a+' · '+b:a;
+}
+/* quantos cachorros esse cadastro representa (conta na lotação da creche) */
+const qtdPets=p=>temIrmao(p)?2:1;
 function avatar(p,extra=''){return p.foto?`<img src="${p.foto}" alt="Foto de ${p.nome}">`:st(RACAS[p.raca].st,extra)}
 function telDigits(t){let d=(t||'').replace(/\D/g,'');if(d&&!d.startsWith('55'))d='55'+d;return d}
 function telFmt(t){const d=(t||'').replace(/\D/g,'').replace(/^55/,'');return d.length>=10?`(${d.slice(0,2)}) ${d.slice(2,-4)}-${d.slice(-4)}`:(t||'')}
@@ -4952,6 +4965,18 @@ function wa(tel,msg){const t=encodeURIComponent(msg);return `https://api.whatsap
 function zapDoPet(p,assunto){
   if(!p)return '';
   return (assunto==='transporte'&&p.telefoneTransporte)?p.telefoneTransporte:(p.telefone||'');
+}
+/* quando o cadastro tem grupo, a mensagem vai pro grupo: o WhatsApp não
+   deixa abrir grupo com texto pronto, então a gente copia e abre o grupo */
+function abrirZapPet(p,msg,meta,assunto){
+  if(p&&p.zapGrupo){
+    try{navigator.clipboard&&navigator.clipboard.writeText(msg)}catch(e){}
+    if(meta)registrarMsg(Object.assign({tel:'grupo'},meta));
+    abrirExterno(p.zapGrupo);
+    toast(p,'Mensagem copiada 📋','Cole no grupo e envie. 💬',true);
+    return;
+  }
+  abrirZap(zapDoPet(p,assunto),msg,meta);
 }
 function abrirZap(tel,msg,meta){
   try{navigator.clipboard?.writeText(msg)}catch(e){}
@@ -5190,7 +5215,7 @@ document.addEventListener('click',e=>{
   if(b=g('boletimir')){fecharModal();boPet=+b.dataset.boletimir;trocarAba('boletim');return}
   if(b=g('bopet')){boPet=+b.dataset.bopet;renderBoletim();return}
   if(b=g('nota')){const o=b.closest('[data-mat]');if(o){salvarNota(boPet,o.dataset.mat,+b.dataset.nota)}return}
-  if(b=g('midiazap')){const p=pets.find(x=>x.id===+b.dataset.midiazap);if(!p.telefone){abrirEditar(p.id);return}if(!p.midias.includes(HOJE))p.midias.push(HOJE);abrirZap(p.telefone,msgMidia(p),{tipo:'foto',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});render();return}
+  if(b=g('midiazap')){const p=pets.find(x=>x.id===+b.dataset.midiazap);if(!p.telefone){abrirEditar(p.id);return}if(!p.midias.includes(HOJE))p.midias.push(HOJE);abrirZapPet(p,msgMidia(p),{tipo:'foto',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});render();return}
   if(b=g('rcheguei')){chegueiParada(rotaDia,+b.dataset.rcheguei);return}
   if(b=g('racaminho')){aCaminhoParada(rotaDia,+b.dataset.racaminho);return}
   if(b=g('rembarcou')){embarcouParada(rotaDia,+b.dataset.rembarcou);return}
@@ -5605,8 +5630,8 @@ function render(){
         <div class="c-linha" data-perfil="${p.id}" title="Ver perfil e calendário completo">
           <div class="foto">${avatar(p)}</div>
           <div class="c-info">
-            <h3>${p.nome} ${selo}${p.obs?`<span class="obsx" title="${p.obs.replace(/"/g,'&quot;')}">📝</span>`:''}</h3>
-            <div class="raca">${r.nome}</div>
+            <h3>${nomeCompleto(p)} ${selo}${p.obs?`<span class="obsx" title="${p.obs.replace(/"/g,'&quot;')}">📝</span>`:''}</h3>
+            <div class="raca">${racasDoPet(p)}${temIrmao(p)?' <span class="irmaos-tag">2 aumigos</span>':''}</div>
             <span class="pill ${p.status}"><span class="dot"></span>${pill}</span>
           </div>
         </div>
@@ -5804,6 +5829,12 @@ function abrirEntrada(){
         <div class="campo obrig"><label for="f-tel">WhatsApp do tutor (cobrança)</label><input id="f-tel" placeholder="(47) 99999-9999" inputmode="tel"></div>
         <div class="campo"><label for="f-tel2">WhatsApp do transporte <small style="font-weight:700;color:#A38560">· opcional</small></label><input id="f-tel2" placeholder="Vazio = usa o mesmo" inputmode="tel"></div>
       </div>
+      <div class="campo"><label for="f-grupo">Link do grupo no WhatsApp <small style="font-weight:700;color:#A38560">· opcional · quando houver, as mensagens vão pro grupo</small></label><input id="f-grupo" placeholder="https://chat.whatsapp.com/..." inputmode="url"></div>
+      <label class="check" style="justify-content:flex-start"><input type="checkbox" id="f-irmao-chk"> 🐶🐕 São dois irmãos no mesmo cadastro</label>
+      <div class="row2 hidden" id="f-irmao-box">
+        <div class="campo"><label for="f-irmao-nome">Nome do irmão</label><input id="f-irmao-nome" placeholder="Ex.: Luna"></div>
+        <div class="campo"><label for="f-irmao-raca">Raça do irmão</label><select id="f-irmao-raca"></select></div>
+      </div>
       <div class="row2">
         <div class="campo obrig"><label for="f-pag">Dia do pagamento</label><input id="f-pag" type="number" min="1" max="31" value="10"></div>
       </div>
@@ -5817,6 +5848,10 @@ function abrirEntrada(){
   </div>`;
   lock();
   $('#ov').addEventListener('change',e=>{const c=e.target.closest('[data-tipo]');if(c)c.closest('label').classList.toggle('on',c.checked)});
+  const opsIrmao=Object.entries(RACAS).map(([k,v])=>`<option value="${k}">${v.nome}</option>`).join('');
+  const selIrmao=$('#f-irmao-raca');if(selIrmao)selIrmao.innerHTML=opsIrmao;
+  const chkIrmao=$('#f-irmao-chk');
+  if(chkIrmao)chkIrmao.onchange=()=>{$('#f-irmao-box').classList.toggle('hidden',!chkIrmao.checked);if(chkIrmao.checked)$('#f-irmao-nome').focus()};
   let fotoNova=null;
   $('#f-file').onchange=e=>{lerFoto(e.target.files[0],320,d=>{
     fotoNova=d;$('#f-prev').innerHTML=`<img src="${d}" alt="">`;      // mostra na hora
@@ -5830,6 +5865,10 @@ function abrirEntrada(){
     if(!tutor){$('#f-tutor').focus();$('#f-tutor').style.borderColor='var(--vermelho)';return}
     if(tel.length<10){$('#f-tel').focus();$('#f-tel').style.borderColor='var(--vermelho)';return}
     const p={id:Date.now(),nome,raca:$('#f-raca').value,porte:$('#f-porte').value,tutor,telefone:tel,pagamentoDia:parseInt($('#f-pag').value)||10,presencas:[],faltas:[],chegadas:{}};
+    const gr=($('#f-grupo')||{value:''}).value.trim();
+    if(gr.indexOf('http')===0)p.zapGrupo=gr;
+    const irm=($('#f-irmao-nome')||{value:''}).value.trim();
+    if(($('#f-irmao-chk')||{}).checked&&irm)p.irmao={nome:irm,raca:$('#f-irmao-raca').value};
     const tel2=($('#f-tel2')||{value:''}).value.replace(/\D/g,'');
     if(tel2.length>=10)p.telefoneTransporte=tel2;
     if(fotoNova)p.foto=fotoNova;
@@ -6023,6 +6062,10 @@ function abrirEditar(id){
     if(tel.length<10){$('#e-tel').focus();$('#e-tel').style.borderColor='var(--vermelho)';return}
     const planoAntes=p.plano,transpAntes=p.transporte;
     p.nome=nome;p.raca=$('#e-raca').value;p.porte=$('#e-porte').value;p.tutor=tutor;p.telefone=tel;if(tel2.length>=10)p.telefoneTransporte=tel2;else delete p.telefoneTransporte;p.pagamentoDia=Math.min(31,Math.max(1,parseInt($('#e-pag').value)||10));
+    const gr2=($('#e-grupo')||{value:''}).value.trim();
+    if(gr2.indexOf('http')===0)p.zapGrupo=gr2;else delete p.zapGrupo;
+    const irm2=($('#e-irmao-nome')||{value:''}).value.trim();
+    if(($('#e-irmao-chk')||{}).checked&&irm2)p.irmao={nome:irm2,raca:$('#e-irmao-raca').value};else delete p.irmao;
     p.estrela=$('#e-selo').value.trim()||undefined;lerPlano(p);
     p.tipos=[...document.querySelectorAll('[data-tipo]:checked')].map(c=>c.dataset.tipo);if(!p.tipos.length)p.tipos=['outro'];p.endereco=$('#e-end').value.trim();p.obs=$('#e-obs').value.trim();p.aniversario=lerNiver($('#e-niver').value);
     const dv=parseFloat($('#e-desc-valor').value)||0;const dAntes=JSON.stringify(p.descontoFixo||null);
@@ -7007,7 +7050,7 @@ function execRota(d){if(!rotas[d]){rotas[d]={stops:rotaDe(d).stops,criadaEm:HOJE
 const kmEstimado=stops=>{let km=0;stops.forEach(x=>{const p=pets.find(q=>q.id===x.petId);km+=cidadeDe(p)==='bc'?6:3.5});return Math.round(km+(stops.length?4:0))};
 function previsaoHora(base,i){const [h,m]=(base||'08:00').split(':').map(Number);let t=(h||0)*60+(m||0)+i*(cfg.minPorParada||12);t=((t%1440)+1440)%1440;return `${pad(Math.floor(t/60))}:${pad(t%60)}`}
 function iniciarRota(d){const ex=execRota(d);ex.iniciada=horaAgora();salvarRotas();renderTransporte();toast(pets[0]||{raca:'golden'},'Rota iniciada 🚐',`Saída da base às ${ex.iniciada}. Boa viagem!`,true)}
-function aCaminhoParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{acaminho:horaAgora()});salvarRotas();const p=pets.find(x=>x.id===petId);const s=(rotas[d].stops||[]).find(x=>x.petId===petId)||{};const tz=zapDoPet(p,'transporte');if(tz)abrirZap(tz,tpl('vanACaminho',{tutor:primeiroNome(p.tutor),pet:p.nome,hora:s.hora||''}),{tipo:'vanACaminho',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});else toast(p,`${p.nome} sem WhatsApp`,'Cadastre o telefone do tutor.');renderTransporte()}
+function aCaminhoParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{acaminho:horaAgora()});salvarRotas();const p=pets.find(x=>x.id===petId);const s=(rotas[d].stops||[]).find(x=>x.petId===petId)||{};const tz=zapDoPet(p,'transporte');if(tz||p.zapGrupo)abrirZapPet(p,tpl('vanACaminho',{tutor:primeiroNome(p.tutor),pet:p.nome,hora:s.hora||''}),{tipo:'vanACaminho',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});else toast(p,`${p.nome} sem WhatsApp`,'Cadastre o telefone do tutor.');renderTransporte()}
 function chegueiParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{cheguei:horaAgora()});salvarRotas();renderTransporte()}
 function embarcouParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{embarcou:horaAgora()});const p=pets.find(x=>x.id===petId);
   if(!p.transportes.includes(d))p.transportes.push(d);if(!p.presencas.includes(d)){p.presencas.push(d);p.chegadas[d]=d===HOJE?horaAgora():'';p.faltas=p.faltas.filter(x=>x!==d)}sincronizarHoje(p);
@@ -7229,7 +7272,7 @@ function abrirCobrancaCreche(id,ym){
   if(pode('descontos'))ligarDesconto('cc-desc',resumoMes(p,ym).bruto,d=>{p.cobrancas[ym]=Object.assign(p.cobrancas[ym]||{},{desconto:d});salvar();const nt=itensCreche(p,ym);$('#cc-msg').value=msgCobrancaCreche(p,ym);const tot=$('.modal.fatura tr.tot td.r');if(tot)tot.textContent=brl(nt.total)});
   $('#cc-pix').onchange=()=>{salvarCob();$('#cc-msg').value=msgCobrancaCreche(p,ym)};
   $('#cc-pdf').onclick=()=>{salvarCob();pdfCobrancaCreche(p,ym,+$('#cc-pix').value)};
-  const bz=$('#cc-zapbtn');if(bz)bz.onclick=()=>{salvarCob();p.cobrancas[ym].enviada=HOJE;render();abrirZap(p.telefone,$('#cc-msg').value,{tipo:'cobranca',pet:p.nome,petId:p.id,via:zapDe(+$('#cc-zap').value).nome,tel:p.telefone});bz.innerHTML=`${ICO_ZAP} Enviar cobrança no WhatsApp ✓`;toast(p,'Cobrança aberta no WhatsApp 💬','A mensagem também foi copiada — se precisar, é só colar.',true)};
+  const bz=$('#cc-zapbtn');if(bz)bz.onclick=()=>{salvarCob();p.cobrancas[ym].enviada=HOJE;render();abrirZapPet(p,$('#cc-msg').value,{tipo:'cobranca',pet:p.nome,petId:p.id,via:zapDe(+$('#cc-zap').value).nome,tel:p.telefone});bz.innerHTML=`${ICO_ZAP} Enviar cobrança no WhatsApp ✓`;toast(p,'Cobrança aberta no WhatsApp 💬','A mensagem também foi copiada — se precisar, é só colar.',true)};
   const bs=$('#cc-sim');if(bs)bs.onclick=()=>{salvarCob();p.pagamentos[ym]=true;p.pagamentos[ym+'_em']=HOJE;
     const rc=cicloDe(p);p.pagamentos[rc.chave]=true;p.pagamentos[rc.chave+'_em']=HOJE;   // renova o pacote
     p.log=p.log||[];p.log.push({d:HOJE,h:horaAgora(),ico:'🔄',txt:'Pacote renovado · '+fmtCurto(rc.inicio)+' a '+fmtCurto(rc.fim)});hospedagensNaFatura(p,ym).forEach(r=>{r.pago=true});salvarHotel();fecharModal();render();toast(p,`${NOMES_MES[+ym.split('-')[1]-1]} de ${p.nome} pago ✅`,`${brl(total)} recebido.`,true)};
@@ -7340,7 +7383,7 @@ function tpl(k,vars){
   Object.entries(vars||{}).forEach(([a,b])=>{t=t.split('{'+a+'}').join(b)});
   return t;
 }
-const varsPet=p=>({tutor:primeiroNome(p.tutor),pet:p.nome,hora:''});
+const varsPet=p=>({tutor:primeiroNome(p.tutor),pet:nomeCompleto(p),hora:''});
 /* CRM — clientes sumindo */
 function diasSemVir(p){
   const dias=[...(p.presencas||[])];
@@ -7364,17 +7407,17 @@ function acaoCrm(id,etapa){
   if(!p.telefone){toast(p,`${p.nome} sem WhatsApp`,'Cadastre o telefone do tutor primeiro.');return}
   const k=+etapa>=30?'oferta':'ausencia';
   p.crm.ultimo=HOJE;p.crm.contatos.push({d:HOJE,tipo:k});
-  abrirZap(p.telefone,tpl(k,varsPet(p)),{tipo:k,pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});
+  abrirZapPet(p,tpl(k,varsPet(p)),{tipo:k,pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});
   salvar();renderInicio();
 }
-function enviarParabens(id){const p=pets.find(x=>x.id===id);abrirZap(p.telefone,tpl('aniversario',varsPet(p)),{tipo:'aniversario',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone})}
+function enviarParabens(id){const p=pets.find(x=>x.id===id);abrirZapPet(p,tpl('aniversario',varsPet(p)),{tipo:'aniversario',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone})}
 function renderMensagens(){
   const chaves=Object.keys(TEMPLATES_PADRAO);
   $('#ms-templates').innerHTML=chaves.map(k=>{const t=TEMPLATES_PADRAO[k];const atual=(cfg.templates&&cfg.templates[k])||t.texto;const mudou=cfg.templates&&cfg.templates[k]&&cfg.templates[k]!==t.texto;
     return `<div class="tpl"><div class="tpl-h"><b>${t.nome}</b><small>${t.uso}</small>${mudou?'<span class="edit-tag">editado</span>':''}</div><textarea data-tpl="${k}">${atual}</textarea><div class="tpl-a"><button class="btn-mini" data-tplsave="${k}">Salvar</button><button class="btn-mini cinza" data-tplreset="${k}">Restaurar padrão</button></div></div>`}).join('');
   const ativosL=ativos();
   $('#ms-envio').innerHTML=`<div class="campo"><label>Enviar agora pra um tutor</label><div class="row3"><select id="ms-pet">${ativosL.map(p=>`<option value="${p.id}">${p.nome} · ${p.tutor}${p.telefone?'':' (sem WhatsApp)'}</option>`).join('')}</select><select id="ms-tpl">${chaves.filter(k=>!['checkin','checkout'].includes(k)).map(k=>`<option value="${k}">${TEMPLATES_PADRAO[k].nome}</option>`).join('')}</select><button class="btn zap" id="ms-go" style="margin:0;padding:10px;font-size:14px">${ICO_ZAP} Abrir no WhatsApp</button></div></div>`;
-  $('#ms-go').onclick=()=>{const p=pets.find(x=>x.id===+$('#ms-pet').value);const k=$('#ms-tpl').value;if(!p.telefone){toast(p,'Sem WhatsApp','Cadastre o telefone do tutor.');return}abrirZap(p.telefone,tpl(k,varsPet(p)),{tipo:k,pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});renderMensagens()};
+  $('#ms-go').onclick=()=>{const p=pets.find(x=>x.id===+$('#ms-pet').value);const k=$('#ms-tpl').value;if(!p.telefone){toast(p,'Sem WhatsApp','Cadastre o telefone do tutor.');return}abrirZapPet(p,tpl(k,varsPet(p)),{tipo:k,pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});renderMensagens()};
   const nomes={checkin:'Check-in',checkout:'Check-out',cobranca:'Cobrança',pix:'PIX',foto:'Foto do dia',aniversario:'Aniversário',ausencia:'Saudade',oferta:'Oferta',recuperacao:'Recuperação',vanACaminho:'Van a caminho',midia:'Foto do dia',inativo:'Inativo',renovacao:'Renovação do plano',frequencia:'Queda de frequência',ocorrencia:'Ocorrência',boletim:'Boletim',fimDeAno:'Fim de ano'};
   $('#ms-hist').innerHTML=msgLog.length?`<tr><th>Quando</th><th>Pet</th><th>Mensagem</th><th>Saiu pelo</th></tr>`+msgLog.slice(0,60).map(m=>`<tr><td>${fmtData(m.quando)} ${m.hora||''}</td><td>${m.pet||'—'}</td><td>${nomes[m.tipo]||m.tipo}</td><td>${m.via||'—'}</td></tr>`).join(''):'<tr><td style="text-align:center;color:#A38560">Nenhuma mensagem registrada ainda.</td></tr>';
   const ult=pets.map(p=>{const m=msgLog.find(x=>x.petId===p.id||x.pet===p.nome);const d=m?Math.round((new Date(HOJE+'T12:00:00')-new Date(m.quando+'T12:00:00'))/86400000):null;return {p,m,d}}).sort((a,b)=>(a.d===null?999:a.d)-(b.d===null?999:b.d)).reverse();
@@ -7730,7 +7773,7 @@ function pdfBoletim(p,ym){
   entregarPdf(doc,`boletim-${p.nome.toLowerCase().replace(/\s+/g,'-')}-${ym}.pdf`,msgBoletim(p,ym));
 }
 function msgBoletim(p,ym){const s=statsBoletim(p,ym);return tpl('boletim',Object.assign(varsPet(p),{mes:NOMES_MES[+ym.split('-')[1]-1],presenca:s.pres===null?'—':s.pres+'%',media:s.media?`${s.media}/${boletimCfg().escala}`:'—'}))}
-function enviarBoletim(pid,ym){const p=pets.find(x=>x.id===pid);if(!p.telefone){abrirEditar(pid);return}const b=boletimDe(p,ym);b.enviadoEm=HOJE;salvar();abrirZap(p.telefone,msgBoletim(p,ym),{tipo:'boletim',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});renderBoletim()}
+function enviarBoletim(pid,ym){const p=pets.find(x=>x.id===pid);if(!p.telefone){abrirEditar(pid);return}const b=boletimDe(p,ym);b.enviadoEm=HOJE;salvar();abrirZapPet(p,msgBoletim(p,ym),{tipo:'boletim',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});renderBoletim()}
 
 </script>
 <script>
