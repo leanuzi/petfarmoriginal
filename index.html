@@ -725,6 +725,7 @@ table.fat tr.desc td{color:var(--verde-txt)}
 .cob.atrasado{border-left-color:var(--vermelho)}
 .cob.pago{border-left-color:var(--verde)}
 .cob.aberto{border-left-color:var(--amarelo)}
+.cob.hoje{border-left-color:#2F5BA8;background:#F4F8FD}
 .cob .mini{width:38px;height:38px;flex:none;border-radius:50%;overflow:hidden;background:var(--amarelo-claro);display:grid;place-items:center}
 .cob .mini img{width:100%;height:100%;object-fit:cover}.cob .mini .st{width:30px;height:30px}
 .cob-i{flex:1 1 120px;min-width:0}
@@ -1863,6 +1864,7 @@ img,svg,video,canvas{max-width:100%}
       <select id="cb-mes" style="margin-left:auto;background:var(--creme);border:1px solid var(--bege);border-radius:999px;padding:9px 14px;font-weight:800;font-size:13px;color:var(--marrom)"></select>
     </div>
     <div class="stats fi-kpis" id="cb-kpis"></div>
+    <section class="hsec"><h3><svg class="st"><use href="#dog-poodle"/></svg> Vence hoje <span class="n" id="cb-n0">0</span></h3><ul class="cob-lista" id="cb-hoje"></ul></section>
     <section class="hsec"><h3><svg class="st"><use href="#dog-beagle"/></svg> A vencer <span class="n" id="cb-n1">0</span></h3><ul class="cob-lista" id="cb-avencer"></ul></section>
     <section class="hsec"><h3><svg class="st"><use href="#dog-bulldog"/></svg> Vencidos <span class="n" id="cb-n2">0</span></h3><ul class="cob-lista" id="cb-vencidos"></ul></section>
     <section class="hsec"><h3><svg class="st"><use href="#dog-golden"/></svg> Pagos <span class="n" id="cb-n3">0</span></h3><ul class="cob-lista" id="cb-pagos"></ul></section>
@@ -2001,7 +2003,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.2.0</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.2.1</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -4839,7 +4841,7 @@ function semearHistorico(p){
       const dias={2:[2,4],3:[1,3,5],4:[1,2,4,5],5:[1,2,3,4,5],6:[1,2,3,4,5,6]}[vezes];
       if(dias.includes(dow)&&!(p.demoQueda&&isoLocal(d)>dAddS(HOJE,-14)&&dow!==2)){
         if((d.getDate()*7+p.id)%11===0)p.faltas.push(isoLocal(d));
-        else{p.presencas.push(isoLocal(d));p.chegadas[isoLocal(d)]=p.previsto}
+        else{p.presencas.push(isoLocal(d));p.chegadas[isoLocal(d)]=''}
       }
     }
     d.setDate(d.getDate()+1);
@@ -4969,7 +4971,7 @@ function niverInfo(p){
   const dias=Math.round((prox-hoje)/86400000);return {dias,txt:`${pad(d)}/${pad(m)}`,hoje:dias===0};
 }
 function hojeStr(){return new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}
-function pendentes(){return ativos().filter(p=>p.status==='pendente').sort((a,b)=>a.previsto.localeCompare(b.previsto))}
+function pendentes(){return naChamada().filter(p=>p.status==='pendente').sort((a,b)=>a.nome.localeCompare(b.nome))}
 
 
 /* ====== leitura de foto (celular e PC) ====== */
@@ -5058,7 +5060,6 @@ function pendencias(){
   ativos().forEach(p=>{
     if(!p.telefone)out.push({n:2,ico:'📵',txt:`${p.nome} sem WhatsApp do tutor`,acao:()=>abrirEditar(p.id)});
     if($fin&&mesCobravel(MES)&&!p.pagamentos[MES]&&hojeDia>p.pagamentoDia)out.push({n:1,ico:'💳',txt:`${p.nome}: pagamento venceu dia ${p.pagamentoDia} · ${brl(resumoMes(p).total)}`,acao:()=>abrirCobrancaCreche(p.id)});
-    if(p.status==='pendente'&&minutosAtraso(p.previsto)>=30)out.push({n:2,ico:'⏱',txt:`${p.nome} ainda sem presença (previsto ${p.previsto})`,acao:()=>abrirChamada(p.id)});
     if(p.status==='presente'&&!p.midias.includes(HOJE))out.push({n:3,ico:'📸',txt:`${p.nome} sem foto/vídeo enviado hoje`,acao:()=>trocarAba('creche')});
     if(p.transporte&&!p.endereco)out.push({n:2,ico:'🚐',txt:`${p.nome} usa transporte e está sem endereço`,acao:()=>abrirEditar(p.id)});
     const m=resumoMes(p);if(m.faltas>=3&&m.faltas>=m.vindas/2)out.push({n:2,ico:'📉',txt:`${p.nome} faltando acima do normal (${m.faltas} faltas em ${nomeMes})`,acao:()=>abrirPerfil(p.id)});
@@ -5240,7 +5241,6 @@ $('#btn-notif').onclick=()=>{
   const avisos=[];
   ativos().filter(p=>!p.telefone).forEach(p=>avisos.push([p,`${p.nome} sem telefone do tutor`,'Cadastro obrigatório: WhatsApp e dia de pagamento.']));
   ativos().filter(p=>p.status==='presente'&&!p.midias.includes(HOJE)).forEach(p=>avisos.push([p,`📸 ${p.nome} sem foto/vídeo hoje`,`Tutor ${p.tutor} ainda não recebeu.`]));
-  pendentes().filter(p=>minutosAtraso(p.previsto)>=30).forEach(p=>avisos.push([p,`${p.nome} ainda sem presença`,`Previsto às ${p.previsto}.`]));
   avisos.length?avisos.slice(0,5).forEach(a=>toast(...a)):toast(pets[0]||{raca:'golden'},'Tudo em dia! 🐾','Nenhuma pendência.',true)};
 
 
@@ -5489,7 +5489,7 @@ function abrirMontarChamada(){
   const pinta=()=>{
     $('#mc-lista').innerHTML=todos.map(p=>`<button type="button" class="add-pet ${sel.has(p.id)?'on':''}" data-mc="${p.id}">
       <span class="mais">${sel.has(p.id)?'✓':'＋'}</span><span class="mini">${avatar(p)}</span>
-      <span class="info-p"><b>${p.nome}</b><span>${nomePlano(p)}${p.previsto?' · chega '+p.previsto:''}</span></span></button>`).join('');
+      <span class="info-p"><b>${p.nome}</b><span>${nomePlano(p)}</span></span></button>`).join('');
     $('#mc-cont').textContent=`· ${sel.size} de ${todos.length} na creche`;
     $('#mc-ok').disabled=sel.size===0;
   };
@@ -5520,7 +5520,7 @@ function abrirMontarChamada(){
     ativos().forEach(p=>{
       p.faltas=(p.faltas||[]).filter(x=>x!==D);      // falta não existe mais na chamada
       if(sel.has(p.id)){
-        if(!p.presencas.includes(D)){p.presencas.push(D);p.chegadas[D]=D===HOJE?horaAgora():(p.previsto||'08:00')}
+        if(!p.presencas.includes(D)){p.presencas.push(D);p.chegadas[D]=D===HOJE?horaAgora():''}
       }else{
         p.presencas=p.presencas.filter(x=>x!==D);    // não veio: fica sem marcação nenhuma
         delete p.chegadas[D];
@@ -5575,7 +5575,7 @@ function render(){
   const grid=$('#grid');grid.innerHTML='';
   lista.forEach(p=>{
     const r=RACAS[p.raca];const m=resumoMes(p);
-    const atraso=minutosAtraso(p.previsto);
+
     const pill={pendente:'Sem marcar',presente:`Presente · ${p.chegou}`,faltou:'Faltou hoje'}[p.status];
     const nv=niverInfo(p);
     const selo=nv&&nv.hoje?'<span class="selo-mini">🎂 hoje</span>':nv&&nv.dias<=7?`<span class="selo-mini">🎂 ${nv.dias}d</span>`:p.estrela?`<span class="selo-mini">⭐</span>`:'';
@@ -5584,7 +5584,7 @@ function render(){
       `<span class="ok">✅ ${m.vindas} ${m.vindas===1?'dia':'dias'}</span>`,
       m.faltas?`<span class="ruim">✕ ${m.faltas} ${m.faltas===1?'falta':'faltas'}</span>`:'',
       m.meta&&m.restamPlano!==null?'':'',
-      p.status==='pendente'&&atraso>=30?`<span class="ruim">⏱ ${p.previsto}</span>`:p.status==='pendente'?`<span>⏰ ${p.previsto}</span>`:'',
+      '',
     ].filter(Boolean).join('');
     const acao = p.status==='pendente'
       ? `<button class="btn primario" data-chamar="${p.id}">${st('sino')} Chamar</button>`
@@ -5710,7 +5710,7 @@ function abrirChamada(id){
         <button class="btn vermelho" id="md-nao">✕ Faltou</button>
       </div>
       <label class="check" id="md-transp"><input type="checkbox" id="md-transp-chk" ${p.transporte||p.transportes.includes(HOJE)?'checked':''}> 🚐 Usou transporte hoje${p.transporte?` (${TRANSPORTE[p.transporte].nome} · ${brl(TRANSPORTE[p.transporte].preco)})`:''}</label>
-      <div class="obs" id="md-obs">${p.status==='pendente'?`Previsto pra chegar às ${p.previsto}`:'Você está alterando a presença já marcada.'}</div>
+      <div class="obs" id="md-obs">${p.status==='pendente'?'Marque se o aumigo chegou hoje.':'Você está alterando a presença já marcada.'}</div>
     </div>
   </div>`;
   lock();
@@ -5726,7 +5726,7 @@ function marcar(p,status){
   const D=diaChamada();
   p.presencas=p.presencas.filter(d=>d!==D);p.faltas=p.faltas.filter(d=>d!==D);delete p.chegadas[D];
   p.transportes=p.transportes.filter(d=>d!==D);
-  if(status==='presente'){p.presencas.push(D);p.chegadas[D]=D===HOJE?horaAgora():(p.previsto||'08:00');if($('#md-transp-chk')&&$('#md-transp-chk').checked)p.transportes.push(D)}else p.faltas.push(D);
+  if(status==='presente'){p.presencas.push(D);p.chegadas[D]=D===HOJE?horaAgora():'';if($('#md-transp-chk')&&$('#md-transp-chk').checked)p.transportes.push(D)}else p.faltas.push(D);
   const lt=$('#md-transp');if(lt)lt.remove();
   sincronizarHoje(p);registrarChamada();
   const md=$('#md');md.classList.add(status==='presente'?'ok':'falta');
@@ -5802,7 +5802,6 @@ function abrirEntrada(){
         <div class="campo"><label for="f-tel2">WhatsApp do transporte <small style="font-weight:700;color:#A38560">· opcional</small></label><input id="f-tel2" placeholder="Vazio = usa o mesmo" inputmode="tel"></div>
       </div>
       <div class="row2">
-        <div class="campo"><label for="f-hora">Horário previsto</label><input id="f-hora" value="${horaAgora()}"></div>
         <div class="campo obrig"><label for="f-pag">Dia do pagamento</label><input id="f-pag" type="number" min="1" max="31" value="10"></div>
       </div>
       <div class="campo"><label for="f-niver">🎂 Aniversário (dia/mês)</label><input id="f-niver" placeholder="25/08" inputmode="numeric"></div>
@@ -5827,7 +5826,7 @@ function abrirEntrada(){
     if(!nome){$('#f-nome').focus();$('#f-nome').style.borderColor='var(--vermelho)';return}
     if(!tutor){$('#f-tutor').focus();$('#f-tutor').style.borderColor='var(--vermelho)';return}
     if(tel.length<10){$('#f-tel').focus();$('#f-tel').style.borderColor='var(--vermelho)';return}
-    const p={id:Date.now(),nome,raca:$('#f-raca').value,porte:$('#f-porte').value,tutor,telefone:tel,pagamentoDia:parseInt($('#f-pag').value)||10,previsto:$('#f-hora').value||horaAgora(),presencas:[],faltas:[],chegadas:{}};
+    const p={id:Date.now(),nome,raca:$('#f-raca').value,porte:$('#f-porte').value,tutor,telefone:tel,pagamentoDia:parseInt($('#f-pag').value)||10,presencas:[],faltas:[],chegadas:{}};
     const tel2=($('#f-tel2')||{value:''}).value.replace(/\D/g,'');
     if(tel2.length>=10)p.telefoneTransporte=tel2;
     if(fotoNova)p.foto=fotoNova;
@@ -5865,7 +5864,7 @@ function abrirRecepcao(){
       </div>
       <div class="fila-lado">
         <h3>${st('dog-beagle')} Ainda sem marcar (${pend.length})</h3>
-        <ol>${pend.length?pend.map(p=>li(p,`prev. ${p.previsto}`)).join(''):`<li><span style="font-weight:700;color:#A38560">Chamada concluída! Todo mundo já foi marcado. 💛</span></li>`}</ol>
+        <ol>${pend.length?pend.map(p=>li(p,'')).join(''):`<li><span style="font-weight:700;color:#A38560">Chamada concluída! Todo mundo já foi marcado. 💛</span></li>`}</ol>
         <div class="presentes"><h3>${st('dog-bulldog')} Chegaram (${pres.length})</h3>
         <ol>${pres.length?pres.map(p=>li(p,`✓ ${p.chegou}`)).join(''):`<li><span style="font-weight:700;color:#A38560">Ninguém chegou ainda.</span></li>`}</ol></div>
         <div class="faltas"><h3>${st('dog-dachshund')} Faltaram (${falt.length})</h3>
@@ -5989,7 +5988,6 @@ function abrirEditar(id){
         <div class="campo"><label for="e-tel2">WhatsApp do transporte <small style="font-weight:700;color:#A38560">· opcional</small></label><input id="e-tel2" value="${p.telefoneTransporte||''}" placeholder="Vazio = usa o mesmo" inputmode="tel"></div>
       </div>
       <div class="row2">
-        <div class="campo"><label for="e-hora">Horário previsto</label><input id="e-hora" value="${p.previsto}"></div>
         <div class="campo obrig"><label for="e-pag">Dia do pagamento</label><input id="e-pag" type="number" min="1" max="31" value="${p.pagamentoDia||10}"></div>
       </div>
       <div class="campo"><label for="e-niver">🎂 Aniversário (dia/mês)</label><input id="e-niver" placeholder="25/08" value="${p.aniversario?p.aniversario.split('-').reverse().join('/'):''}" inputmode="numeric"></div>
@@ -6022,7 +6020,7 @@ function abrirEditar(id){
     if(tel.length<10){$('#e-tel').focus();$('#e-tel').style.borderColor='var(--vermelho)';return}
     const planoAntes=p.plano,transpAntes=p.transporte;
     p.nome=nome;p.raca=$('#e-raca').value;p.porte=$('#e-porte').value;p.tutor=tutor;p.telefone=tel;if(tel2.length>=10)p.telefoneTransporte=tel2;else delete p.telefoneTransporte;p.pagamentoDia=Math.min(31,Math.max(1,parseInt($('#e-pag').value)||10));
-    p.previsto=$('#e-hora').value||p.previsto;p.estrela=$('#e-selo').value.trim()||undefined;lerPlano(p);
+    p.estrela=$('#e-selo').value.trim()||undefined;lerPlano(p);
     p.tipos=[...document.querySelectorAll('[data-tipo]:checked')].map(c=>c.dataset.tipo);if(!p.tipos.length)p.tipos=['outro'];p.endereco=$('#e-end').value.trim();p.obs=$('#e-obs').value.trim();p.aniversario=lerNiver($('#e-niver').value);
     const dv=parseFloat($('#e-desc-valor').value)||0;const dAntes=JSON.stringify(p.descontoFixo||null);
     p.descontoFixo=dv?{tipo:$('#e-desc-tipo').value,valor:dv,motivo:$('#e-desc-motivo').value.trim()}:null;
@@ -6152,7 +6150,7 @@ function abrirPerfil(id,ym){
       const iso=d.dataset.dia;
       if(p.presencas.includes(iso)){p.presencas=p.presencas.filter(x=>x!==iso);p.transportes=p.transportes.filter(x=>x!==iso);delete p.chegadas[iso];p.faltas.push(iso)}
       else if(p.faltas.includes(iso)){p.faltas=p.faltas.filter(x=>x!==iso)}
-      else{p.presencas.push(iso);p.chegadas[iso]=p.previsto;if(p.transporte)p.transportes.push(iso)}
+      else{p.presencas.push(iso);p.chegadas[iso]='';if(p.transporte)p.transportes.push(iso)}
       sincronizarHoje(p);render();abrirPerfil(id,ym);
     }
   });
@@ -6816,11 +6814,11 @@ function renderTransporte(){
     const ehProx=prox&&prox.stop.petId===p.id;
     return `<li class="${cls} ${ehProx&&emExec?'proxima':''}">
       <span class="num">${pe.embarcou?'✓':i+1}</span>
-      <span class="hora">${x.hora||p.previsto}<span class="prev">${pe.embarcou?'embarcou '+pe.embarcou:pe.cheguei?'chegou '+pe.cheguei:ex&&ex.iniciada?'prev. '+previsaoHora(inicioPrev,i+1):''}</span></span>
+      <span class="hora">${x.hora||''}<span class="prev">${pe.embarcou?'embarcou '+pe.embarcou:pe.cheguei?'chegou '+pe.cheguei:ex&&ex.iniciada?'prev. '+previsaoHora(inicioPrev,i+1):''}</span></span>
       <div class="mini">${avatar(p)}</div>
       <div style="min-width:0;flex:1">
         <b class="nome">${p.nome} <span class="cid ${ehTransporte()&&p._un?(p._un==='itajai'?'itj':'cam'):(cid==='bc'?'bc':'cam')}">${ehTransporte()&&p._un?nomeUnidade(p._un):(cid==='bc'?'Bal. Camboriú':'Camboriú')}${p.transporte&&podeFinTransp()?' · '+brl(tp.preco):''}</span></b>
-        <div class="end">${p.endereco?`📍 ${p.endereco} · <a class="maps-link" href="${mapsUrl(p.endereco)}" target="_blank" rel="noopener">🗺 mapa</a>`:`<span class="semend">⚠ sem endereço — </span><button class="alterar" style="margin:0" data-editar="${p.id}">cadastrar</button>`} · tutor ${p.tutor}${p.telefone?` · <a href="${wa(p.telefone,tpl('vanACaminho',{tutor:primeiroNome(p.tutor),pet:p.nome,hora:x.hora||p.previsto}))}" target="_blank" rel="noopener">avisar tutor</a>`:''}</div>
+        <div class="end">${p.endereco?`📍 ${p.endereco} · <a class="maps-link" href="${mapsUrl(p.endereco)}" target="_blank" rel="noopener">🗺 mapa</a>`:`<span class="semend">⚠ sem endereço — </span><button class="alterar" style="margin:0" data-editar="${p.id}">cadastrar</button>`} · tutor ${p.tutor}${p.telefone?` · <a href="${wa(p.telefone,tpl('vanACaminho',{tutor:primeiroNome(p.tutor),pet:p.nome,hora:x.hora||''}))}" target="_blank" rel="noopener">avisar tutor</a>`:''}</div>
       </div>
       <div class="acoes">
         ${manual&&!emExec?`<span class="mover"><button class="mv" data-rup="${i}" aria-label="Subir na ordem" ${i===0?'disabled':''}>↑</button><button class="mv" data-rdn="${i}" aria-label="Descer na ordem" ${i===stops.length-1?'disabled':''}>↓</button></span>`:''}
@@ -6865,7 +6863,7 @@ function moverParada(d,i,dir){
 function copiarRota(d){
   const rota=rotaDe(d);
   const linhas=[`🚐 Rota ${fmtData(d)} — ${cfg.nome}`,`🏠 Saída: ${BASE}`]
-    .concat(rota.stops.map((x,i)=>{const p=pets.find(q=>q.id===x.petId)||{};return `${i+1}. ${x.hora||p.previsto||''} — ${p.nome||'?'} — ${p.endereco||'⚠ sem endereço'}`}))
+    .concat(rota.stops.map((x,i)=>{const p=pets.find(q=>q.id===x.petId)||{};return `${i+1}. ${x.hora?x.hora+' — ':''}${p.nome||'?'} — ${p.endereco||'⚠ sem endereço'}`}))
     .concat([`🏁 Volta: ${BASE}`]);
   const txt=linhas.join('\n');
   const ok=()=>toast(pets[0]||{raca:'golden'},'Rota copiada 📋','Cole no WhatsApp, no Maps ou onde quiser.',true);
@@ -6885,7 +6883,7 @@ function folhaRota(d){
       <h2>🚐 Folha da rota · ${fmtData(d)}</h2>
       <ol class="folha">
         <li><b>🏠 Saída da base</b><span>${BASE}</span></li>
-        ${rota.stops.map((x,i)=>{const p=pets.find(q=>q.id===x.petId)||{};return `<li><b>${i+1}. ${p.nome||'?'} <small>${x.hora||p.previsto||''}</small></b><span>${p.endereco||'⚠ sem endereço'}</span>${p.endereco?`<a class="maps-link" href="${mapsUrl(p.endereco)}" target="_blank" rel="noopener">🗺 abrir no Google Maps</a>`:''}</li>`}).join('')}
+        ${rota.stops.map((x,i)=>{const p=pets.find(q=>q.id===x.petId)||{};return `<li><b>${i+1}. ${p.nome||'?'} <small>${x.hora||''}</small></b><span>${p.endereco||'⚠ sem endereço'}</span>${p.endereco?`<a class="maps-link" href="${mapsUrl(p.endereco)}" target="_blank" rel="noopener">🗺 abrir no Google Maps</a>`:''}</li>`}).join('')}
         <li><b>🏁 Volta pra base</b><span>${BASE}</span></li>
       </ol>
       <button class="btn primario" data-rcopy="1" style="margin-top:14px">📋 Copiar essa lista</button>
@@ -6899,7 +6897,7 @@ function folhaRota(d){
 /* ====== MONTAR A ROTA: você escolhe a ordem 1, 2, 3, 4, 5... ====== */
 function abrirRota(d){
   const atual=rotaDe(d);
-  let ordem=atual.stops.map(x=>{const p=pets.find(q=>q.id===x.petId)||{};return {petId:x.petId,hora:x.hora||p.previsto||'08:00'}});
+  let ordem=atual.stops.map(x=>{const p=pets.find(q=>q.id===x.petId)||{};return {petId:x.petId,hora:x.hora||''}});
   let modo=(rotas[d]&&rotas[d].ordem)||'manual';
   $('#modais').innerHTML=`
   <div class="overlay" id="ov">
@@ -6971,7 +6969,7 @@ function abrirRota(d){
     const b=e.target.closest('[data-add]');if(!b)return;
     [...document.querySelectorAll('#rt-ordem [data-rth]')].forEach(inp=>{const o=ordem.find(x=>x.petId===+inp.dataset.rth);if(o)o.hora=inp.value||o.hora});
     const p=pets.find(q=>q.id===+b.dataset.add);if(!p)return;
-    ordem.push({petId:p.id,hora:p.previsto||'08:00'});pintar();
+    ordem.push({petId:p.id,hora:''});pintar();
     const el=$('#rt-ordem');if(el&&el.lastElementChild)el.lastElementChild.scrollIntoView({block:'nearest',behavior:'smooth'});
   });
   $('#rt-limpar').onclick=()=>{ordem=[];pintar()};
@@ -6995,10 +6993,10 @@ function execRota(d){if(!rotas[d]){rotas[d]={stops:rotaDe(d).stops,criadaEm:HOJE
 const kmEstimado=stops=>{let km=0;stops.forEach(x=>{const p=pets.find(q=>q.id===x.petId);km+=cidadeDe(p)==='bc'?6:3.5});return Math.round(km+(stops.length?4:0))};
 function previsaoHora(base,i){const [h,m]=(base||'08:00').split(':').map(Number);let t=(h||0)*60+(m||0)+i*(cfg.minPorParada||12);t=((t%1440)+1440)%1440;return `${pad(Math.floor(t/60))}:${pad(t%60)}`}
 function iniciarRota(d){const ex=execRota(d);ex.iniciada=horaAgora();salvarRotas();renderTransporte();toast(pets[0]||{raca:'golden'},'Rota iniciada 🚐',`Saída da base às ${ex.iniciada}. Boa viagem!`,true)}
-function aCaminhoParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{acaminho:horaAgora()});salvarRotas();const p=pets.find(x=>x.id===petId);const s=(rotas[d].stops||[]).find(x=>x.petId===petId)||{};const tz=zapDoPet(p,'transporte');if(tz)abrirZap(tz,tpl('vanACaminho',{tutor:primeiroNome(p.tutor),pet:p.nome,hora:s.hora||p.previsto}),{tipo:'vanACaminho',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});else toast(p,`${p.nome} sem WhatsApp`,'Cadastre o telefone do tutor.');renderTransporte()}
+function aCaminhoParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{acaminho:horaAgora()});salvarRotas();const p=pets.find(x=>x.id===petId);const s=(rotas[d].stops||[]).find(x=>x.petId===petId)||{};const tz=zapDoPet(p,'transporte');if(tz)abrirZap(tz,tpl('vanACaminho',{tutor:primeiroNome(p.tutor),pet:p.nome,hora:s.hora||''}),{tipo:'vanACaminho',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});else toast(p,`${p.nome} sem WhatsApp`,'Cadastre o telefone do tutor.');renderTransporte()}
 function chegueiParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{cheguei:horaAgora()});salvarRotas();renderTransporte()}
 function embarcouParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{embarcou:horaAgora()});const p=pets.find(x=>x.id===petId);
-  if(!p.transportes.includes(d))p.transportes.push(d);if(!p.presencas.includes(d)){p.presencas.push(d);p.chegadas[d]=d===HOJE?horaAgora():p.previsto;p.faltas=p.faltas.filter(x=>x!==d)}sincronizarHoje(p);
+  if(!p.transportes.includes(d))p.transportes.push(d);if(!p.presencas.includes(d)){p.presencas.push(d);p.chegadas[d]=d===HOJE?horaAgora():'';p.faltas=p.faltas.filter(x=>x!==d)}sincronizarHoje(p);
   const todos=rotas[d].stops.every(s=>ex.paradas[s.petId]&&ex.paradas[s.petId].embarcou);if(todos&&!ex.finalizada){ex.finalizada=horaAgora();toast(p,'Rota concluída 🏁',`Todos embarcaram · ${rotas[d].stops.length} paradas.`,true)}
   salvarRotas();render();renderTransporte()}
 
@@ -7265,12 +7263,15 @@ function renderCobranca(){
   const f=financeiroResumo(ym);
   const hojeDia=new Date().getDate(), mesAtual=ym===MES;
   const venceu=x=>mesCobravel(ym)&&(!mesAtual||hojeDia>x.p.pagamentoDia);
+  const ehHoje=x=>mesCobravel(ym)&&mesAtual&&x.p.pagamentoDia===hojeDia;
   const comValor=f.creche.filter(x=>x.m.total>0);
   const pagos=comValor.filter(x=>x.pago);
   const vencidos=comValor.filter(x=>!x.pago&&venceu(x));
-  const aVencer=comValor.filter(x=>!x.pago&&!venceu(x));
+  const venceHoje=comValor.filter(x=>!x.pago&&ehHoje(x));
+  const aVencer=comValor.filter(x=>!x.pago&&!venceu(x)&&!ehHoje(x));
   const soma=l=>l.reduce((a,x)=>a+x.m.total,0);
   $('#cb-kpis').innerHTML=`
+    <div class="stat pr"><b>${brl(soma(venceHoje))}</b><span>Vence hoje</span></div>
     <div class="stat ag"><b>${brl(soma(aVencer))}</b><span>A vencer</span></div>
     <div class="stat fa"><b>${brl(soma(vencidos))}</b><span>Vencidos</span></div>
     <div class="stat pr"><b>${brl(soma(pagos))}</b><span>Recebido</span></div>`;
@@ -7284,10 +7285,11 @@ function renderCobranca(){
     $(id).innerHTML=lista.length?lista.sort((a,b)=>a.p.pagamentoDia-b.p.pagamentoDia).map(x=>linha(x,tipo)).join('')
       :`<li class="cob-vazio">${vazio}</li>`;
   };
+  põe('#cb-hoje',venceHoje,'hoje','Ninguém vence hoje. 🐾');
   põe('#cb-avencer',aVencer,'aberto','Ninguém com pagamento em aberto por aqui. 🐾');
   põe('#cb-vencidos',vencidos,'atrasado','Nenhum vencido. Tudo em dia! 💛');
   põe('#cb-pagos',pagos,'pago','Ainda ninguém pagou este mês.');
-  $('#cb-n1').textContent=aVencer.length;$('#cb-n2').textContent=vencidos.length;$('#cb-n3').textContent=pagos.length;
+  $('#cb-n0').textContent=venceHoje.length;$('#cb-n1').textContent=aVencer.length;$('#cb-n2').textContent=vencidos.length;$('#cb-n3').textContent=pagos.length;
   $('#cb-inad').innerHTML=`<tr><th>Cliente</th><th class="r">Valor</th><th>Vence</th><th>Contato</th></tr>`+
     (f.atrasoL.length?f.atrasoL.sort((a,b)=>b.m.total-a.m.total).map(x=>
       `<tr><td><b>${x.p.nome}</b><small style="display:block;color:#A38560">${x.p.tutor}</small></td><td class="r">${brl(x.m.total)}</td><td>dia ${x.p.pagamentoDia}</td><td>${x.p.telefone?telFmt(x.p.telefone):'—'}</td></tr>`).join('')
@@ -7324,7 +7326,7 @@ function tpl(k,vars){
   Object.entries(vars||{}).forEach(([a,b])=>{t=t.split('{'+a+'}').join(b)});
   return t;
 }
-const varsPet=p=>({tutor:primeiroNome(p.tutor),pet:p.nome,hora:p.previsto||''});
+const varsPet=p=>({tutor:primeiroNome(p.tutor),pet:p.nome,hora:''});
 /* CRM — clientes sumindo */
 function diasSemVir(p){
   const dias=[...(p.presencas||[])];
@@ -7559,7 +7561,7 @@ function indicadores(ym){
   const fin=financeiroResumo(ym);const clientesFat=fin.creche.filter(x=>x.m.total>0).length+fin.hotelL.filter(h=>!h.r.petId).length;
   const opsMes=Object.entries(ops).filter(([d])=>d.startsWith(ym)).map(([d,o])=>o);
   const tempos=opsMes.map(o=>minutosEntre(o.chamadaInicio,o.chamadaFim)).filter(x=>x!==null&&x>=0);
-  const atrasos=at.reduce((a,p)=>a+Object.entries(p.chegadas||{}).filter(([d,h])=>d.startsWith(ym)&&minutosEntre(p.previsto,h)>30).length,0);
+  const atrasos=0;   // sem horário previsto cadastrado não há como falar em atraso
   const ocorr=pets.reduce((a,p)=>a+(p.ocorrencias||[]).filter(o=>o.d.startsWith(ym)).length,0);
   const checkins=reservas.filter(r=>(r.checkinFeito||'').startsWith(ym)).length,checkouts=reservas.filter(r=>(r.checkoutFeito||'').startsWith(ym)).length;
   const media=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):null;
@@ -8274,7 +8276,7 @@ function abrirAgendaDia(d){
   const blocos=[];
   if(ci.length||co.length||hosp.length)blocos.push(`<div class="cfg-h">🏡 Hotel</div><ul class="pn-ev" style="margin-top:6px">${ci.map(r=>li('🔑',`Check-in de ${hospede(r).nome} · ${r.horaIn||'09:00'}`,`data-hperfil="${r.id}"`)).join('')}${co.map(r=>li('🏁',`Check-out de ${hospede(r).nome} · ${r.horaOut||'17:00'}`,`data-hperfil="${r.id}"`)).join('')}${hosp.filter(r=>!ci.includes(r)&&!co.includes(r)).map(r=>li('🏡',`${hospede(r).nome} hospedado`,`data-hperfil="${r.id}"`)).join('')}</ul>`);
   if(nv.length||venc.length||ren.length)blocos.push(`<div class="cfg-h">📌 Lembretes</div><ul class="pn-ev" style="margin-top:6px">${nv.map(p=>li('🎂',`Aniversário de ${p.nome}`,`data-perfil="${p.id}"`)).join('')}${venc.map(p=>li('💳',`Vence o pagamento de ${p.nome} · ${brl(resumoMes(p,d.slice(0,7)).total)}`,`data-cobrar="${p.id}" data-ym="${d.slice(0,7)}"`)).join('')}${ren.map(p=>li('🗓',`Renovação do plano de ${p.nome}`,`data-perfil="${p.id}"`)).join('')}</ul>`);
-  if(rt.stops.length)blocos.push(`<div class="cfg-h">🚐 Transporte · ${rt.stops.length} ${rt.stops.length===1?'parada':'paradas'}</div><ul class="pn-ev" style="margin-top:6px">${rt.stops.map((x,i)=>{const p=pets.find(q=>q.id===x.petId);return li(String(i+1),`${x.hora||p.previsto} · ${p.nome}${p.endereco?' · '+p.endereco.split(' - ')[0]:''}`,`data-perfil="${p.id}"`)}).join('')}<li><button class="btn secund" data-irrota="${d}" style="margin:0;width:100%">Abrir a rota desse dia</button></li></ul>`);
+  if(rt.stops.length)blocos.push(`<div class="cfg-h">🚐 Transporte · ${rt.stops.length} ${rt.stops.length===1?'parada':'paradas'}</div><ul class="pn-ev" style="margin-top:6px">${rt.stops.map((x,i)=>{const p=pets.find(q=>q.id===x.petId);return li(String(i+1),`${x.hora?x.hora+' · ':''}${p.nome}${p.endereco?' · '+p.endereco.split(' - ')[0]:''}`,`data-perfil="${p.id}"`)}).join('')}<li><button class="btn secund" data-irrota="${d}" style="margin:0;width:100%">Abrir a rota desse dia</button></li></ul>`);
   if(previstos.length)blocos.push(`<div class="cfg-h">🏫 Creche · ${previstos.length} ${previstos.length===1?'pet previsto':'pets previstos'}</div><div class="pert-card" style="margin:6px 0 0;gap:6px">${previstos.map(p=>`<span class="th" title="${p.nome}" data-perfil="${p.id}" style="width:36px;height:36px;border-radius:50%;cursor:pointer">${avatar(p)}</span>`).join('')}</div>`);
   $('#modais').innerHTML=`<div class="overlay" id="ov"><div class="modal form" role="dialog">
     <button class="fechar" data-fechar aria-label="Fechar">✕</button>
@@ -8443,11 +8445,23 @@ const PODERES={
   equipe:['🔒','Criar e editar logins'],
   meu_pagamento:['💰','Financeiro do transporte (valores da van)']
 };
+const PERFIS_PADRAO=JSON.parse(JSON.stringify(PERFIS));
 function aplicarPerfisSalvos(){
   const sv=(typeof cfg!=='undefined')&&cfg.perfis;if(!sv)return;
+  /* aba criada depois que você salvou as permissões não pode ficar invisível
+     pra sempre: o que é novo entra conforme o padrão do perfil. cfg.perfisViews
+     guarda quais telas existiam quando você salvou, pra saber o que é novo. */
+  const conhecidas=Array.isArray(cfg.perfisViews)?cfg.perfisViews:null;
+  const ehNova=v=>conhecidas?conhecidas.indexOf(v)<0:true;
   Object.keys(PERFIS).forEach(k=>{
     const s=sv[k];if(!s)return;
-    if(Array.isArray(s.views)){const vs=s.views.filter(v=>VIEW_INFO[v]);PERFIS[k].views=vs.length?vs:['inicio']}
+    if(Array.isArray(s.views)){
+      const vs=s.views.filter(v=>VIEW_INFO[v]);
+      (PERFIS_PADRAO[k]?PERFIS_PADRAO[k].views:[]).forEach(v=>{
+        if(ehNova(v)&&vs.indexOf(v)<0)vs.push(v);
+      });
+      PERFIS[k].views=vs.length?vs:['inicio'];
+    }
     if(Array.isArray(s.pode))PERFIS[k].pode=s.pode.filter(p=>PODERES[p]);
   });
   if(!PERFIS.master.pode.includes('config'))PERFIS.master.pode.push('config');
@@ -8490,6 +8504,7 @@ function abrirPermissoes(){
     if(!PERFIS.master.pode.includes('config'))PERFIS.master.pode.push('config');
     cfg.perfis={};
     Object.keys(PERFIS).forEach(k=>{cfg.perfis[k]={views:PERFIS[k].views.slice(),pode:PERFIS[k].pode.slice()}});
+    cfg.perfisViews=Object.keys(VIEW_INFO);   // o que existia agora: o que vier depois é novidade
   };
   $('#pm-reset').onclick=()=>{delete cfg.perfis;salvarCfg();location.reload()};
   $('#pm-ok').onclick=()=>{ler();salvarCfg();montarNav();fecharModal();toast(pets[0]||{raca:'golden'},'Permissões salvas 🔒','Cada pessoa vê as telas que você marcou.',true)};
