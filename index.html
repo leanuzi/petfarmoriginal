@@ -710,6 +710,10 @@ table.fat tr.desc td{color:var(--verde-txt)}
 .un-topo b{font-family:var(--display);font-size:30px;font-weight:600;color:var(--marrom-escuro);display:block;line-height:1}
 .un-topo b span{color:var(--amarelo-escuro,#D9A41E)}
 .un-topo small{font-size:13px;font-weight:800;color:#A38560}
+.login-voltar{position:absolute;left:14px;top:14px;background:none;border:none;font-weight:800;font-size:14px;color:#A38560;cursor:pointer;padding:10px 8px;min-height:44px}
+.login-voltar:hover{color:var(--marrom-escuro)}
+.login-un{font-size:13px;font-weight:800;color:#A38560;margin:-6px 0 14px}
+.login-cx{position:relative}
 .un-badge{background:var(--amarelo-suave);border:1px solid var(--amarelo);border-radius:999px;padding:7px 14px;font-weight:800;font-size:13px;color:var(--marrom-escuro);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;min-height:36px}
 .un-badge:hover{background:var(--amarelo)}
 .cid.itj{background:#E4EEF7;color:#2F5BA8}
@@ -1916,7 +1920,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.0.5</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.0.6</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -4642,7 +4646,7 @@ const CFG_PADRAO={nome:'Pet Farm',cidade:'Camboriú',usuario:'Marcelle',usuarios
   pix:[{id:1,nome:'Marcelle',chave:'marcelle@petfarm.com.br',tipo:'email',banco:'Nubank'},{id:2,nome:'Carla',chave:'123.456.789-00',tipo:'cpf',banco:'Itaú'},{id:3,nome:'Renato',chave:'(47) 99999-0000',tipo:'celular',banco:'Sicredi'}],
   zaps:[{id:1,nome:'WhatsApp Pet Farm',numero:'47999000001'},{id:2,nome:'WhatsApp cobrança',numero:'47999000002'}],
   zapHotel:1,zapCobranca:2,pixPadrao:1};
-const HOTEL={pequeno:100,grande:120,aluno:90,sinal:.30};
+const HOTEL={pequeno:100,grande:120,aluno:90,sinal:.30,ferPequeno:130,ferGrande:160,ferAluno:100};
 const RACAS = {
   golden:{nome:'Golden Retriever',st:'dog-golden'},
   poodle:{nome:'Poodle',st:'dog-poodle'},
@@ -4766,6 +4770,7 @@ function semearHistorico(p){
 function sincronizarHoje(p){
   p.presencas=p.presencas||[];p.faltas=p.faltas||[];p.chegadas=p.chegadas||{};
   p.plano=p.plano||'avulso';p.transporte=p.transporte||'';p.peso=p.peso||(p.porte==='P'?8:p.porte==='M'?15:28);
+  if(!RACAS[p.raca])p.raca=Object.keys(RACAS)[0]||'golden';   // raça apagada não derruba a tela
   if(!p.tipos||!p.tipos.length)p.tipos=['creche'];p.obs=p.obs||'';p.endereco=p.endereco||'';p.cobrancas=p.cobrancas||{};p.transportes=p.transportes||[];p.midias=p.midias||[];if(!p.pagamentos){p.pagamentos={};if([1,3,5,8].includes(p.id))p.pagamentos[MES]=true}p.telefone=p.telefone||'';p.pagamentoDia=p.pagamentoDia||10;
   if(p.transportes.length===0&&p.transporte&&!p._transpSemeado){p.transportes=p.presencas.filter(d=>d!==HOJE);p._transpSemeado=true}
   p.status=p.presencas.includes(HOJE)?'presente':p.faltas.includes(HOJE)?'faltou':'pendente';
@@ -4948,7 +4953,7 @@ function iniciar(){
   migrarChaves();
   cfg=JSON.parse(JSON.stringify(CFG_PADRAO));            // sem herdar nada da unidade anterior
   try{const sv=lerLocal('petfarm.cfg');if(sv)cfg=Object.assign(cfg,JSON.parse(sv))}catch(e){}
-  CRECHE_NOME=cfg.nome;aplicarPrecos();aplicarPerfisSalvos();
+  CRECHE_NOME=cfg.nome;aplicarPrecos();aplicarPerfisSalvos();aplicarRacasSalvas();
   try{const sv=lerLocal('petfarm.turma');pets=ehTransporte()?turmaDasUnidades():(sv?JSON.parse(sv):JSON.parse(JSON.stringify(DEMO_PETS)))}catch(e){pets=JSON.parse(JSON.stringify(DEMO_PETS))}
   pets.forEach(p=>{if(p.aniversario==='__HOJE__')p.aniversario=MMDD});
   pets.forEach(p=>{semearHistorico(p);sincronizarHoje(p)});
@@ -5194,6 +5199,7 @@ function abrirConfig(){
       </div>
       ${pode('config')?`<div class="cfg-h">💛 Planos e preços <button class="btn-mini" id="cf-precos" type="button">Editar preços da creche, hotel e van</button></div>
       <div class="cfg-h">⛽ Van <button class="btn-mini" id="cf-comb" type="button">Combustível e custos</button> <button class="btn-mini" id="cf-mot" type="button">Como o motorista é pago</button></div>`:''}
+      ${pode('config')?`<div class="cfg-h">🐶 Raças <button class="btn-mini" id="cf-racas" type="button">Cadastrar raças</button></div>`:''}
       ${pode('config')?`<div class="cfg-h">🔒 Logins <button class="btn-mini" id="cf-logins" type="button">Gerenciar acessos</button></div>`:''}
       <div class="cfg-h">💾 Backup <span style="font-size:11px;font-weight:700;color:#A38560">exporte de vez em quando e guarde o arquivo</span></div>
       <div class="row2"><button class="btn-mini" id="cf-exp" type="button">⬇ Exportar backup (.json)</button><label class="btn-mini cinza" style="justify-content:center">⬆ Importar backup<input type="file" id="cf-imp" accept="application/json" style="display:none"></label></div>
@@ -5223,6 +5229,7 @@ function abrirConfig(){
     cfg.zaps=[...document.querySelectorAll('#cf-zaps .row')].map(r=>({id:+r.dataset.zap,nome:r.querySelector('[data-k=nome]').value.trim(),numero:r.querySelector('[data-k=numero]').value.replace(/\D/g,'')})).filter(z=>z.nome);
     cfg.zapHotel=+$('#cf-zh').value;cfg.zapCobranca=+$('#cf-zc').value;cfg.pixPadrao=+$('#cf-px').value;
   };
+  const br=$('#cf-racas');if(br)br.onclick=abrirRacas;
   const bl=$('#cf-logins');if(bl)bl.onclick=abrirLogins;const bp=$('#cf-precos');if(bp)bp.onclick=abrirPrecos;const bcb=$('#cf-comb');if(bcb)bcb.onclick=abrirCombustivel;const bmo=$('#cf-mot');if(bmo)bmo.onclick=abrirCfgMotorista;
   $('#cf-exp').onclick=exportarBackup;$('#cf-imp').onchange=e=>importarBackup(e.target.files[0]);
   const bz=$('#cf-zerar');if(bz)bz.onclick=abrirZerar;
@@ -5849,13 +5856,39 @@ function hospede(r){ // dados do pet (da creche ou visitante)
 }
 function diarias(r){const a=new Date(r.checkin),b=new Date(r.checkout);return Math.max(1,Math.round((b-a)/86400000))}
 function diariaValor(h){return h.aluno?HOTEL.aluno:(h.peso<=10?HOTEL.pequeno:HOTEL.grande)}
+/* ---- tarifa de véspera e feriado: só Natal e Ano Novo ----
+   24/12 e 25/12 (véspera e Natal), 31/12 e 01/01 (véspera e Ano Novo).
+   O aluno da creche tem valor próprio nessas datas. */
+const FERIADOS_HOTEL=['12-24','12-25','12-31','01-01'];
+const ehFeriadoHotel=iso=>FERIADOS_HOTEL.indexOf(String(iso).slice(5))>=0;
+function valorDiaria(h,feriado){
+  if(feriado)return h.aluno?HOTEL.ferAluno:(h.peso<=10?HOTEL.ferPequeno:HOTEL.ferGrande);
+  return h.aluno?HOTEL.aluno:(h.peso<=10?HOTEL.pequeno:HOTEL.grande);
+}
+/* uma linha por diária, do check-in até a véspera do check-out */
+function diariasDetalhe(r,h){
+  h=h||hospede(r);
+  const n=diarias(r), out=[], d=new Date(r.checkin+'T12:00:00');
+  for(let i=0;i<n;i++){
+    const iso=isoLocal(d), fer=ehFeriadoHotel(iso);
+    out.push({iso,feriado:fer,valor:valorDiaria(h,fer)});
+    d.setDate(d.getDate()+1);
+  }
+  return out;
+}
 function contaHotel(r){
   const h=hospede(r);const n=diarias(r);const v=diariaValor(h);
   const tp=TRANSPORTE[r.transporteCidade||''].preco;
-  const subtotal=n*v, transp=(r.transporteVezes||0)*tp, bruto=subtotal+transp;
+  const dias=diariasDetalhe(r,h);
+  const nFer=dias.filter(x=>x.feriado).length, nNorm=n-nFer;
+  const vFer=valorDiaria(h,true);
+  const subtotal=dias.reduce((a,x)=>a+x.valor,0), transp=(r.transporteVezes||0)*tp, bruto=subtotal+transp;
+  const resumoDiarias=nFer
+    ? (nNorm?nNorm+' '+(nNorm===1?'diária':'diárias')+' × '+brl(v)+' + ':'')+nFer+' de feriado × '+brl(vFer)
+    : n+' '+(n===1?'diária':'diárias')+' × '+brl(v);
   const abat=calcDesc(r.desconto,bruto), total=Math.max(0,bruto-abat);
   const sinal=Math.round(subtotal*HOTEL.sinal*100)/100;
-  return {h,n,v,tp,subtotal,transp,bruto,abatimento:abat,total,sinal,restante:Math.max(0,total-(r.sinalPago?sinal:0))};
+  return {h,n,v,tp,subtotal,transp,bruto,abatimento:abat,total,sinal,restante:Math.max(0,total-(r.sinalPago?sinal:0)),dias,nFeriado:nFer,vFeriado:vFer,resumoDiarias};
 }
 const fmtData=d=>{const [y,m,dd]=d.split('-');return `${dd}/${m}`};
 function renderHotel(){
@@ -5894,7 +5927,7 @@ function renderHotel(){
       </div>
       ${it.length?`<div class="pert-card">${it.slice(0,4).map(i=>`<span class="th" title="${i.nome}">${i.foto?`<img src="${i.foto}" alt="">`:'🎒'}</span>`).join('')}<small>${it.length} ${it.length===1?'item':'itens'}</small></div>`:''}
       ${r.status==='hospedado'?diarioChips(r):''}
-      ${pode('financeiro')?`<div class="h-total"><span>${c.n} ${c.n===1?'diária':'diárias'} × ${brl(c.v)}${c.transp?` + transporte ${r.transporteVezes}x`:''}${r.sinalPago?' · sinal pago':''}${r.naFatura?' · 🧾 na fatura':''}</span><b>${brl(c.restante)}</b></div>`:''}
+      ${pode('financeiro')?`<div class="h-total"><span>${c.resumoDiarias}${c.transp?` + transporte ${r.transporteVezes}x`:''}${r.sinalPago?' · sinal pago':''}${r.naFatura?' · 🧾 na fatura':''}</span><b>${brl(c.restante)}</b></div>`:''}
       ${r.aguardandoPgto&&r.status==='hospedado'?`<div class="msg-ok" style="background:var(--vermelho-bg);color:var(--vermelho-txt);margin:8px 0 0">💳 Aguardando pagamento</div>`:''}
       <div class="h-acoes">${acao}${r.status==='hospedado'?`<button class="ico-btn" data-diario="${r.id}" title="Diário do dia">📋</button>`:''}<button class="ico-btn" data-pdfpert="${r.id}" title="Relatório de pertences (PDF)" style="background:#fff;color:var(--marrom-escuro);border:2px solid var(--marrom-escuro);box-shadow:0 3px 0 var(--marrom-escuro)">📄</button></div>
     </article>`;
@@ -5903,7 +5936,7 @@ function renderHotel(){
   $('#h-reservas').innerHTML=res.length?res.map(card).join(''):'<div class="nada" style="grid-column:1/-1">Nenhuma reserva futura. Clique em "Nova reserva". 🐾</div>';
   $('#h-finalizados').innerHTML=fin.length?fin.map(r=>{const c=contaHotel(r);const h=c.h;return `<li>
       <div class="mini" data-hperfil="${r.id}" style="cursor:pointer">${h.avatar}</div>
-      <div style="cursor:pointer" data-hperfil="${r.id}"><b class="nome">${h.nome}</b><span class="det">${fmtData(r.checkin)} → ${fmtData(r.checkout)} · ${c.n} ${c.n===1?'diária':'diárias'} × ${brl(c.v)}${c.transp?` · transporte ${r.transporteVezes}x`:''} · ${h.aluno?'aluno':'visitante'} · tutor ${h.tutor}</span></div>
+      <div style="cursor:pointer" data-hperfil="${r.id}"><b class="nome">${h.nome}</b><span class="det">${fmtData(r.checkin)} → ${fmtData(r.checkout)} · ${c.resumoDiarias}${c.transp?` · transporte ${r.transporteVezes}x`:''} · ${h.aluno?'aluno':'visitante'} · tutor ${h.tutor}</span></div>
       <span class="valor">${brl(c.total)}</span>
       <span class="st-pag ${r.pago?'pago':r.naFatura?'junto':'aberto'}">${r.pago?'✓ pago':r.naFatura?'🧾 na fatura do mês':'aguardando pagamento'}</span>
       <button class="btn-mini" data-fatura="${r.id}">📄 Fatura</button><button class="btn-mini cinza" data-pdfcob="${r.id}">⬇ PDF</button>
@@ -5985,7 +6018,7 @@ function abrirReserva(id,diaSugerido){
   const prev=()=>{
     const tmp=ler(false);if(!tmp)return;
     const c=contaHotel(tmp);
-    $('#r-prev').innerHTML=`<div class="l"><span>${c.n} ${c.n===1?'diária':'diárias'} × ${brl(c.v)} ${c.h.aluno?'(aluno)':(c.h.peso<=10?'(até 10 kg)':'(acima de 10 kg)')}</span><b>${brl(c.subtotal)}</b></div><div class="l"><span>Sinal 30% na reserva</span><b>${brl(c.sinal)}</b></div>`;
+    $('#r-prev').innerHTML=`<div class="l"><span>${c.resumoDiarias} ${c.h.aluno?'(aluno)':(c.h.peso<=10?'(até 10 kg)':'(acima de 10 kg)')}</span><b>${brl(c.subtotal)}</b></div><div class="l"><span>Sinal 30% na reserva</span><b>${brl(c.sinal)}</b></div>`;
   };
   const ler=(validar)=>{
     const isAluno=!$('#r-aluno').classList.contains('hidden');
@@ -6069,7 +6102,7 @@ function msgCobranca(r){
 }
 function msgFatura(r){
   const c=contaHotel(r);const h=c.h;
-  const L=[`🏡 *${CRECHE_NOME} · Hospedagem do(a) ${h.nome}*`,`Período: ${fmtData(r.checkin)} a ${fmtData(r.checkout)}`,'',`• ${c.n} ${c.n===1?'diária':'diárias'} × ${brl(c.v)}${h.aluno?' (aluno da creche)':''} = ${brl(c.subtotal)}`];
+  const L=[`🏡 *${CRECHE_NOME} · Hospedagem do(a) ${h.nome}*`,`Período: ${fmtData(r.checkin)} a ${fmtData(r.checkout)}`,'',`• ${c.resumoDiarias}${h.aluno?' (aluno da creche)':''} = ${brl(c.subtotal)}`];
   if(c.transp)L.push(`• Transporte ${r.transporteVezes}x × ${brl(c.tp)} = ${brl(c.transp)}`);
   L.push('',`Total: *${brl(c.total)}*`);
   if(r.sinalPago)L.push(`Sinal pago: − ${brl(c.sinal)}`,`*Restante a pagar: ${brl(c.restante)}*`);
@@ -7412,7 +7445,7 @@ function aplicarPrecos(){
   const pr=cfg.precos;if(!pr)return;
   ['2x','3x','4x','5x','6x'].forEach(k=>{if(pr.planos&&pr.planos[k]!=null)PLANOS[k].preco=+pr.planos[k]});
   if(pr.avulso){if(pr.avulso.ate10!=null)AVULSO.ate10=+pr.avulso.ate10;if(pr.avulso.acima10!=null)AVULSO.acima10=+pr.avulso.acima10}
-  if(pr.hotel){['pequeno','grande','aluno'].forEach(k=>{if(pr.hotel[k]!=null)HOTEL[k]=+pr.hotel[k]});if(pr.hotel.sinal!=null)HOTEL.sinal=+pr.hotel.sinal/100}
+  if(pr.hotel){['pequeno','grande','aluno','ferPequeno','ferGrande','ferAluno'].forEach(k=>{if(pr.hotel[k]!=null)HOTEL[k]=+pr.hotel[k]});if(pr.hotel.sinal!=null)HOTEL.sinal=+pr.hotel.sinal/100}
   if(pr.transporte){if(pr.transporte.camboriu!=null)TRANSPORTE.camboriu.preco=+pr.transporte.camboriu;if(pr.transporte.bc!=null)TRANSPORTE.bc.preco=+pr.transporte.bc}
 }
 function abrirPrecos(){
@@ -7428,13 +7461,15 @@ function abrirPrecos(){
     <div class="precos-grid"><label><span>Até 10 kg</span><input type="number" min="0" id="pr-a1" value="${AVULSO.ate10}"></label><label><span>Acima de 10 kg</span><input type="number" min="0" id="pr-a2" value="${AVULSO.acima10}"></label></div>
     <div class="cfg-h">🏡 Hotel (diária)</div>
     <div class="precos-grid"><label><span>Porte pequeno (até 10 kg)</span><input type="number" min="0" id="pr-h1" value="${HOTEL.pequeno}"></label><label><span>Porte grande (acima de 10 kg)</span><input type="number" min="0" id="pr-h2" value="${HOTEL.grande}"></label><label><span>Aluno da creche</span><input type="number" min="0" id="pr-h3" value="${HOTEL.aluno}"></label><label><span>Sinal na reserva (%)</span><input type="number" min="0" max="100" id="pr-h4" value="${Math.round(HOTEL.sinal*100)}"></label></div>
+    <div class="cfg-h">🎄 Hotel · véspera e feriado <span style="font-size:11px;font-weight:700;color:#A38560">vale em 24/12, 25/12, 31/12 e 01/01</span></div>
+    <div class="precos-grid"><label><span>Porte pequeno (feriado)</span><input type="number" min="0" id="pr-f1" value="${HOTEL.ferPequeno}"></label><label><span>Porte grande (feriado)</span><input type="number" min="0" id="pr-f2" value="${HOTEL.ferGrande}"></label><label><span>Aluno da creche (feriado)</span><input type="number" min="0" id="pr-f3" value="${HOTEL.ferAluno}"></label></div>
     <div class="cfg-h">🚐 Transporte (por dia)</div>
     <div class="precos-grid"><label><span>Camboriú</span><input type="number" min="0" id="pr-t1" value="${TRANSPORTE.camboriu.preco}"></label><label><span>Balneário Camboriú</span><input type="number" min="0" id="pr-t2" value="${TRANSPORTE.bc.preco}"></label></div>
     <button class="btn primario" id="pr-ok" style="margin-top:16px">${st('check')} Salvar preços</button>
   </div></div>`;
   lock();
   $('#pr-ok').onclick=()=>{
-    cfg.precos={planos:{},avulso:{ate10:+$('#pr-a1').value,acima10:+$('#pr-a2').value},hotel:{pequeno:+$('#pr-h1').value,grande:+$('#pr-h2').value,aluno:+$('#pr-h3').value,sinal:+$('#pr-h4').value},transporte:{camboriu:+$('#pr-t1').value,bc:+$('#pr-t2').value}};
+    cfg.precos={planos:{},avulso:{ate10:+$('#pr-a1').value,acima10:+$('#pr-a2').value},hotel:{pequeno:+$('#pr-h1').value,grande:+$('#pr-h2').value,aluno:+$('#pr-h3').value,sinal:+$('#pr-h4').value,ferPequeno:+$('#pr-f1').value,ferGrande:+$('#pr-f2').value,ferAluno:+$('#pr-f3').value},transporte:{camboriu:+$('#pr-t1').value,bc:+$('#pr-t2').value}};
     document.querySelectorAll('[data-pl]').forEach(i=>cfg.precos.planos[i.dataset.pl]=+i.value);
     aplicarPrecos();salvarCfg();fecharModal();render();toast(pets[0]||{raca:'golden'},'Preços salvos 💛','Já valem nas próximas faturas e reservas.',true);
   };
@@ -7875,7 +7910,9 @@ function telaLogin(erro){
         <svg class="st"><use href="#dog-golden"/></svg>
         <div><b>Pet<span>Farm</span></b><small>creche e hotel</small></div>
       </div>
+      <button class="login-voltar" id="login-voltar">‹ Trocar de unidade</button>
       <h2>Quem está usando? 🐾</h2>
+      <div class="login-un" id="login-un"></div>
       <div class="login-users">${lista.map(u=>`<button data-user="${u.id}"><span class="av">${(u.nome||'?').trim().charAt(0).toUpperCase()}</span><b>${u.nome}</b><small>${PERFIS[u.perfil].nome}</small></button>`).join('')}</div>
       <div class="login-pin hidden" id="login-pin">
         <button class="voltar" id="pin-voltar">‹ trocar de usuário</button>
@@ -7884,9 +7921,12 @@ function telaLogin(erro){
         <div class="pin-erro ${erro?'':'hidden'}" id="pin-erro">Senha incorreta, tente de novo.</div>
         <div class="teclado">${[1,2,3,4,5,6,7,8,9,'',0,'←'].map(k=>k===''?'<span></span>':`<button data-k="${k}">${k}</button>`).join('')}</div>
       </div>
-      <div class="login-rod">Cada pessoa tem seu acesso. Peça o PIN pra Marcelle.</div>
+      <div class="login-rod">Cada pessoa tem seu acesso. Peça o PIN pra quem cuida desta unidade.</div>
     </div>`;
   document.body.appendChild(el);
+  const bv=el.querySelector('#login-voltar'), un=el.querySelector('#login-un');
+  if(un&&UN)un.textContent=(UNIDADES[UN]||{}).ico+' '+nomeUnidade();
+  if(bv)bv.onclick=trocarUnidade;
   let alvo=null,pin='';
   const pontos=()=>{$('#login-pin').classList.remove('hidden');$('#pin-pontos').innerHTML=[0,1,2,3].map(i=>`<i class="${i<pin.length?'on':''}"></i>`).join('')};
   const tentar=()=>{
@@ -7991,6 +8031,83 @@ function abrirPermissoes(){
   $('#pm-reset').onclick=()=>{delete cfg.perfis;salvarCfg();location.reload()};
   $('#pm-ok').onclick=()=>{ler();salvarCfg();montarNav();fecharModal();toast(pets[0]||{raca:'golden'},'Permissões salvas 🔒','Cada pessoa vê as telas que você marcou.',true)};
   $('#ov').onclick=e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()};
+  document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
+}
+/* ---- raças: as 8 de fábrica mais as que a Pet Farm cadastrar ---- */
+const FIGURINHAS_NOME={'dog-golden':'Cachorro dourado','dog-poodle':'Cachorro felpudo','dog-dachshund':'Cachorro comprido','dog-bulldog':'Cachorro atarracado','dog-labrador':'Cachorro grande','dog-shihtzu':'Cachorro peludinho','dog-beagle':'Cachorro orelhudo','dog-collie':'Cachorro pastor'};
+const FIGURINHAS=Object.keys(FIGURINHAS_NOME);
+const RACAS_PADRAO=JSON.parse(JSON.stringify(RACAS));
+function aplicarRacasSalvas(){
+  const sv=(typeof cfg!=='undefined')&&cfg.racas;
+  Object.keys(RACAS).forEach(k=>delete RACAS[k]);
+  if(sv&&Object.keys(sv).length){
+    Object.entries(sv).forEach(([k,v])=>{
+      if(!v||!v.nome)return;
+      RACAS[k]={nome:String(v.nome),st:FIGURINHAS.indexOf(v.st)>=0?v.st:'dog-golden'};
+    });
+  }
+  if(!Object.keys(RACAS).length)Object.entries(RACAS_PADRAO).forEach(([k,v])=>{RACAS[k]=Object.assign({},v)});
+}
+/* quantos pets usam cada raça (pra não deixar apagar uma que está em uso) */
+function usoDaRaca(k){return (typeof pets!=='undefined'?pets:[]).filter(p=>p.raca===k).length}
+function abrirRacas(){
+  if(!pode('config')){toast(pets[0]||{raca:'golden'},'Sem permissão','Só o acesso master cadastra raças.');return}
+  const linha=(k,v)=>{
+    const uso=usoDaRaca(k);
+    return `<div class="row raca-row" data-raca="${k}">
+      <span class="raca-fig">${st(v.st)}</span>
+      <input placeholder="Nome da raça" value="${v.nome.replace(/"/g,'&quot;')}" data-k="nome">
+      <select data-k="st">${FIGURINHAS.map(f=>`<option value="${f}" ${v.st===f?'selected':''}>${FIGURINHAS_NOME[f]}</option>`).join('')}</select>
+      <small class="raca-uso">${uso?uso+(uso===1?' pet':' pets'):'sem pets'}</small>
+      ${uso?`<span class="tag-master" title="em uso por ${uso} pet(s)">em uso</span>`:`<button class="rm" data-rmraca="${k}">✕</button>`}
+    </div>`;
+  };
+  $('#modais').innerHTML=`
+  <div class="overlay" id="ov"><div class="modal form" role="dialog" aria-labelledby="rc-t">
+    <button class="fechar" data-fechar aria-label="Fechar">✕</button>
+    <h2 id="rc-t">${st('dog-beagle')} Raças cadastradas</h2>
+    <div class="nota" style="font-size:12px;font-weight:700;color:#A38560">Cada raça usa uma das figurinhas de cachorro do sistema. Dá para renomear as de fábrica e criar quantas quiser.</div>
+    <div class="cfg-lista" id="rc-lista">${Object.entries(RACAS).map(([k,v])=>linha(k,v)).join('')}</div>
+    <button class="btn-mini" id="rc-add" style="margin-top:10px">＋ Nova raça</button>
+    <button class="btn primario" id="rc-ok" style="margin-top:16px">${st('check')} Salvar raças</button>
+  </div></div>`;
+  lock();
+  const ler=()=>{
+    const novo={};
+    document.querySelectorAll('#rc-lista .raca-row').forEach(r=>{
+      const nome=r.querySelector('[data-k=nome]').value.trim();
+      if(!nome)return;
+      novo[r.dataset.raca]={nome,st:r.querySelector('[data-k=st]').value};
+    });
+    if(!Object.keys(novo).length){toast(pets[0]||{raca:'golden'},'Deixe ao menos uma raça','A lista não pode ficar vazia.');return false}
+    cfg.racas=novo;
+    aplicarRacasSalvas();
+    return true;
+  };
+  $('#rc-add').onclick=()=>{
+    ler();
+    const k='nova'+Date.now().toString(36);
+    cfg.racas[k]={nome:'',st:'dog-golden'};
+    RACAS[k]={nome:'Nova raça',st:'dog-golden'};
+    abrirRacas();
+  };
+  $('#ov').addEventListener('click',e=>{
+    const b=e.target.closest('[data-rmraca]');
+    if(b){ler();delete cfg.racas[b.dataset.rmraca];delete RACAS[b.dataset.rmraca];abrirRacas();return}
+    if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal();
+  });
+  $('#ov').addEventListener('change',e=>{
+    const s=e.target.closest('[data-k=st]');
+    if(s){const row=s.closest('.raca-row');row.querySelector('.raca-fig').innerHTML=st(s.value)}
+  });
+  $('#rc-ok').onclick=()=>{
+    if(ler()===false)return;
+    // um nome só, mesmo que a pessoa deixe repetido, não pode virar chave vazia
+    salvarCfg();fecharModal();
+    if(typeof render==='function')render();
+    if(typeof renderPets==='function')renderPets();
+    toast(pets[0]||{raca:'golden'},'Raças salvas 🐶',Object.keys(RACAS).length+' raças disponíveis no cadastro.',true);
+  };
   document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
 }
 function abrirLogins(){
