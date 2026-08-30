@@ -558,9 +558,7 @@ body.lock{overflow:hidden}
 .rota .cid{font-size:11px;font-weight:800;border-radius:999px;padding:3px 9px;background:var(--bege-claro);border:1px solid var(--bege);color:var(--marrom);font-family:var(--body);vertical-align:middle}
 .rota .acoes{margin-left:auto;display:flex;gap:6px;align-items:center}
 .rota .tg{display:inline-flex;background:var(--bege-claro);border:1px solid var(--bege);border-radius:999px;padding:3px}
-.rota .tg button{padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;color:var(--marrom)}
-.rota .tg button.on{background:var(--verde);color:#fff}
-.rota .tg button.on.n{background:var(--vermelho);color:#fff}
+.rota .tg-usou{background:var(--verde);color:#fff;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap}
 .rota .cnt{font-family:var(--display);font-weight:600;font-size:16px;color:#D9A41E;white-space:nowrap}
 .tabela-simples{width:100%;border-collapse:separate;border-spacing:0;background:var(--creme);border:1px solid var(--bege);border-radius:16px;overflow:hidden;font-size:13px}
 .tabela-simples th{text-align:left;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#A38560;background:var(--bege-claro);padding:10px 12px}
@@ -1351,7 +1349,7 @@ a.maps-link:hover{text-decoration:underline}
 .modo-rota button.on{background:var(--amarelo-suave);border-color:var(--amarelo)}
 
 .ordem-rota{list-style:none;display:flex;flex-direction:column;gap:6px;margin:8px 0 0;padding:0;max-height:44vh;overflow:auto}
-.ordem-rota li{display:flex;align-items:center;gap:9px;background:var(--creme);border:1px solid var(--bege);border-radius:16px;padding:7px 10px}
+.ordem-rota li{display:flex;align-items:center;gap:9px;background:var(--creme);border:1px solid var(--bege);border-radius:16px;padding:7px 10px;flex:none}  /* flex:none: a lista é uma coluna com altura limitada e vinha espremendo cada parada, jogando nome, hora e botões por cima da parada de baixo */
 .ordem-rota li.vazio{display:block;text-align:center;font-size:12.5px;font-weight:700;color:#A38560;padding:16px 12px;background:var(--bege-claro);border-style:dashed}
 .ordem-rota .n{width:28px;height:28px;flex:none;border-radius:50%;background:var(--marrom-escuro);color:var(--creme);display:grid;place-items:center;font-family:var(--display);font-weight:600;font-size:14px}
 .ordem-rota .mini{width:34px;height:34px;flex:none;border-radius:50%;overflow:hidden;background:var(--amarelo-claro);display:grid;place-items:center}
@@ -1428,7 +1426,7 @@ img,svg,video,canvas{max-width:100%}
   .rota .cnt{font-size:14px}
   .ordem-rota{max-height:38vh}
   .ordem-rota li{flex-wrap:wrap;row-gap:8px}
-  .ordem-rota .info{flex:1 1 100%;order:3}
+  .ordem-rota .info{flex:1 1 0;order:0;min-width:0;width:0}   /* nome ao lado da foto: base 0 pra caber ao lado, o endereço corta com reticências */
   .ordem-rota input[type=time]{order:4;width:92px}
   .ordem-rota .mv-box{order:5;margin-left:auto}
   .etapas .btn{padding:12px 10px}
@@ -1709,8 +1707,23 @@ img,svg,video,canvas{max-width:100%}
     <span class="sub" id="sub-turma">Turma da manhã</span>
     <button class="iniciar" id="btn-iniciar"><svg class="st"><use href="#sino"/></svg> Iniciar chamada</button>
     <button class="ghost" id="btn-reiniciar" title="Zera as marcações de hoje">↻ Reiniciar chamada</button>
+    <div class="rota-nav" style="margin-left:auto">
+      <button class="seta" data-cdia="-1" aria-label="Dia anterior">‹</button>
+      <span class="dia" id="ch-data"></span>
+      <button class="seta" data-cdia="1" aria-label="Próximo dia">›</button>
+      <button class="hoje-btn" id="ch-hoje-btn">Hoje</button>
+    </div>
     <button class="add" id="btn-add" style="margin-left:0"><span style="font-size:18px;line-height:1">＋</span> Adicionar à turma</button>
   </div>
+
+  <section class="vazio" id="ch-abrir">
+    <div style="position:relative;display:inline-block">
+      <svg class="st"><use href="#dog-beagle"/></svg>
+    </div>
+    <h3>Chamada ainda não aberta</h3>
+    <p>Abra o dia pra ver a turma da creche e marcar quem chegou.</p>
+    <button class="btn primario" data-fazerchamada="1" style="margin-top:14px;max-width:280px">🔔 Fazer chamada</button>
+  </section>
 
   <div class="filtros" role="search">
     <div class="peek"><svg class="st"><use href="#dog-shihtzu"/></svg></div>
@@ -1933,7 +1946,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.0.7</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.0.8</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -4780,6 +4793,8 @@ function semearHistorico(p){
   if(p.status==='presente'){p.presencas.push(HOJE);p.chegadas[HOJE]=p.chegou}
   if(p.status==='faltou')p.faltas.push(HOJE);
 }
+let chamadaDia=null;                    // dia que a chamada está mostrando (null = hoje)
+const diaChamada=()=>chamadaDia||HOJE;
 function sincronizarHoje(p){
   p.presencas=p.presencas||[];p.faltas=p.faltas||[];p.chegadas=p.chegadas||{};
   p.plano=p.plano||'avulso';p.transporte=p.transporte||'';p.peso=p.peso||(p.porte==='P'?8:p.porte==='M'?15:28);
@@ -4787,8 +4802,11 @@ function sincronizarHoje(p){
   if(!PLANOS[p.plano])p.plano='avulso';
   if(!TRANSPORTE[p.transporte||''])p.transporte='';
   if(!p.tipos||!p.tipos.length)p.tipos=['creche'];p.obs=p.obs||'';p.endereco=p.endereco||'';p.cobrancas=p.cobrancas||{};p.transportes=p.transportes||[];p.midias=p.midias||[];if(!p.pagamentos){p.pagamentos={};if([1,3,5,8].includes(p.id))p.pagamentos[MES]=true}p.telefone=p.telefone||'';p.pagamentoDia=p.pagamentoDia||10;
-  if(p.transportes.length===0&&p.transporte&&!p._transpSemeado){p.transportes=p.presencas.filter(d=>d!==HOJE);p._transpSemeado=true}
-  p.status=p.presencas.includes(HOJE)?'presente':p.faltas.includes(HOJE)?'faltou':'pendente';
+  // quem diz que o pet andou de van é o embarque na rota. Antes, todo pet com
+  // plano de van e sem viagens ganhava todas as presenças como transporte, o que
+  // cobrava viagem que não aconteceu.
+  const _d=diaChamada();
+  p.status=p.presencas.includes(_d)?'presente':p.faltas.includes(_d)?'faltou':'pendente';
   p.chegou=p.status==='presente'?p.chegadas[HOJE]:undefined;
 }
 const doMes=(arr,ym=MES)=>arr.filter(d=>d.startsWith(ym));
@@ -4828,7 +4846,17 @@ function telDigits(t){let d=(t||'').replace(/\D/g,'');if(d&&!d.startsWith('55'))
 function telFmt(t){const d=(t||'').replace(/\D/g,'').replace(/^55/,'');return d.length>=10?`(${d.slice(0,2)}) ${d.slice(2,-4)}-${d.slice(-4)}`:(t||'')}
 const MOBILE=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
 function wa(tel,msg){const t=encodeURIComponent(msg);return `https://api.whatsapp.com/send?phone=${telDigits(tel)}&text=${t}`}
-function abrirZap(tel,msg,meta){try{navigator.clipboard?.writeText(msg)}catch(e){}if(meta)registrarMsg(Object.assign({tel},meta));window.open(wa(tel,msg),'_blank')}
+function abrirZap(tel,msg,meta){
+  try{navigator.clipboard?.writeText(msg)}catch(e){}
+  if(meta)registrarMsg(Object.assign({tel},meta));
+  abrirExterno(wa(tel,msg));
+}
+/* abre o link e fecha a aba que fica em branco depois que o app assume */
+function abrirExterno(url){
+  const w=window.open(url,'_blank');
+  if(w){setTimeout(()=>{try{if(!w.closed)w.close()}catch(e){}},2500);return w}
+  location.href=url;   // se o navegador bloqueou a aba, vai direto
+}
 const primeiroNome=n=>{const w=(n||'').trim().split(/\s+/)[0]||'';return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()}
 const ICO_ZAP='<svg class="st" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.4 2 11.8c0 1.9.5 3.6 1.5 5.2L2 22l5.2-1.4c1.5.8 3.1 1.2 4.8 1.2 5.5 0 10-4.4 10-9.9S17.5 2 12 2zm4.6 13.9c-.2.6-1.2 1.1-1.7 1.2-.4.1-1 .1-1.6-.1-.4-.2-.9-.3-1.5-.6-2.7-1.1-4.4-3.7-4.5-3.9-.2-.2-1.1-1.4-1.1-2.7s.7-1.9.9-2.2c.2-.2.5-.3.7-.3h.5c.2 0 .4-.1.6.4l.8 1.9c.1.1.1.3 0 .5-.1.2-.2.3-.3.5l-.4.5c-.1.1-.2.2-.1.5.2.2.7 1 1.4 1.7.9.8 1.7 1.1 2 1.2.2.1.4.1.5-.1.1-.2.6-.7.8-1 .2-.2.4-.2.6-.1.2.1 1.4.7 1.7.8.3.1.5.1.6.4 0 .1 0 .6-.2 1.2z"/></svg>';
 function msgMidia(p){return tpl('foto',varsPet(p))}
@@ -4962,6 +4990,7 @@ function trocarAba(v,manterPosicao){
   if(v==='inicio')renderInicio();if(v==='hotel')renderHotel();if(v==='transporte')renderTransporte();if(v==='financeiro')renderFinanceiro();if(v==='mensagens')renderMensagens();if(v==='gestao'){renderPainel();renderGestao()}if(v==='pets')renderPets();if(v==='fintransp')renderFinTransp();if(v==='boletim')renderBoletim();
   // sobe na hora. o 'instant' e necessario porque o CSS tem html{scroll-behavior:smooth},
   // que fazia cada troca de aba esperar meio segundo de rolagem animada
+  if(v!=='creche'&&chamadaDia&&chamadaDia!==HOJE){chamadaDia=null;pets.forEach(p=>{try{sincronizarHoje(p)}catch(e){}})}
   if(!manterPosicao){try{window.scrollTo({top:0,behavior:'instant'})}catch(e){window.scrollTo(0,0)}}
 }
 /* ====== inicialização ====== */
@@ -4980,6 +5009,8 @@ function iniciar(){
   $('#data-hoje').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
 
 document.addEventListener('click',e=>{
+  const zl=e.target.closest('a[href*="whatsapp.com"]');
+  if(zl&&zl.target==='_blank'){e.preventDefault();abrirExterno(zl.href);return}
   const g=(a)=>e.target.closest(`[data-${a}]`);
   let b;
   if(b=g('menu')){e.stopPropagation();abrirMenu(+b.dataset.menu,b);return}
@@ -4990,8 +5021,6 @@ document.addEventListener('click',e=>{
   if(b=g('reativar')){reativar(+b.dataset.reativar);return}
   if(b=g('perfil')){fecharMenu();abrirPerfil(+b.dataset.perfil);return}
   if(b=g('cobrar')){fecharMenu();abrirCobrancaCreche(+b.dataset.cobrar,b.dataset.ym);return}
-  if(b=g('trusou')){const p=pets.find(x=>x.id===+b.dataset.trusou);const d=rotaDia;if(!p.transportes.includes(d))p.transportes.push(d);if(!p.presencas.includes(d)){p.presencas.push(d);p.chegadas[d]=d===HOJE?horaAgora():p.previsto;p.faltas=p.faltas.filter(x=>x!==d)}sincronizarHoje(p);render();renderTransporte();return}
-  if(b=g('trnao')){const p=pets.find(x=>x.id===+b.dataset.trnao);p.transportes=p.transportes.filter(x=>x!==rotaDia);render();renderTransporte();return}
   if(b=g('rdia')){rotaDia=dAdd(rotaDia,+b.dataset.rdia);renderTransporte();return}
   if(b=g('rsel')){rotaDia=b.dataset.rsel;renderTransporte();return}
   if(b=g('rrm')){delete rotas[rotaDia];salvarRotas();renderTransporte();return}
@@ -5004,6 +5033,8 @@ document.addEventListener('click',e=>{
   if(b=g('view')){trocarAba(b.dataset.view);if(b.dataset.iniciar)setTimeout(iniciarChamada,150);return}
   if(b=g('acao')){novaAcao(b.dataset.acao);return}
   if(b=g('maisviews')){abrirMaisViews();return}
+  if(b=g('cdia')){irParaDiaChamada(dAddS(diaChamada(),+b.dataset.cdia));return}
+  if(b=g('fazerchamada')){const o=opDia(diaChamada());o.chamadaFeita=true;salvarOps();render();return}
   if(b=g('fechamais')){const m=$('#fab-menu');if(m)m.remove();return}
   if(b=g('painel')){const m=$('#fab-menu');if(m)m.remove();abrirRecepcao();return}
   if(b=g('sair')){sair();return}
@@ -5069,6 +5100,7 @@ document.addEventListener('change',e=>{const m=e.target.closest('#tf-mes');if(m)
 $('#eu').onclick=()=>confirmar({titulo:`Sair da conta de ${usuario.nome}?`,texto:'O sistema volta pra tela de escolha de usuário. Os dados ficam salvos.',botao:'Sair',onOk:sair});$('#ge-mes').onchange=e=>{gesMes=e.target.value;renderGestao()};
 $('#btn-rota').onclick=()=>abrirRota(rotaDia);
 $('#tr-hoje-btn').onclick=()=>{rotaDia=HOJE;renderTransporte()};
+$('#ch-hoje-btn').onclick=()=>irParaDiaChamada(HOJE);
 $('#btn-cfg').onclick=abrirConfig;
 $('#btn-reiniciar').onclick=reiniciarChamada;
 $('#chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;
@@ -5272,8 +5304,41 @@ function abrirConfig(){
 <script>
 /* Pet Farm · chamada.js — chamada diária, cards, perfil e calendário */
 /* ====== render ====== */
+/* ---- a chamada anda por data, igual à rota do transporte ---- */
+function irParaDiaChamada(d){
+  chamadaDia=(d===HOJE)?null:d;
+  pets.forEach(p=>{try{sincronizarHoje(p)}catch(e){}});
+  sequencia=null;
+  render();
+}
+function chamadaFeita(d){
+  d=d||diaChamada();
+  if((ops[d]||{}).chamadaFeita)return true;
+  // dia antigo que já tem marcação abre direto: o histórico não some da tela
+  return pets.some(p=>p.presencas.includes(d)||p.faltas.includes(d));
+}
+function pintarDiaChamada(){
+  const d=diaChamada(), el=$('#ch-data');
+  if(el)el.textContent=d===HOJE?'Hoje':d===dAddS(HOJE,-1)?'Ontem':d===dAddS(HOJE,1)?'Amanhã'
+    :new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  const bh=$('#ch-hoje-btn');if(bh)bh.classList.toggle('hidden',d===HOJE);
+}
 function render(){
   salvar();
+  pintarDiaChamada();
+  const D=diaChamada(), feita=chamadaFeita(D);
+  // enquanto a chamada do dia não for aberta, a lista fica limpa
+  document.querySelectorAll('#view-creche .filtros, #view-creche #grid, #view-creche #fechamento, #view-creche #cancelados').forEach(el=>el.classList.toggle('hidden',!feita));
+  const cx=$('#ch-abrir');
+  if(cx)cx.classList.toggle('hidden',feita);
+  if(!feita){
+    $('#n-ag').textContent=0;$('#n-pr').textContent=0;$('#n-fa').textContent=0;
+    $('#saudacao').textContent=D===HOJE?'Vamos começar a chamada de hoje? 🐾':'Chamada de '+fmtData(D)+' 🐾';
+    $('#resumo').textContent='Toque em "Fazer chamada" pra abrir o dia e ver a turma.';
+    $('#vazio').classList.add('hidden');
+    ['#btn-iniciar','#btn-reiniciar'].forEach(s=>{const e=$(s);if(e)e.classList.add('hidden')});
+    return;
+  }
   const pe=ativos().filter(p=>p.status==='pendente').length;
   const pr=ativos().filter(p=>p.status==='presente').length;
   const fa=ativos().filter(p=>p.status==='faltou').length;
@@ -5445,9 +5510,10 @@ function fecharModal(){$('#modais').innerHTML='';document.body.classList.remove(
 function lock(){document.body.classList.add('lock')}
 
 function marcar(p,status){
-  p.presencas=p.presencas.filter(d=>d!==HOJE);p.faltas=p.faltas.filter(d=>d!==HOJE);delete p.chegadas[HOJE];
-  p.transportes=p.transportes.filter(d=>d!==HOJE);
-  if(status==='presente'){p.presencas.push(HOJE);p.chegadas[HOJE]=horaAgora();if($('#md-transp-chk')&&$('#md-transp-chk').checked)p.transportes.push(HOJE)}else p.faltas.push(HOJE);
+  const D=diaChamada();
+  p.presencas=p.presencas.filter(d=>d!==D);p.faltas=p.faltas.filter(d=>d!==D);delete p.chegadas[D];
+  p.transportes=p.transportes.filter(d=>d!==D);
+  if(status==='presente'){p.presencas.push(D);p.chegadas[D]=D===HOJE?horaAgora():(p.previsto||'08:00');if($('#md-transp-chk')&&$('#md-transp-chk').checked)p.transportes.push(D)}else p.faltas.push(D);
   const lt=$('#md-transp');if(lt)lt.remove();
   sincronizarHoje(p);registrarChamada();
   const md=$('#md');md.classList.add(status==='presente'?'ok':'falta');
@@ -6441,7 +6507,7 @@ function mapsRotaLinks(ends){
   while(i<pts.length-1){
     const fim=Math.min(i+MAX+1,pts.length-1);
     const wps=pts.slice(i+1,fim);
-    links.push(`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pts[i])}&destination=${encodeURIComponent(pts[fim])}&travelmode=driving${wps.length?`&waypoints=${wps.map(encodeURIComponent).join('|')}`:''}`);
+    links.push(`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(pts[i])}&destination=${encodeURIComponent(pts[fim])}&travelmode=driving${wps.length?`&waypoints=${wps.map(encodeURIComponent).join('|')}`:''}&dir_action=navigate`);
     i=fim;
   }
   return links;
@@ -6484,8 +6550,9 @@ function rotaDe(d){
     const modo=r.ordem||'manual';
     return {...r,stops:modo==='auto'?ordenarParadas(stops):stops,ordem:modo,auto:false};
   }
-  const dow=new Date(d+'T12:00:00').getDay();if(dow===0)return {stops:[],auto:true,ordem:'auto'};
-  return {stops:ordenarParadas(ativos().filter(p=>p.transporte||p.transportes.includes(d)).map(p=>({petId:p.id,hora:p.previsto}))),auto:true,ordem:'auto'};
+  // sem rota montada o dia fica limpo: a rota só existe depois que a pessoa
+  // monta em "Montar rota". Antes o sistema inventava uma sozinho todo dia.
+  return {stops:[],auto:true,ordem:'manual',vazia:true};
 }
 /* próxima parada pendente (destaque na lista durante a rota) */
 function proximaParada(d){
@@ -6528,7 +6595,7 @@ function renderTransporte(){
       <div class="acoes">
         ${manual&&!emExec?`<span class="mover"><button class="mv" data-rup="${i}" aria-label="Subir na ordem" ${i===0?'disabled':''}>↑</button><button class="mv" data-rdn="${i}" aria-label="Descer na ordem" ${i===stops.length-1?'disabled':''}>↓</button></span>`:''}
         <span class="cnt" title="Viagens em ${nomeMes}">${resumoMes(p).transpVezes}x no mês</span>
-        ${emExec?`<span class="exec">${pe.embarcou?`<span class="feito">✓ Embarcou às ${pe.embarcou}</span>`:pe.cheguei?`<button class="btn-mini" data-rembarcou="${p.id}">🐶 Pet embarcou</button>`:pe.acaminho?`<button class="btn-mini cinza" data-rcheguei="${p.id}">📍 Cheguei</button>`:`<button class="btn-mini zapbtn" data-racaminho="${p.id}">🚐 Estou a caminho</button>`}${p.endereco&&!pe.embarcou?`<a class="btn-mini maps2" href="${mapsUrl(p.endereco)}" target="_blank" rel="noopener">🗺 Navegar</a>`:''}</span>`:d<=HOJE?`<span class="tg"><button class="${usou?'on':''}" data-trusou="${p.id}">🚐 Usou</button><button class="${!usou&&p.presencas.includes(d)?'on n':''}" data-trnao="${p.id}">Não usou</button></span>`:''}
+        ${emExec?`<span class="exec">${pe.embarcou?`<span class="feito">✓ Embarcou às ${pe.embarcou}</span>`:pe.cheguei?`<button class="btn-mini" data-rembarcou="${p.id}">🐶 Pet embarcou</button>`:pe.acaminho?`<button class="btn-mini cinza" data-rcheguei="${p.id}">📍 Cheguei</button>`:`<button class="btn-mini zapbtn" data-racaminho="${p.id}">🚐 Estou a caminho</button>`}${p.endereco&&!pe.embarcou?`<a class="btn-mini maps2" href="${mapsUrl(p.endereco)}" target="_blank" rel="noopener">🗺 Navegar</a>`:''}</span>`:usou?`<span class="tg-usou">🚐 Usou a van</span>`:''}
       </div>
     </li>`};
   $('#tr-rota').innerHTML=stops.length
