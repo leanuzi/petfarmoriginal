@@ -711,6 +711,33 @@ table.fat tr.desc td{color:var(--verde-txt)}
 .ciclo-n .r b{color:#2F5BA8}
 .ciclo-n .m b{color:#B4552E}
 .ciclo-n .v b{color:var(--verde-txt)}
+/* ===== retornar clientes: no celular a linha empilha em vez de espremer ===== */
+@media (max-width:760px){
+  .pend.lista-p li{flex-wrap:wrap;row-gap:8px;align-items:flex-start}
+  .pend.lista-p li>div{flex:1 1 calc(100% - 56px);min-width:0}
+  .pend.lista-p li .btn-mini{flex:none;margin-left:56px}
+  .pend.lista-p li b{font-size:16px}
+  .pend.lista-p li span{white-space:normal}
+}
+/* ===== cobrança ===== */
+.cob-lista{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.cob{display:flex;align-items:center;gap:10px;background:var(--creme);border:1px solid var(--bege);border-left-width:4px;border-radius:14px;padding:9px 12px}
+.cob.atrasado{border-left-color:var(--vermelho)}
+.cob.pago{border-left-color:var(--verde)}
+.cob.aberto{border-left-color:var(--amarelo)}
+.cob .mini{width:38px;height:38px;flex:none;border-radius:50%;overflow:hidden;background:var(--amarelo-claro);display:grid;place-items:center}
+.cob .mini img{width:100%;height:100%;object-fit:cover}.cob .mini .st{width:30px;height:30px}
+.cob-i{flex:1 1 120px;min-width:0}
+.cob-i b{display:block;font-family:var(--display);font-weight:600;font-size:16px;color:var(--marrom-escuro);line-height:1.15}
+.cob-i span{display:block;font-size:11.5px;font-weight:700;color:#8C7355;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cob-v{font-family:var(--display);font-weight:600;font-size:17px;color:var(--marrom-escuro);flex:none}
+.cob-vazio{text-align:center;font-size:13px;font-weight:700;color:#A38560;padding:16px;background:var(--bege-claro);border:1px dashed var(--bege);border-radius:14px}
+@media (max-width:760px){
+  .cob{flex-wrap:wrap;row-gap:8px}
+  .cob-i{flex:1 1 calc(100% - 50px)}
+  .cob-v{margin-left:48px}
+  .cob .btn-mini{margin-left:auto}
+}
 /* ===== escolha da unidade (tela inicial) ===== */
 .unidades{position:fixed;inset:0;z-index:120;background:var(--creme);display:grid;place-items:center;padding:24px;overflow:auto}
 .un-caixa{width:min(920px,100%)}
@@ -1829,6 +1856,19 @@ img,svg,video,canvas{max-width:100%}
   </div>
 
   <!-- ===================== FINANCEIRO ===================== -->
+  <!-- ===================== COBRANÇA ===================== -->
+  <div id="view-cobranca" class="hidden">
+    <div class="sec-head" style="margin-top:0">
+      <h2><svg class="st"><use href="#dog-collie"/></svg> Cobrança</h2>
+      <select id="cb-mes" style="margin-left:auto;background:var(--creme);border:1px solid var(--bege);border-radius:999px;padding:9px 14px;font-weight:800;font-size:13px;color:var(--marrom)"></select>
+    </div>
+    <div class="stats fi-kpis" id="cb-kpis"></div>
+    <section class="hsec"><h3><svg class="st"><use href="#dog-beagle"/></svg> A vencer <span class="n" id="cb-n1">0</span></h3><ul class="cob-lista" id="cb-avencer"></ul></section>
+    <section class="hsec"><h3><svg class="st"><use href="#dog-bulldog"/></svg> Vencidos <span class="n" id="cb-n2">0</span></h3><ul class="cob-lista" id="cb-vencidos"></ul></section>
+    <section class="hsec"><h3><svg class="st"><use href="#dog-golden"/></svg> Pagos <span class="n" id="cb-n3">0</span></h3><ul class="cob-lista" id="cb-pagos"></ul></section>
+    <section class="hsec"><h3><svg class="st"><use href="#dog-dormindo"/></svg> Inadimplência</h3><table class="tabela-simples" id="cb-inad"></table></section>
+  </div>
+
   <div id="view-financeiro" class="hidden">
     <div class="sec-head" style="margin-top:0">
       <h2><svg class="st"><use href="#dog-labrador"/></svg> Financeiro</h2>
@@ -1839,7 +1879,6 @@ img,svg,video,canvas{max-width:100%}
       <section class="hsec"><h3><svg class="st"><use href="#dog-golden"/></svg> Receita por cliente</h3><table class="tabela-simples" id="fi-clientes"></table></section>
       <section class="hsec"><h3><svg class="st"><use href="#dog-poodle"/></svg> Receita por serviço</h3><div class="servs" id="fi-servicos"></div></section>
     </div>
-    <section class="hsec"><h3><svg class="st"><use href="#dog-bulldog"/></svg> Inadimplência</h3><table class="tabela-simples" id="fi-inad"></table></section>
   </div>
 
   <!-- ===================== MENSAGENS ===================== -->
@@ -1962,7 +2001,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.1.2</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.2.0</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -5066,12 +5105,12 @@ function renderInicio(){
 function avisarRenovacao(id){const p=pets.find(x=>x.id===id);const rn=renovacao(p);if(!p.telefone){abrirEditar(id);return}p.log=p.log||[];p.log.push({d:HOJE,h:horaAgora(),ico:'🗓',txt:'Aviso de renovação enviado'});abrirZap(p.telefone,tpl('renovacao',Object.assign(varsPet(p),{vindas:rn.vindas,meta:rn.meta,data:fmtData(rn.data)})),{tipo:'renovacao',pet:p.nome,petId:p.id,via:zapDe(cfg.zapCobranca).nome,tel:p.telefone});salvar()}
 function avisarFrequencia(id){const p=pets.find(x=>x.id===id);if(!p.telefone){abrirEditar(id);return}p.crm=p.crm||{contatos:[]};p.crm.ultimo=HOJE;p.crm.contatos.push({d:HOJE,tipo:'frequencia'});abrirZap(p.telefone,tpl('frequencia',varsPet(p)),{tipo:'frequencia',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});salvar()}
 /* ====== abas ====== */
-const VIEWS=['inicio','creche','pets','hotel','transporte','financeiro','fintransp','boletim','mensagens','gestao'];
+const VIEWS=['inicio','creche','pets','hotel','transporte','cobranca','financeiro','fintransp','boletim','mensagens','gestao'];
 function trocarAba(v,manterPosicao){
   if(usuario&&!podeVer(v))v=viewsPermitidas()[0];
   document.querySelectorAll('.nav [data-view], .tabbar [data-view]').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
   VIEWS.forEach(x=>{const el=$('#view-'+x);if(el)el.classList.toggle('hidden',x!==v)});
-  if(v==='inicio')renderInicio();if(v==='hotel')renderHotel();if(v==='transporte')renderTransporte();if(v==='financeiro')renderFinanceiro();if(v==='mensagens')renderMensagens();if(v==='gestao'){renderPainel();renderGestao()}if(v==='pets')renderPets();if(v==='fintransp')renderFinTransp();if(v==='boletim')renderBoletim();
+  if(v==='inicio')renderInicio();if(v==='cobranca')renderCobranca();if(v==='hotel')renderHotel();if(v==='transporte')renderTransporte();if(v==='financeiro')renderFinanceiro();if(v==='mensagens')renderMensagens();if(v==='gestao'){renderPainel();renderGestao()}if(v==='pets')renderPets();if(v==='fintransp')renderFinTransp();if(v==='boletim')renderBoletim();
   // sobe na hora. o 'instant' e necessario porque o CSS tem html{scroll-behavior:smooth},
   // que fazia cada troca de aba esperar meio segundo de rolagem animada
   if(v!=='creche'&&chamadaDia&&chamadaDia!==HOJE){chamadaDia=null;pets.forEach(p=>{try{sincronizarHoje(p)}catch(e){}})}
@@ -5183,7 +5222,7 @@ document.addEventListener('change',e=>{
   if(e.target.id==='bo-tia'){const p=pets.find(x=>x.id===boPet);if(p){boletimDe(p,boMes).tia=e.target.value;salvar()}}});
 document.addEventListener('input',e=>{if(e.target.id==='bo-coment'){const p=pets.find(x=>x.id===boPet);if(p){boletimDe(p,boMes).comentario=e.target.value;clearTimeout(_tp);_tp=setTimeout(salvar,400)}}});
 document.addEventListener('change',e=>{const m=e.target.closest('#tf-mes');if(m){tfMes=m.value;renderTransporteFin()}const h=e.target.closest('#hc-mes');if(h){hcMes=h.value;renderHotelCal()}});
-$('#eu').onclick=()=>confirmar({titulo:`Sair da conta de ${usuario.nome}?`,texto:'O sistema volta pra tela de escolha de usuário. Os dados ficam salvos.',botao:'Sair',onOk:sair});$('#ge-mes').onchange=e=>{gesMes=e.target.value;renderGestao()};
+$('#eu').onclick=()=>confirmar({titulo:`Sair da conta de ${usuario.nome}?`,texto:'O sistema volta pra tela de escolha de usuário. Os dados ficam salvos.',botao:'Sair',onOk:sair});$('#ge-mes').onchange=e=>{gesMes=e.target.value;renderGestao()};$('#cb-mes').onchange=e=>{cobMes=e.target.value;renderCobranca()};
 $('#btn-rota').onclick=()=>abrirRota(rotaDia);
 $('#tr-hoje-btn').onclick=()=>{rotaDia=HOJE;renderTransporte()};
 $('#ch-hoje-btn').onclick=()=>irParaDiaChamada(HOJE);
@@ -5615,8 +5654,9 @@ function render(){
 
 function blocoPagamento(p){
   const pago=!!p.pagamentos[MES];const dia=p.pagamentoDia;const hojeDia=new Date().getDate();
-  const cls=pago?'':(hojeDia>dia?'atrasado':'aberto');
-  const txt=pago?`✓ ${nomeMes} pago`:(hojeDia>dia?`⚠ Venceu dia ${dia}`:`Vence dia ${dia}`);
+  const jaVence=mesCobravel(MES)&&hojeDia>dia;      // nada vence antes de a Pet Farm começar a cobrar pelo sistema
+  const cls=pago?'':(jaVence?'atrasado':'aberto');
+  const txt=pago?`✓ ${nomeMes} pago`:(jaVence?`⚠ Venceu dia ${dia}`:`Vence dia ${dia}`);
   return `<div class="pag ${cls}"><span>💳 ${txt}</span><button data-cobrar="${p.id}">${pago?'ver fatura':'cobrar'}</button></div>`;
 }
 function blocoMidia(p){
@@ -7194,7 +7234,7 @@ function financeiroResumo(ym){
   const creche=pets.filter(p=>p.ativo!==false||doMes(p.presencas,ym).length).map(p=>({p,m:resumoMes(p,ym),pago:!!p.pagamentos[ym]}));
   const aReceber=creche.filter(x=>!x.pago).reduce((a,x)=>a+x.m.total,0);
   const recebido=creche.filter(x=>x.pago).reduce((a,x)=>a+x.m.total,0);
-  const atrasoL=creche.filter(x=>!x.pago&&x.m.total>0&&(!mesAtual||hojeDia>x.p.pagamentoDia));
+  const atrasoL=creche.filter(x=>!x.pago&&x.m.total>0&&mesCobravel(ym)&&(!mesAtual||hojeDia>x.p.pagamentoDia));
   const atraso=atrasoL.reduce((a,x)=>a+x.m.total,0);
   const previsao=creche.reduce((a,x)=>a+x.m.total,0);
   const hotelL=reservas.filter(r=>r.status!=='reservado'&&r.status!=='cancelado'&&(r.checkout||'').startsWith(ym)).map(r=>({r,c:contaHotel(r)}));
@@ -7211,6 +7251,48 @@ function financeiroResumo(ym){
   };
   return {creche,aReceber,recebido,atraso,atrasoL,previsao,hotel,hotelRecebido,hotelAberto,hotelL,hotelSolto,transporte,porServico,total:previsao+hotelSolto.reduce((a,x)=>a+x.c.total,0)};
 }
+/* ---- Cobrança: a vencer, vencidos e pagos, separado do Financeiro ---- */
+let cobMes=null;
+function renderCobranca(){
+  const ym=cobMes||MES;
+  const sel=$('#cb-mes');
+  if(sel&&!sel.dataset.pronto){
+    const meses=[];for(let i=0;i<6;i++)meses.push(ymAdd(MES,-i));
+    sel.innerHTML=meses.map(m=>`<option value="${m}">${ymNome(m)}</option>`).join('');
+    sel.dataset.pronto='1';
+  }
+  if(sel)sel.value=ym;
+  const f=financeiroResumo(ym);
+  const hojeDia=new Date().getDate(), mesAtual=ym===MES;
+  const venceu=x=>mesCobravel(ym)&&(!mesAtual||hojeDia>x.p.pagamentoDia);
+  const comValor=f.creche.filter(x=>x.m.total>0);
+  const pagos=comValor.filter(x=>x.pago);
+  const vencidos=comValor.filter(x=>!x.pago&&venceu(x));
+  const aVencer=comValor.filter(x=>!x.pago&&!venceu(x));
+  const soma=l=>l.reduce((a,x)=>a+x.m.total,0);
+  $('#cb-kpis').innerHTML=`
+    <div class="stat ag"><b>${brl(soma(aVencer))}</b><span>A vencer</span></div>
+    <div class="stat fa"><b>${brl(soma(vencidos))}</b><span>Vencidos</span></div>
+    <div class="stat pr"><b>${brl(soma(pagos))}</b><span>Recebido</span></div>`;
+  const linha=(x,tipo)=>`<li class="cob ${tipo}">
+      <span class="mini">${avatar(x.p)}</span>
+      <div class="cob-i"><b>${x.p.nome}</b><span>${x.p.tutor}${x.p.telefone?' · '+telFmt(x.p.telefone):''} · vence dia ${x.p.pagamentoDia}</span></div>
+      <b class="cob-v">${brl(x.m.total)}</b>
+      <button class="btn-mini" data-cobrar="${x.p.id}" data-ym="${ym}">${x.pago?'ver':'cobrar'}</button>
+    </li>`;
+  const põe=(id,lista,tipo,vazio)=>{
+    $(id).innerHTML=lista.length?lista.sort((a,b)=>a.p.pagamentoDia-b.p.pagamentoDia).map(x=>linha(x,tipo)).join('')
+      :`<li class="cob-vazio">${vazio}</li>`;
+  };
+  põe('#cb-avencer',aVencer,'aberto','Ninguém com pagamento em aberto por aqui. 🐾');
+  põe('#cb-vencidos',vencidos,'atrasado','Nenhum vencido. Tudo em dia! 💛');
+  põe('#cb-pagos',pagos,'pago','Ainda ninguém pagou este mês.');
+  $('#cb-n1').textContent=aVencer.length;$('#cb-n2').textContent=vencidos.length;$('#cb-n3').textContent=pagos.length;
+  $('#cb-inad').innerHTML=`<tr><th>Cliente</th><th class="r">Valor</th><th>Vence</th><th>Contato</th></tr>`+
+    (f.atrasoL.length?f.atrasoL.sort((a,b)=>b.m.total-a.m.total).map(x=>
+      `<tr><td><b>${x.p.nome}</b><small style="display:block;color:#A38560">${x.p.tutor}</small></td><td class="r">${brl(x.m.total)}</td><td>dia ${x.p.pagamentoDia}</td><td>${x.p.telefone?telFmt(x.p.telefone):'—'}</td></tr>`).join('')
+      :`<tr><td colspan="4" style="text-align:center;color:#A38560;font-weight:700;padding:14px">Ninguém inadimplente. 🎉</td></tr>`);
+}
 let finMes=null;
 function renderFinanceiro(){
   finMes=finMes||MES;const f=financeiroResumo(finMes);const hojeDia=new Date().getDate();
@@ -7225,10 +7307,9 @@ function renderFinanceiro(){
   const porCliente=f.creche.map(x=>({nome:x.p.nome,tutor:x.p.tutor,creche:x.m.total-x.m.valorHotel+(x.m.abatimento?0:0),hotel:f.hotelL.filter(h=>h.r.petId===x.p.id).reduce((a,h)=>a+(h.r.naFatura?h.c.restante:h.c.total),0),junto:x.m.hosp.length>0,pago:x.pago,venc:x.p.pagamentoDia,id:x.p.id}));
   f.hotelSolto.filter(h=>!h.r.petId).forEach(h=>porCliente.push({nome:h.r.nome+' (visitante)',tutor:h.r.tutor,creche:0,hotel:h.c.total,pago:h.r.pago,venc:null,rid:h.r.id}));
   porCliente.sort((a,b)=>(b.creche+b.hotel)-(a.creche+a.hotel));
-  $('#fi-clientes').innerHTML=`<tr><th>Cliente</th><th class="r">Creche</th><th class="r">Hotel</th><th class="r">Total</th><th>Status</th><th></th></tr>`+porCliente.map(c=>`<tr><td><b>${c.nome}</b><br><small style="color:#A38560">${c.tutor}</small></td><td class="r">${c.creche?brl(c.creche):'—'}</td><td class="r">${c.hotel?brl(c.hotel)+(c.junto?'<br><small style="color:var(--verde-txt)">na fatura</small>':''):'—'}</td><td class="r"><b>${brl(c.creche+c.hotel)}</b></td><td>${c.pago?'<span class="st-pag pago">✓ pago</span>':(c.venc&&finMes===MES&&hojeDia>c.venc)||finMes<MES?'<span class="st-pag aberto" style="background:var(--vermelho-bg);color:var(--vermelho-txt)">vencido</span>':'<span class="st-pag aberto" style="background:var(--amarelo-claro)">em aberto</span>'}</td><td>${c.id?`<button class="btn-mini" data-cobrar="${c.id}" data-ym="${finMes}">${c.pago?'Fatura':'Cobrar'}</button>`:`<button class="btn-mini" data-fatura="${c.rid}">Fatura</button>`}</td></tr>`).join('')+`<tr class="tot"><td>Total</td><td class="r">${brl(f.previsao-f.creche.reduce((a,x)=>a+x.m.valorHotel,0))}</td><td class="r">${brl(f.hotel)}</td><td class="r">${brl(f.previsao+f.hotelSolto.reduce((a,x)=>a+x.c.total,0))}</td><td colspan="2"></td></tr>`;
+  $('#fi-clientes').innerHTML=`<tr><th>Cliente</th><th class="r">Creche</th><th class="r">Hotel</th><th class="r">Total</th><th>Status</th></tr>`+porCliente.map(c=>`<tr><td><b>${c.nome}</b><br><small style="color:#A38560">${c.tutor}</small></td><td class="r">${c.creche?brl(c.creche):'—'}</td><td class="r">${c.hotel?brl(c.hotel)+(c.junto?'<br><small style="color:var(--verde-txt)">na fatura</small>':''):'—'}</td><td class="r"><b>${brl(c.creche+c.hotel)}</b></td><td>${c.pago?'<span class="st-pag pago">✓ pago</span>':(c.venc&&finMes===MES&&hojeDia>c.venc)||finMes<MES?'<span class="st-pag aberto" style="background:var(--vermelho-bg);color:var(--vermelho-txt)">vencido</span>':'<span class="st-pag aberto" style="background:var(--amarelo-claro)">em aberto</span>'}</td></tr>`).join('')+`<tr class="tot"><td>Total</td><td class="r">${brl(f.previsao-f.creche.reduce((a,x)=>a+x.m.valorHotel,0))}</td><td class="r">${brl(f.hotel)}</td><td class="r">${brl(f.previsao+f.hotelSolto.reduce((a,x)=>a+x.c.total,0))}</td><td colspan="2"></td></tr>`;
   const tot=Object.values(f.porServico).reduce((a,b)=>a+b,0)||1;
   $('#fi-servicos').innerHTML=Object.entries(f.porServico).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="serv"><div class="serv-h"><span>${k}</span><b>${brl(v)} <small>${Math.round(v/tot*100)}%</small></b></div><div class="barra"><i style="width:${v/tot*100}%"></i></div></div>`).join('')||'<div class="nada">Sem receita neste mês.</div>';
-  $('#fi-inad').innerHTML=f.atrasoL.length?`<tr><th>Cliente</th><th>Venceu</th><th class="r">Dias</th><th class="r">Valor</th><th></th></tr>`+f.atrasoL.map(x=>{const dias=finMes===MES?hojeDia-x.p.pagamentoDia:Math.round((new Date(HOJE+'T12:00:00')-new Date(finMes+'-'+pad(x.p.pagamentoDia)+'T12:00:00'))/86400000);return `<tr><td><b>${x.p.nome}</b> · ${x.p.tutor}${x.p.telefone?'':' ⚠ sem WhatsApp'}</td><td>dia ${x.p.pagamentoDia}</td><td class="r">${dias}</td><td class="r"><b>${brl(x.m.total)}</b></td><td><button class="btn-mini" data-cobrar="${x.p.id}" data-ym="${finMes}">💳 Cobrar</button></td></tr>`}).join('')+`<tr class="tot"><td colspan="3">Total em atraso</td><td class="r">${brl(f.atraso)}</td><td></td></tr>`:'<tr><td style="text-align:center;color:var(--verde-txt);font-weight:800">Nenhum pagamento em atraso 🎉</td></tr>';
 }
 
 </script>
@@ -7245,8 +7326,21 @@ function tpl(k,vars){
 }
 const varsPet=p=>({tutor:primeiroNome(p.tutor),pet:p.nome,hora:p.previsto||''});
 /* CRM — clientes sumindo */
-function diasSemVir(p){const ult=[...p.presencas].sort().pop();if(!ult)return null;return Math.round((new Date(HOJE+'T12:00:00')-new Date(ult+'T12:00:00'))/86400000)}
-function faixaInativo(d){return d>=60?{k:60,txt:'60+ dias sem vir',acao:'Marcar inativo',cor:'r'}:d>=30?{k:30,txt:'30 dias sem vir',acao:'Enviar oferta',cor:'r'}:d>=14?{k:14,txt:'14 dias sem vir',acao:'Mensagem de saudade',cor:'l'}:d>=7?{k:7,txt:'7 dias sem vir',acao:'Mensagem de saudade',cor:'a'}:null}
+function diasSemVir(p){
+  const dias=[...(p.presencas||[])];
+  // quem esteve no hotel não está sumido: conta a última saída também
+  try{(reservas||[]).forEach(r=>{if(r.petId===p.id&&r.status!=='cancelado'&&r.checkout)dias.push(r.checkout)})}catch(e){}
+  const ult=dias.sort().pop();
+  if(!ult)return null;
+  return Math.round((new Date(HOJE+'T12:00:00')-new Date(ult+'T12:00:00'))/86400000);
+}
+function faixaInativo(d){
+  // só some da creche quem passou de 15 dias: antes já entrava com 7
+  return d>=60?{k:60,txt:'60+ dias sem vir',acao:'Marcar inativo',cor:'r'}
+    :d>=30?{k:30,txt:'30 dias sem vir',acao:'Enviar oferta',cor:'r'}
+    :d>=15?{k:15,txt:d+' dias sem vir',acao:'Mensagem de saudade',cor:'l'}
+    :null;
+}
 function inativos(){return pets.filter(p=>!(p.crm&&p.crm.inativo)).map(p=>({p,d:diasSemVir(p)})).filter(x=>x.d!==null&&x.p.status!=='presente').map(x=>({...x,f:faixaInativo(x.d)})).filter(x=>x.f).sort((a,b)=>b.d-a.d)}
 function acaoCrm(id,etapa){
   const p=pets.find(x=>x.id===id);p.crm=p.crm||{contatos:[]};
@@ -8202,8 +8296,8 @@ function abrirAgendaDia(d){
 <script>
 /* Pet Farm · auth.js — logins, perfis de acesso e permissões */
 const PERFIS={
-  master:{nome:'Dona / Master',desc:'Acesso total, cria e edita logins',views:['inicio','creche','pets','hotel','transporte','financeiro','boletim','mensagens','gestao'],pode:['financeiro','config','equipe','descontos','cadastro']},
-  gestor:{nome:'Gerente',desc:'Tudo, menos criar logins',views:['inicio','creche','pets','hotel','transporte','financeiro','boletim','mensagens','gestao'],pode:['financeiro','descontos','cadastro']},
+  master:{nome:'Dona / Master',desc:'Acesso total, cria e edita logins',views:['inicio','creche','pets','hotel','transporte','cobranca','financeiro','boletim','mensagens','gestao'],pode:['financeiro','config','equipe','descontos','cadastro']},
+  gestor:{nome:'Gerente',desc:'Tudo, menos criar logins',views:['inicio','creche','pets','hotel','transporte','cobranca','financeiro','boletim','mensagens','gestao'],pode:['financeiro','descontos','cadastro']},
   recepcao:{nome:'Recepção',desc:'Chamada, hotel, transporte e mensagens',views:['inicio','creche','pets','hotel','transporte','boletim','mensagens'],pode:['cadastro']},
   motorista:{nome:'Motorista',desc:'Rota do transporte + o próprio fechamento. Só este acesso vê o financeiro do transporte',views:['transporte','fintransp'],pode:['meu_pagamento']},
 };
@@ -8320,7 +8414,7 @@ function iniciarAuth(){
   if(u&&s.em&&Date.now()-s.em<validade)iniciarSessao(u);else telaLogin();
 }
 /* ---- nav dinâmica (topo + barra de baixo no celular) ---- */
-const VIEW_INFO={inicio:['🏠','Início'],creche:['🔔','Chamada'],pets:['🐾','Pets'],hotel:['🏡','Hotel'],transporte:['🚐','Transporte'],financeiro:['💳','Financeiro'],fintransp:['💰','Fin. Transporte'],boletim:['📚','Boletim'],mensagens:['💬','Mensagens'],gestao:['📊','Painel']};
+const VIEW_INFO={inicio:['🏠','Início'],creche:['🔔','Chamada'],pets:['🐾','Pets'],hotel:['🏡','Hotel'],transporte:['🚐','Transporte'],cobranca:['🧾','Cobrança'],financeiro:['💳','Financeiro'],fintransp:['💰','Fin. Transporte'],boletim:['📚','Boletim'],mensagens:['💬','Mensagens'],gestao:['📊','Painel']};
 function montarNav(){
   const vs=viewsPermitidas();
   $('#nav').innerHTML=vs.map(v=>`<button data-view="${v}">${VIEW_INFO[v][1]}</button>`).join('')+(podeVer('creche')?'<button data-painel="1">📺 TV</button>':'');
