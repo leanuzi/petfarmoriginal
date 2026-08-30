@@ -710,6 +710,8 @@ table.fat tr.desc td{color:var(--verde-txt)}
 .ciclo-n b{font-family:var(--display);font-weight:600;font-size:22px;color:var(--marrom-escuro);line-height:1}
 .ciclo-n .f b{color:var(--vermelho-txt)}
 .ciclo-n .r b{color:#2F5BA8}
+.ciclo-n .m b{color:#B4552E}
+.ciclo-n .v b{color:var(--verde-txt)}
 /* ===== escolha da unidade (tela inicial) ===== */
 .unidades{position:fixed;inset:0;z-index:120;background:var(--creme);display:grid;place-items:center;padding:24px;overflow:auto}
 .un-caixa{width:min(920px,100%)}
@@ -1961,7 +1963,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.0.9</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.1.0</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -4843,17 +4845,22 @@ const noCiclo=(arr,c)=>(arr||[]).filter(d=>d>=c.inicio&&d<=c.fim).length;
 function resumoCiclo(p,ref){
   const c=cicloDe(p,ref), pl=PLANOS[p.plano]||{};
   const vezes=temValorCombinado(p)?0:(pl.vezes||0);
-  const esperadas=vezes?Math.round(vezes*c.dias/7):0;
+  // mesma conta que a fatura usa pra cobrar extras (vezes por semana × 4),
+  // senão o bloco diria "pacote fechado" e a fatura cobraria dia a mais
+  const esperadas=vezes?vezes*4:0;
   const vindas=noCiclo(p.presencas,c), faltas=noCiclo(p.faltas,c);
   // enquanto o ciclo está correndo, só conta o que já passou: senão um pacote
   // que começou ontem já apareceria com o mês inteiro "pra repor"
   const ate=c.fim<HOJE?c.fim:HOJE;
   const corridos=Math.max(0,Math.round((new Date(ate+'T12:00:00')-new Date(c.inicio+'T12:00:00'))/86400000)+1);
   const emAndamento=c.fim>=HOJE;
-  const jaDevia=vezes?Math.round(vezes*Math.min(corridos,c.dias)/7):0;
+  const jaDevia=vezes?Math.min(esperadas,Math.round(vezes*Math.min(corridos,c.dias)/7)):0;
   const aRepor=vezes?Math.max(0,jaDevia-vindas):0;
-  return {...c,esperadas,vindas,faltas,aRepor,jaDevia,emAndamento,pago:!!p.pagamentos[c.chave],
-    transpVezes:noCiclo(p.transportes,c)};
+  const faltamNoPacote=vezes?Math.max(0,esperadas-vindas):0;   // pra fechar o pacote do ciclo
+  const aMais=vezes?Math.max(0,vindas-esperadas):0;            // veio além do pacote
+  const diaExtra=p.peso<=10?AVULSO.ate10:AVULSO.acima10;
+  return {...c,esperadas,vindas,faltas,aRepor,faltamNoPacote,aMais,valorAMais:aMais*diaExtra,diaExtra,
+    jaDevia,emAndamento,pago:!!p.pagamentos[c.chave],transpVezes:noCiclo(p.transportes,c)};
 }
 const fmtCurto=d=>{const [y,m,dd]=d.split('-');return dd+'/'+m};
 function resumoMes(p,ym=MES){
@@ -4923,6 +4930,27 @@ function pendentes(){return ativos().filter(p=>p.status==='pendente').sort((a,b)
 
 
 /* ====== leitura de foto (celular e PC) ====== */
+/* ---- fotos ficam no Storage do Supabase, não dentro do cadastro ----
+   O cadastro guarda só o endereço da foto, então a turma inteira fica leve
+   (era ~40 KB por pet). Sem internet, a foto continua sendo guardada junto
+   do cadastro como antes: nada deixa de funcionar offline. */
+async function subirFoto(dataUrl){
+  const cli=(typeof nuvemCliente==='function')?nuvemCliente():null;
+  if(!cli||!nuvemOk||!/^data:image\//.test(dataUrl||''))throw new Error('sem nuvem');
+  const bin=atob(dataUrl.split(',')[1]);
+  const arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+  const nome='pet-'+Date.now().toString(36)+Math.random().toString(36).slice(2,8)+'.jpg';
+  const {error}=await cli.storage.from('fotos').upload(nome,new Blob([arr],{type:'image/jpeg'}),{contentType:'image/jpeg',cacheControl:'31536000'});
+  if(error)throw error;
+  const {data}=cli.storage.from('fotos').getPublicUrl(nome);
+  if(!data||!data.publicUrl)throw new Error('sem endereço');
+  return data.publicUrl;
+}
+/* devolve o endereço da foto na nuvem; se não der, devolve a própria imagem */
+function guardarFoto(dataUrl,cb){
+  subirFoto(dataUrl).then(url=>cb(url,true)).catch(()=>cb(dataUrl,false));
+}
 function lerFoto(file,tam,cb){
   if(!file)return;
   if(!/^image\//.test(file.type)&&!/\.(heic|heif|jpe?g|png|webp)$/i.test(file.name)){toast(pets[0]||{raca:'golden'},'Arquivo não é imagem','Escolha uma foto (JPG, PNG ou HEIC).');return}
@@ -5312,6 +5340,8 @@ function abrirConfig(){
       ${pode('config')?`<div class="cfg-h">🐶 Raças <button class="btn-mini" id="cf-racas" type="button">Cadastrar raças</button></div>`:''}
       ${pode('config')?`<div class="cfg-h">🔒 Logins <button class="btn-mini" id="cf-logins" type="button">Gerenciar acessos</button></div>`:''}
       <div class="cfg-h">💾 Backup <span style="font-size:11px;font-weight:700;color:#A38560">exporte de vez em quando e guarde o arquivo</span></div>
+      ${pode('config')?`<div class="cfg-h">📸 Fotos <span style="font-size:11px;font-weight:700;color:#A38560">tira as fotos de dentro do cadastro e deixa o sistema mais leve</span></div>
+      <div class="row2"><button class="btn-mini" id="cf-fotos" type="button">☁️ Mandar fotos pra nuvem</button><span></span></div>`:''}
       <div class="row2"><button class="btn-mini" id="cf-exp" type="button">⬇ Exportar backup (.json)</button><label class="btn-mini cinza" style="justify-content:center">⬆ Importar backup<input type="file" id="cf-imp" accept="application/json" style="display:none"></label></div>
       ${pode('config')?`<div class="cfg-h">🧹 Começar do zero</div>
       <div class="zona-perigo">
@@ -5343,6 +5373,7 @@ function abrirConfig(){
   const bl=$('#cf-logins');if(bl)bl.onclick=abrirLogins;const bp=$('#cf-precos');if(bp)bp.onclick=abrirPrecos;const bcb=$('#cf-comb');if(bcb)bcb.onclick=abrirCombustivel;const bmo=$('#cf-mot');if(bmo)bmo.onclick=abrirCfgMotorista;
   $('#cf-exp').onclick=exportarBackup;$('#cf-imp').onchange=e=>importarBackup(e.target.files[0]);
   const bz=$('#cf-zerar');if(bz)bz.onclick=abrirZerar;
+  const bf=$('#cf-fotos');if(bf)bf.onclick=migrarFotosParaNuvem;
   $('#cf-addpix').onclick=()=>{ler();cfg.pix.push({id:Date.now(),nome:'',chave:'',tipo:'email',banco:''});abrirConfig()};
   $('#cf-addzap').onclick=()=>{ler();cfg.zaps.push({id:Date.now(),nome:'',numero:''});abrirConfig()};
   $('#ov').addEventListener('click',e=>{const a=e.target.closest('[data-rmpix]');const b=e.target.closest('[data-rmzap]');
@@ -5418,9 +5449,20 @@ function abrirMontarChamada(){
   });
   $('#mc-todos').onclick=()=>{sel=new Set(todos.map(p=>p.id));pinta()};
   $('#mc-ok').onclick=()=>{
-    o.turma=[...sel];o.chamadaFeita=true;salvarOps();
+    const D=diaChamada();
+    ativos().forEach(p=>{
+      p.faltas=(p.faltas||[]).filter(x=>x!==D);      // falta não existe mais na chamada
+      if(sel.has(p.id)){
+        if(!p.presencas.includes(D)){p.presencas.push(D);p.chegadas[D]=D===HOJE?horaAgora():(p.previsto||'08:00')}
+      }else{
+        p.presencas=p.presencas.filter(x=>x!==D);    // não veio: fica sem marcação nenhuma
+        delete p.chegadas[D];
+      }
+      try{sincronizarHoje(p)}catch(e){}
+    });
+    o.turma=[...sel];o.chamadaFeita=true;salvarOps();salvar();
     fecharModal();render();
-    toast(pets[0]||{raca:'golden'},'Chamada aberta 🔔',sel.size+(sel.size===1?' aumigo na lista do dia.':' aumigos na lista do dia.'),true);
+    toast(pets[0]||{raca:'golden'},'Chamada feita 🔔',sel.size+(sel.size===1?' aumigo marcado como presente hoje.':' aumigos marcados como presentes hoje.'),true);
   };
   $('#ov').addEventListener('click',e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()});
   document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
@@ -5707,7 +5749,10 @@ function abrirEntrada(){
   lock();
   $('#ov').addEventListener('change',e=>{const c=e.target.closest('[data-tipo]');if(c)c.closest('label').classList.toggle('on',c.checked)});
   let fotoNova=null;
-  $('#f-file').onchange=e=>{lerFoto(e.target.files[0],320,d=>{fotoNova=d;$('#f-prev').innerHTML=`<img src="${d}" alt="">`});e.target.value=''};
+  $('#f-file').onchange=e=>{lerFoto(e.target.files[0],320,d=>{
+    fotoNova=d;$('#f-prev').innerHTML=`<img src="${d}" alt="">`;      // mostra na hora
+    guardarFoto(d,url=>{fotoNova=url});                                  // e sobe por trás
+  });e.target.value=''};
   $('#f-prev').onclick=()=>$('#f-file').click();
   $('#f-raca').onchange=()=>{if(!fotoNova)$('#f-prev').innerHTML=st(RACAS[$('#f-raca').value].st)};
   $('#f-ok').onclick=()=>{
@@ -5895,7 +5940,10 @@ function abrirEditar(id){
   lock();
   let novaFoto=p.foto||null, removeu=false;
   $('#ov').addEventListener('change',e=>{const c=e.target.closest('[data-tipo]');if(c)c.closest('label').classList.toggle('on',c.checked)});
-  $('#e-file').onchange=e=>{lerFoto(e.target.files[0],320,d=>{novaFoto=d;removeu=false;$('#e-prev').innerHTML=`<img src="${d}" alt="">`});e.target.value=''};
+  $('#e-file').onchange=e=>{lerFoto(e.target.files[0],320,d=>{
+    novaFoto=d;removeu=false;$('#e-prev').innerHTML=`<img src="${d}" alt="">`;
+    guardarFoto(d,url=>{if(!removeu)novaFoto=url});
+  });e.target.value=''};
   $('#e-prev').onclick=()=>$('#e-file').click();
   const sf=$('#e-semfoto');if(sf)sf.onclick=()=>{novaFoto=null;removeu=true;$('#e-prev').innerHTML=st(RACAS[$('#e-raca').value].st)};
   $('#e-raca').onchange=()=>{if(!novaFoto)$('#e-prev').innerHTML=st(RACAS[$('#e-raca').value].st)};
@@ -5992,9 +6040,7 @@ function abrirPerfil(id,ym){
       ${(()=>{const rc=resumoCiclo(p);return rc.esperadas?`<div class="ciclo-box">
         <div class="ciclo-h"><b>🔄 Pacote de ${fmtCurto(rc.inicio)} a ${fmtCurto(rc.fim)}</b><span>${rc.pago?'pago ✓':'renova no dia '+rc.dia}</span></div>
         <div class="ciclo-n">
-          <span><b>${rc.vindas}</b>de ${rc.esperadas} vindas</span>
-          <span class="f"><b>${rc.faltas}</b>${rc.faltas===1?'falta':'faltas'}</span>
-          <span class="r"><b>${rc.aRepor}</b>${rc.aRepor===1?'dia pra repor':'dias pra repor'}</span>
+          <span><b>${rc.vindas}</b>de ${rc.esperadas} vindas</span>${rc.faltamNoPacote?`<span class="r"><b>${rc.faltamNoPacote}</b>${rc.faltamNoPacote===1?'dia pra fechar o pacote':'dias pra fechar o pacote'}</span>`:''}${rc.aMais?`<span class="m"><b>${rc.aMais}</b>${rc.aMais===1?'dia a mais':'dias a mais'} · ${brl(rc.valorAMais)}</span>`:''}${!rc.faltamNoPacote&&!rc.aMais?`<span class="v"><b>✓</b>pacote fechadinho</span>`:''}
         </div>
       </div>`:''})()}
       <div class="kpis">
@@ -6242,7 +6288,7 @@ function abrirReserva(id,diaSugerido){
   $('#r-pert').addEventListener('input',e=>{const i=e.target.closest('[data-pnome]');if(i){const it=pert.find(x=>x.id===+i.dataset.pnome);if(it)it.nome=i.value}});
   $('#r-pert').addEventListener('change',e=>{
     const f=e.target.closest('[data-pfoto]');if(!f||!f.files[0])return;
-    const it=pert.find(x=>x.id===+f.dataset.pfoto);lerFoto(f.files[0],400,d=>{it.foto=d;renderPert()});f.value='';
+    const it=pert.find(x=>x.id===+f.dataset.pfoto);lerFoto(f.files[0],400,d=>{it.foto=d;renderPert();guardarFoto(d,url=>{it.foto=url;renderPert()})});f.value='';
   });
   const prev=()=>{
     const tmp=ler(false);if(!tmp)return;
@@ -7080,7 +7126,7 @@ function abrirCobrancaCreche(id,ym){
       <div class="sub">${PLANOS[p.plano].nome}${resumoMes(p,ym).hosp.length?` + ${resumoMes(p,ym).hosp.length} ${resumoMes(p,ym).hosp.length===1?'hospedagem':'hospedagens'} 🏡`:''} · tutor ${p.tutor}${p.telefone?` · ${telFmt(p.telefone)}`:''} · vence dia ${p.pagamentoDia}${cob.enviada?` · cobrança enviada ${fmtData(cob.enviada)}`:''}</div>
       ${(()=>{const rc=resumoCiclo(p);return rc.esperadas?`<div class="ciclo-box">
         <div class="ciclo-h"><b>🔄 Pacote de ${fmtCurto(rc.inicio)} a ${fmtCurto(rc.fim)}</b><span>renova quando pagar</span></div>
-        <div class="ciclo-n"><span><b>${rc.vindas}</b>de ${rc.esperadas} vindas</span><span class="f"><b>${rc.faltas}</b>${rc.faltas===1?'falta':'faltas'}</span><span class="r"><b>${rc.aRepor}</b>${rc.aRepor===1?'dia pra repor':'dias pra repor'}</span></div>
+        <div class="ciclo-n"><span><b>${rc.vindas}</b>de ${rc.esperadas} vindas</span>${rc.faltamNoPacote?`<span class="r"><b>${rc.faltamNoPacote}</b>${rc.faltamNoPacote===1?'dia pra fechar o pacote':'dias pra fechar o pacote'}</span>`:''}${rc.aMais?`<span class="m"><b>${rc.aMais}</b>${rc.aMais===1?'dia a mais':'dias a mais'} · ${brl(rc.valorAMais)}</span>`:''}${!rc.faltamNoPacote&&!rc.aMais?`<span class="v"><b>✓</b>pacote fechadinho</span>`:''}</div>
       </div>`:''})()}
       <table class="fat">
         <tr><th>Item</th><th class="r">Qtd</th><th class="r">Valor</th><th class="r">Total</th></tr>
@@ -7226,6 +7272,22 @@ function importarBackup(file){
 }
 
 /* ---- começar do zero: apaga o movimento, mantém logins, preços e ajustes ---- */
+/* ---- manda pra nuvem as fotos que ficaram guardadas dentro do cadastro ---- */
+async function migrarFotosParaNuvem(){
+  const alvo=pets.filter(p=>/^data:image\//.test(p.foto||''));
+  if(!alvo.length){toast(pets[0]||{raca:'golden'},'Nada pra mandar 👍','As fotos já estão todas na nuvem.',true);return}
+  if(!nuvemOk){toast(pets[0]||{raca:'golden'},'Sem conexão com a nuvem','Conecte e tente de novo.');return}
+  const bt=$('#cf-fotos');if(bt){bt.disabled=true;bt.textContent='Enviando…'}
+  let ok=0,falhou=0;
+  for(const p of alvo){
+    try{p.foto=await subirFoto(p.foto);ok++}catch(e){falhou++}
+    if(bt)bt.textContent=`Enviando… ${ok+falhou} de ${alvo.length}`;
+  }
+  if(ok)salvar();
+  if(bt){bt.disabled=false;bt.textContent='☁️ Mandar fotos pra nuvem'}
+  toast(pets[0]||{raca:'golden'},'Fotos enviadas 📸',
+    ok+(ok===1?' foto foi':' fotos foram')+' pra nuvem'+(falhou?' · '+falhou+' não deu':'')+'. O cadastro ficou bem mais leve.',!falhou);
+}
 function abrirZerar(){
   if(!pode('config')){toast(pets[0]||{raca:'golden'},'Sem permissão','Só o acesso master pode zerar o sistema.');return}
   $('#modais').innerHTML=`
