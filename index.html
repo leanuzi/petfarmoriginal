@@ -1962,7 +1962,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.1.1</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.1.2</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -6784,7 +6784,6 @@ function renderTransporte(){
       </div>
       <div class="acoes">
         ${manual&&!emExec?`<span class="mover"><button class="mv" data-rup="${i}" aria-label="Subir na ordem" ${i===0?'disabled':''}>↑</button><button class="mv" data-rdn="${i}" aria-label="Descer na ordem" ${i===stops.length-1?'disabled':''}>↓</button></span>`:''}
-        <span class="cnt" title="Viagens em ${nomeMes}">${resumoMes(p).transpVezes}x no mês</span>
         ${emExec?`<span class="exec">${pe.embarcou?`<span class="feito">✓ Embarcou às ${pe.embarcou}</span>`:pe.cheguei?`<button class="btn-mini" data-rembarcou="${p.id}">🐶 Pet embarcou</button>`:pe.acaminho?`<button class="btn-mini cinza" data-rcheguei="${p.id}">📍 Cheguei</button>`:`<button class="btn-mini zapbtn" data-racaminho="${p.id}">🚐 Estou a caminho</button>`}${p.endereco&&!pe.embarcou?`<a class="btn-mini maps2" href="${mapsUrl(p.endereco)}" target="_blank" rel="noopener">🗺 Navegar</a>`:''}</span>`:''}
       </div>
     </li>`};
