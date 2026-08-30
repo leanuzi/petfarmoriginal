@@ -2,7 +2,7 @@
    - deixa o app instalável no celular (ícone na tela inicial)
    - guarda a tela pra abrir mesmo sem internet
    - NUNCA guarda chamadas do Supabase: dados sempre frescos */
-const VERSAO = 'petfarm-v1';
+const VERSAO = 'petfarm-v2';
 const ESSENCIAL = ['./', './index.html'];
 
 self.addEventListener('install', e => {
@@ -26,6 +26,18 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;                      // salvamentos vão direto pra rede
 
   const url = new URL(req.url);
+  // as fotos dos pets ficam guardadas: o nome do arquivo nunca se repete,
+  // então dá pra servir do cache e elas aparecem mesmo sem internet
+  if (url.pathname.includes('/storage/v1/object/public/fotos/')) {
+    e.respondWith(
+      caches.match(req).then(hit => hit || fetch(req).then(r => {
+        if (r && r.status === 200) { const copia = r.clone(); caches.open(VERSAO).then(c => c.put(req, copia)).catch(() => {}); }
+        return r;
+      }))
+    );
+    return;
+  }
+
   // Supabase (dados e login) nunca é guardado
   if (url.hostname.endsWith('.supabase.co')) return;
 
