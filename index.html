@@ -700,6 +700,16 @@ table.fat tr.desc td{color:var(--verde-txt)}
 .kv div b{color:var(--marrom-escuro);text-align:right}
 .sit{font-size:11px;font-weight:800;border-radius:999px;padding:3px 9px;white-space:nowrap}
 .sit.s-v{background:var(--verde-bg);color:var(--verde-txt)}.sit.s-a{background:var(--amarelo-suave);color:var(--marrom)}.sit.s-l{background:#FFF1DC;color:#9A6212}.sit.s-r{background:var(--vermelho-bg);color:var(--vermelho-txt)}
+/* ===== ciclo do pacote (renova no pagamento) ===== */
+.ciclo-box{background:var(--amarelo-suave);border:1px solid var(--amarelo);border-radius:16px;padding:12px 14px;margin-top:14px}
+.ciclo-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:space-between}
+.ciclo-h b{font-size:14px;font-weight:800;color:var(--marrom-escuro)}
+.ciclo-h span{font-size:12px;font-weight:800;color:#A38560}
+.ciclo-n{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+.ciclo-n span{font-size:12px;font-weight:800;color:#8C7355;display:flex;align-items:baseline;gap:5px}
+.ciclo-n b{font-family:var(--display);font-weight:600;font-size:22px;color:var(--marrom-escuro);line-height:1}
+.ciclo-n .f b{color:var(--vermelho-txt)}
+.ciclo-n .r b{color:#2F5BA8}
 /* ===== escolha da unidade (tela inicial) ===== */
 .unidades{position:fixed;inset:0;z-index:120;background:var(--creme);display:grid;place-items:center;padding:24px;overflow:auto}
 .un-caixa{width:min(920px,100%)}
@@ -1426,7 +1436,11 @@ img,svg,video,canvas{max-width:100%}
   .rota .cnt{font-size:14px}
   .ordem-rota{max-height:38vh}
   .ordem-rota li{flex-wrap:wrap;row-gap:8px}
-  .ordem-rota .info{flex:1 1 0;order:0;min-width:0;width:0}   /* nome ao lado da foto: base 0 pra caber ao lado, o endereço corta com reticências */
+  .ordem-rota .info{flex:1 1 140px;min-width:140px;order:0}   /* largura mínima: com base 0 o nome quebrava letra por letra */
+  .ordem-rota .info b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ordem-rota li{padding:6px 8px;gap:7px}
+  .ordem-rota .info>span{display:none}          /* endereço já aparece na rota e na lista de baixo */
+  .ordem-rota li{row-gap:6px}
   .ordem-rota input[type=time]{order:4;width:92px}
   .ordem-rota .mv-box{order:5;margin-left:auto}
   .etapas .btn{padding:12px 10px}
@@ -1706,6 +1720,7 @@ img,svg,video,canvas{max-width:100%}
     <h2><svg class="st"><use href="#dog-beagle"/></svg> Chamada dos Aumigos</h2>
     <span class="sub" id="sub-turma">Turma da manhã</span>
     <button class="iniciar" id="btn-iniciar"><svg class="st"><use href="#sino"/></svg> Iniciar chamada</button>
+    <button class="ghost" id="btn-turma" data-editarturma="1" title="Escolher quem está na creche">👥 Quem está hoje</button>
     <button class="ghost" id="btn-reiniciar" title="Zera as marcações de hoje">↻ Reiniciar chamada</button>
     <div class="rota-nav" style="margin-left:auto">
       <button class="seta" data-cdia="-1" aria-label="Dia anterior">‹</button>
@@ -1721,7 +1736,7 @@ img,svg,video,canvas{max-width:100%}
       <svg class="st"><use href="#dog-beagle"/></svg>
     </div>
     <h3>Chamada ainda não aberta</h3>
-    <p>Abra o dia pra ver a turma da creche e marcar quem chegou.</p>
+    <p>Escolha quem está na creche hoje e a lista do dia é montada.</p>
     <button class="btn primario" data-fazerchamada="1" style="margin-top:14px;max-width:280px">🔔 Fazer chamada</button>
   </section>
 
@@ -1946,7 +1961,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.0.8</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.0.9</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -4801,7 +4816,7 @@ function sincronizarHoje(p){
   if(!RACAS[p.raca])p.raca=Object.keys(RACAS)[0]||'golden';   // raça apagada não derruba a tela
   if(!PLANOS[p.plano])p.plano='avulso';
   if(!TRANSPORTE[p.transporte||''])p.transporte='';
-  if(!p.tipos||!p.tipos.length)p.tipos=['creche'];p.obs=p.obs||'';p.endereco=p.endereco||'';p.cobrancas=p.cobrancas||{};p.transportes=p.transportes||[];p.midias=p.midias||[];if(!p.pagamentos){p.pagamentos={};if([1,3,5,8].includes(p.id))p.pagamentos[MES]=true}p.telefone=p.telefone||'';p.pagamentoDia=p.pagamentoDia||10;
+  if(!p.tipos||!p.tipos.length)p.tipos=['creche'];p.obs=p.obs||'';p.endereco=p.endereco||'';p.cobrancas=p.cobrancas||{};p.transportes=p.transportes||[];p.midias=p.midias||[];if(!p.pagamentos)p.pagamentos={};p.telefone=p.telefone||'';p.pagamentoDia=p.pagamentoDia||10;
   // quem diz que o pet andou de van é o embarque na rota. Antes, todo pet com
   // plano de van e sem viagens ganhava todas as presenças como transporte, o que
   // cobrava viagem que não aconteceu.
@@ -4810,6 +4825,37 @@ function sincronizarHoje(p){
   p.chegou=p.status==='presente'?p.chegadas[HOJE]:undefined;
 }
 const doMes=(arr,ym=MES)=>arr.filter(d=>d.startsWith(ym));
+/* ---- ciclo do pacote: vai de um vencimento ao outro, não do dia 1 ao 30 ----
+   O plano renova quando o cliente paga, e o vencimento é o dia cadastrado
+   no pet. Se o vencimento é dia 10, o ciclo vai de 10/09 a 09/10. */
+function cicloDe(p,ref){
+  ref=ref||HOJE;
+  const D=Math.min(28,Math.max(1,p.pagamentoDia||10));   // 28 pra não sumir em fevereiro
+  const [Y,M,DD]=ref.split('-').map(Number);
+  const ini=new Date(Y,(DD<D?M-2:M-1),D,12);
+  const fim=new Date(ini);fim.setMonth(fim.getMonth()+1);fim.setDate(fim.getDate()-1);
+  const dias=Math.round((fim-ini)/86400000)+1;
+  return {inicio:isoLocal(ini),fim:isoLocal(fim),dia:D,dias,chave:'c'+isoLocal(ini)};
+}
+const cicloAnterior=(p,ref)=>cicloDe(p,dAddS(cicloDe(p,ref).inicio,-1));
+const noCiclo=(arr,c)=>(arr||[]).filter(d=>d>=c.inicio&&d<=c.fim).length;
+/* quanto o pacote dá no ciclo, quanto ele usou e quanto sobrou pra repor */
+function resumoCiclo(p,ref){
+  const c=cicloDe(p,ref), pl=PLANOS[p.plano]||{};
+  const vezes=temValorCombinado(p)?0:(pl.vezes||0);
+  const esperadas=vezes?Math.round(vezes*c.dias/7):0;
+  const vindas=noCiclo(p.presencas,c), faltas=noCiclo(p.faltas,c);
+  // enquanto o ciclo está correndo, só conta o que já passou: senão um pacote
+  // que começou ontem já apareceria com o mês inteiro "pra repor"
+  const ate=c.fim<HOJE?c.fim:HOJE;
+  const corridos=Math.max(0,Math.round((new Date(ate+'T12:00:00')-new Date(c.inicio+'T12:00:00'))/86400000)+1);
+  const emAndamento=c.fim>=HOJE;
+  const jaDevia=vezes?Math.round(vezes*Math.min(corridos,c.dias)/7):0;
+  const aRepor=vezes?Math.max(0,jaDevia-vindas):0;
+  return {...c,esperadas,vindas,faltas,aRepor,jaDevia,emAndamento,pago:!!p.pagamentos[c.chave],
+    transpVezes:noCiclo(p.transportes,c)};
+}
+const fmtCurto=d=>{const [y,m,dd]=d.split('-');return dd+'/'+m};
 function resumoMes(p,ym=MES){
   const vindas=doMes(p.presencas,ym).length, faltas=doMes(p.faltas,ym).length;
   const pl=PLANOS[p.plano];
@@ -4846,6 +4892,12 @@ function telDigits(t){let d=(t||'').replace(/\D/g,'');if(d&&!d.startsWith('55'))
 function telFmt(t){const d=(t||'').replace(/\D/g,'').replace(/^55/,'');return d.length>=10?`(${d.slice(0,2)}) ${d.slice(2,-4)}-${d.slice(-4)}`:(t||'')}
 const MOBILE=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
 function wa(tel,msg){const t=encodeURIComponent(msg);return `https://api.whatsapp.com/send?phone=${telDigits(tel)}&text=${t}`}
+/* o tutor pode ter um número só pro transporte (quem entrega o pet na porta
+   costuma não ser quem paga). Sem o segundo, tudo vai pro principal. */
+function zapDoPet(p,assunto){
+  if(!p)return '';
+  return (assunto==='transporte'&&p.telefoneTransporte)?p.telefoneTransporte:(p.telefone||'');
+}
 function abrirZap(tel,msg,meta){
   try{navigator.clipboard?.writeText(msg)}catch(e){}
   if(meta)registrarMsg(Object.assign({tel},meta));
@@ -5034,7 +5086,8 @@ document.addEventListener('click',e=>{
   if(b=g('acao')){novaAcao(b.dataset.acao);return}
   if(b=g('maisviews')){abrirMaisViews();return}
   if(b=g('cdia')){irParaDiaChamada(dAddS(diaChamada(),+b.dataset.cdia));return}
-  if(b=g('fazerchamada')){const o=opDia(diaChamada());o.chamadaFeita=true;salvarOps();render();return}
+  if(b=g('fazerchamada')){abrirMontarChamada();return}
+  if(b=g('editarturma')){abrirMontarChamada();return}
   if(b=g('fechamais')){const m=$('#fab-menu');if(m)m.remove();return}
   if(b=g('painel')){const m=$('#fab-menu');if(m)m.remove();abrirRecepcao();return}
   if(b=g('sair')){sair();return}
@@ -5323,6 +5376,55 @@ function pintarDiaChamada(){
     :new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
   const bh=$('#ch-hoje-btn');if(bh)bh.classList.toggle('hidden',d===HOJE);
 }
+/* ---- montar a chamada do dia: escolher quem está na creche ---- */
+function naChamada(){
+  const t=(ops[diaChamada()]||{}).turma;
+  const base=ativos();
+  return Array.isArray(t)?base.filter(p=>t.indexOf(p.id)>=0):base;
+}
+function abrirMontarChamada(){
+  const D=diaChamada();
+  const o=opDia(D);
+  const todos=ativos().slice().sort((a,b)=>a.nome.localeCompare(b.nome));
+  let sel=new Set(Array.isArray(o.turma)?o.turma:todos.map(p=>p.id));
+  const nomeDia=D===HOJE?'de hoje':D===dAddS(HOJE,-1)?'de ontem':'de '+fmtData(D);
+  const pinta=()=>{
+    $('#mc-lista').innerHTML=todos.map(p=>`<button type="button" class="add-pet ${sel.has(p.id)?'on':''}" data-mc="${p.id}">
+      <span class="mais">${sel.has(p.id)?'✓':'＋'}</span><span class="mini">${avatar(p)}</span>
+      <span class="info-p"><b>${p.nome}</b><span>${nomePlano(p)}${p.previsto?' · chega '+p.previsto:''}</span></span></button>`).join('');
+    $('#mc-cont').textContent=`· ${sel.size} de ${todos.length} na creche`;
+    $('#mc-ok').disabled=sel.size===0;
+  };
+  $('#modais').innerHTML=`
+  <div class="overlay" id="ov"><div class="modal form" role="dialog" aria-labelledby="mc-t">
+    <button class="fechar" data-fechar aria-label="Fechar">✕</button>
+    <h2 id="mc-t">${st('dog-beagle')} Chamada ${nomeDia} 🐾</h2>
+    <div class="nota" style="font-size:12px;font-weight:700;color:#A38560">Toque pra tirar quem não vem. Quem ficar marcado entra na lista do dia.</div>
+    <div class="campo" style="margin-top:10px">
+      <label>Quem está na creche <small style="font-weight:700;color:#A38560" id="mc-cont"></small></label>
+      <div class="pet-sel escolher" id="mc-lista"></div>
+    </div>
+    <div class="duplo" style="max-width:none;margin-top:14px">
+      <button class="btn cinza" id="mc-todos">Marcar todos</button>
+      <button class="btn primario" id="mc-ok">${st('check')} Fazer chamada</button>
+    </div>
+  </div></div>`;
+  lock();pinta();
+  $('#mc-lista').addEventListener('click',e=>{
+    const b=e.target.closest('[data-mc]');if(!b)return;
+    const id=+b.dataset.mc;
+    if(sel.has(id))sel.delete(id);else sel.add(id);
+    pinta();
+  });
+  $('#mc-todos').onclick=()=>{sel=new Set(todos.map(p=>p.id));pinta()};
+  $('#mc-ok').onclick=()=>{
+    o.turma=[...sel];o.chamadaFeita=true;salvarOps();
+    fecharModal();render();
+    toast(pets[0]||{raca:'golden'},'Chamada aberta 🔔',sel.size+(sel.size===1?' aumigo na lista do dia.':' aumigos na lista do dia.'),true);
+  };
+  $('#ov').addEventListener('click',e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()});
+  document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
+}
 function render(){
   salvar();
   pintarDiaChamada();
@@ -5336,18 +5438,20 @@ function render(){
     $('#saudacao').textContent=D===HOJE?'Vamos começar a chamada de hoje? 🐾':'Chamada de '+fmtData(D)+' 🐾';
     $('#resumo').textContent='Toque em "Fazer chamada" pra abrir o dia e ver a turma.';
     $('#vazio').classList.add('hidden');
-    ['#btn-iniciar','#btn-reiniciar'].forEach(s=>{const e=$(s);if(e)e.classList.add('hidden')});
+    ['#btn-iniciar','#btn-reiniciar','#btn-turma'].forEach(s=>{const e=$(s);if(e)e.classList.add('hidden')});
     return;
   }
-  const pe=ativos().filter(p=>p.status==='pendente').length;
-  const pr=ativos().filter(p=>p.status==='presente').length;
-  const fa=ativos().filter(p=>p.status==='faltou').length;
+  const bt=$('#btn-turma');
+  if(bt){bt.classList.remove('hidden');const t=(ops[D]||{}).turma;bt.textContent='👥 Quem está hoje'+(Array.isArray(t)?' ('+t.length+')':'')}
+  const pe=naChamada().filter(p=>p.status==='pendente').length;
+  const pr=naChamada().filter(p=>p.status==='presente').length;
+  const fa=naChamada().filter(p=>p.status==='faltou').length;
   $('#n-ag').textContent=pe;$('#n-pr').textContent=pr;$('#n-fa').textContent=fa;
   $('#saudacao').textContent = pe===0 ? 'Uhuu! Chamada concluída! 🐶💛' : `${saudacao()}! Vamos fazer a chamada dos aumigos? 🐾`;
   $('#resumo').textContent = pe===0
     ? `${pr} ${pr===1?'aumigo presente':'aumigos presentes'} hoje` + (fa?` · ${fa} ${fa===1?'falta':'faltas'}`:' · ninguém faltou!') + '.'
     : `${pe} ${pe===1?'aumigo ainda sem presença marcada':'aumigos ainda sem presença marcada'}` + (pr?` · ${pr} já ${pr===1?'chegou':'chegaram'}`:'') + (fa?` · ${fa} ${fa===1?'falta':'faltas'}`:'') + '.';
-  const semMidia=ativos().filter(p=>p.status==='presente'&&!p.midias.includes(HOJE)).length;
+  const semMidia=naChamada().filter(p=>p.status==='presente'&&!p.midias.includes(HOJE)).length;
   if(semMidia&&pe>0)$('#resumo').textContent+=` 📸 ${semMidia} ainda sem foto/vídeo enviado.`;
   const semTel=ativos().filter(p=>!p.telefone).length;
   $('#notif-badge').textContent=semMidia+semTel;$('#notif-badge').classList.toggle('hidden',semMidia+semTel===0);
@@ -5356,7 +5460,7 @@ function render(){
   $('#btn-reiniciar').classList.toggle('hidden',pr+fa===0);
 
   const b=busca.trim().toLowerCase();
-  const lista=ativos().filter(p=>(filtro==='todos'||p.status===filtro)
+  const lista=naChamada().filter(p=>(filtro==='todos'||p.status===filtro)
     &&(!porte||p.porte===porte)&&(!planoF||p.plano===planoF)
     &&(!b||p.nome.toLowerCase().includes(b)||RACAS[p.raca].nome.toLowerCase().includes(b)||p.tutor.toLowerCase().includes(b)));
 
@@ -5585,7 +5689,8 @@ function abrirEntrada(){
       </div>
       <div class="row2">
         <div class="campo obrig"><label for="f-tutor">Tutor</label><input id="f-tutor" placeholder="Nome do tutor"></div>
-        <div class="campo obrig"><label for="f-tel">WhatsApp do tutor</label><input id="f-tel" placeholder="(47) 99999-9999" inputmode="tel"></div>
+        <div class="campo obrig"><label for="f-tel">WhatsApp do tutor (cobrança)</label><input id="f-tel" placeholder="(47) 99999-9999" inputmode="tel"></div>
+        <div class="campo"><label for="f-tel2">WhatsApp do transporte <small style="font-weight:700;color:#A38560">· opcional</small></label><input id="f-tel2" placeholder="Vazio = usa o mesmo" inputmode="tel"></div>
       </div>
       <div class="row2">
         <div class="campo"><label for="f-hora">Horário previsto</label><input id="f-hora" value="${horaAgora()}"></div>
@@ -5611,6 +5716,8 @@ function abrirEntrada(){
     if(!tutor){$('#f-tutor').focus();$('#f-tutor').style.borderColor='var(--vermelho)';return}
     if(tel.length<10){$('#f-tel').focus();$('#f-tel').style.borderColor='var(--vermelho)';return}
     const p={id:Date.now(),nome,raca:$('#f-raca').value,porte:$('#f-porte').value,tutor,telefone:tel,pagamentoDia:parseInt($('#f-pag').value)||10,previsto:$('#f-hora').value||horaAgora(),presencas:[],faltas:[],chegadas:{}};
+    const tel2=($('#f-tel2')||{value:''}).value.replace(/\D/g,'');
+    if(tel2.length>=10)p.telefoneTransporte=tel2;
     if(fotoNova)p.foto=fotoNova;
     p.log=[{d:HOJE,h:horaAgora(),ico:'🐾',txt:'Cadastrado na turma'}];p.tipos=[...document.querySelectorAll('[data-tipo]:checked')].map(c=>c.dataset.tipo);if(!p.tipos.length)p.tipos=['outro'];if(!p.tipos.includes('creche'))p.ativo=false;lerPlano(p);p.aniversario=lerNiver($('#f-niver').value);p.endereco=$('#f-end').value.trim();p.obs=$('#f-obs').value.trim();sincronizarHoje(p);pets.push(p);fecharModal();render();toast(p,`${nome} entrou na chamada 🐾`,'Já dá pra marcar a presença.');
   };
@@ -5766,7 +5873,8 @@ function abrirEditar(id){
       </div>
       <div class="row2">
         <div class="campo obrig"><label for="e-tutor">Tutor</label><input id="e-tutor" value="${p.tutor}" required></div>
-        <div class="campo obrig"><label for="e-tel">WhatsApp do tutor</label><input id="e-tel" value="${p.telefone||''}" placeholder="(47) 99999-9999" inputmode="tel"></div>
+        <div class="campo obrig"><label for="e-tel">WhatsApp do tutor (cobrança)</label><input id="e-tel" value="${p.telefone||''}" placeholder="(47) 99999-9999" inputmode="tel"></div>
+        <div class="campo"><label for="e-tel2">WhatsApp do transporte <small style="font-weight:700;color:#A38560">· opcional</small></label><input id="e-tel2" value="${p.telefoneTransporte||''}" placeholder="Vazio = usa o mesmo" inputmode="tel"></div>
       </div>
       <div class="row2">
         <div class="campo"><label for="e-hora">Horário previsto</label><input id="e-hora" value="${p.previsto}"></div>
@@ -5794,10 +5902,11 @@ function abrirEditar(id){
   $('#e-ok').onclick=()=>{
     const nome=$('#e-nome').value.trim();if(!nome){$('#e-nome').focus();return}
     const tutor=$('#e-tutor').value.trim(),tel=$('#e-tel').value.replace(/\D/g,'');
+    const tel2=($('#e-tel2')||{value:''}).value.replace(/\D/g,'');
     if(!tutor){$('#e-tutor').focus();$('#e-tutor').style.borderColor='var(--vermelho)';return}
     if(tel.length<10){$('#e-tel').focus();$('#e-tel').style.borderColor='var(--vermelho)';return}
     const planoAntes=p.plano,transpAntes=p.transporte;
-    p.nome=nome;p.raca=$('#e-raca').value;p.porte=$('#e-porte').value;p.tutor=tutor;p.telefone=tel;p.pagamentoDia=Math.min(31,Math.max(1,parseInt($('#e-pag').value)||10));
+    p.nome=nome;p.raca=$('#e-raca').value;p.porte=$('#e-porte').value;p.tutor=tutor;p.telefone=tel;if(tel2.length>=10)p.telefoneTransporte=tel2;else delete p.telefoneTransporte;p.pagamentoDia=Math.min(31,Math.max(1,parseInt($('#e-pag').value)||10));
     p.previsto=$('#e-hora').value||p.previsto;p.estrela=$('#e-selo').value.trim()||undefined;lerPlano(p);
     p.tipos=[...document.querySelectorAll('[data-tipo]:checked')].map(c=>c.dataset.tipo);if(!p.tipos.length)p.tipos=['outro'];p.endereco=$('#e-end').value.trim();p.obs=$('#e-obs').value.trim();p.aniversario=lerNiver($('#e-niver').value);
     const dv=parseFloat($('#e-desc-valor').value)||0;const dAntes=JSON.stringify(p.descontoFixo||null);
@@ -5880,6 +5989,14 @@ function abrirPerfil(id,ym){
       ${p.obs?`<div class="obs"><b>📝 Observações:</b> ${p.obs}</div>`:''}
       <div class="selos">${selos(p)}</div>
       <div class="cal-nav"><button data-cal="-1" aria-label="Mês anterior">‹</button><h3>${ymNome(ym)}</h3><button data-cal="1" aria-label="Próximo mês" ${ym>=MES?'disabled style="opacity:.3"':''}>›</button></div>
+      ${(()=>{const rc=resumoCiclo(p);return rc.esperadas?`<div class="ciclo-box">
+        <div class="ciclo-h"><b>🔄 Pacote de ${fmtCurto(rc.inicio)} a ${fmtCurto(rc.fim)}</b><span>${rc.pago?'pago ✓':'renova no dia '+rc.dia}</span></div>
+        <div class="ciclo-n">
+          <span><b>${rc.vindas}</b>de ${rc.esperadas} vindas</span>
+          <span class="f"><b>${rc.faltas}</b>${rc.faltas===1?'falta':'faltas'}</span>
+          <span class="r"><b>${rc.aRepor}</b>${rc.aRepor===1?'dia pra repor':'dias pra repor'}</span>
+        </div>
+      </div>`:''})()}
       <div class="kpis">
         <div class="kpi v"><b>${m.vindas}</b><span>Presenças</span></div>
         <div class="kpi f"><b>${m.faltas}</b><span>Faltas</span></div>
@@ -6766,7 +6883,7 @@ function execRota(d){if(!rotas[d]){rotas[d]={stops:rotaDe(d).stops,criadaEm:HOJE
 const kmEstimado=stops=>{let km=0;stops.forEach(x=>{const p=pets.find(q=>q.id===x.petId);km+=cidadeDe(p)==='bc'?6:3.5});return Math.round(km+(stops.length?4:0))};
 function previsaoHora(base,i){const [h,m]=(base||'08:00').split(':').map(Number);let t=(h||0)*60+(m||0)+i*(cfg.minPorParada||12);t=((t%1440)+1440)%1440;return `${pad(Math.floor(t/60))}:${pad(t%60)}`}
 function iniciarRota(d){const ex=execRota(d);ex.iniciada=horaAgora();salvarRotas();renderTransporte();toast(pets[0]||{raca:'golden'},'Rota iniciada 🚐',`Saída da base às ${ex.iniciada}. Boa viagem!`,true)}
-function aCaminhoParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{acaminho:horaAgora()});salvarRotas();const p=pets.find(x=>x.id===petId);const s=(rotas[d].stops||[]).find(x=>x.petId===petId)||{};if(p.telefone)abrirZap(p.telefone,tpl('vanACaminho',{tutor:primeiroNome(p.tutor),pet:p.nome,hora:s.hora||p.previsto}),{tipo:'vanACaminho',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});else toast(p,`${p.nome} sem WhatsApp`,'Cadastre o telefone do tutor.');renderTransporte()}
+function aCaminhoParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{acaminho:horaAgora()});salvarRotas();const p=pets.find(x=>x.id===petId);const s=(rotas[d].stops||[]).find(x=>x.petId===petId)||{};const tz=zapDoPet(p,'transporte');if(tz)abrirZap(tz,tpl('vanACaminho',{tutor:primeiroNome(p.tutor),pet:p.nome,hora:s.hora||p.previsto}),{tipo:'vanACaminho',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});else toast(p,`${p.nome} sem WhatsApp`,'Cadastre o telefone do tutor.');renderTransporte()}
 function chegueiParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{cheguei:horaAgora()});salvarRotas();renderTransporte()}
 function embarcouParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.assign(ex.paradas[petId]||{},{embarcou:horaAgora()});const p=pets.find(x=>x.id===petId);
   if(!p.transportes.includes(d))p.transportes.push(d);if(!p.presencas.includes(d)){p.presencas.push(d);p.chegadas[d]=d===HOJE?horaAgora():p.previsto;p.faltas=p.faltas.filter(x=>x!==d)}sincronizarHoje(p);
@@ -6961,6 +7078,10 @@ function abrirCobrancaCreche(id,ym){
       <button class="fechar" data-fechar aria-label="Fechar">✕</button>
       <h2 id="cc-t"><span class="mini">${avatar(p)}</span> Fatura de ${p.nome} · ${ymNome(ym)}</h2>
       <div class="sub">${PLANOS[p.plano].nome}${resumoMes(p,ym).hosp.length?` + ${resumoMes(p,ym).hosp.length} ${resumoMes(p,ym).hosp.length===1?'hospedagem':'hospedagens'} 🏡`:''} · tutor ${p.tutor}${p.telefone?` · ${telFmt(p.telefone)}`:''} · vence dia ${p.pagamentoDia}${cob.enviada?` · cobrança enviada ${fmtData(cob.enviada)}`:''}</div>
+      ${(()=>{const rc=resumoCiclo(p);return rc.esperadas?`<div class="ciclo-box">
+        <div class="ciclo-h"><b>🔄 Pacote de ${fmtCurto(rc.inicio)} a ${fmtCurto(rc.fim)}</b><span>renova quando pagar</span></div>
+        <div class="ciclo-n"><span><b>${rc.vindas}</b>de ${rc.esperadas} vindas</span><span class="f"><b>${rc.faltas}</b>${rc.faltas===1?'falta':'faltas'}</span><span class="r"><b>${rc.aRepor}</b>${rc.aRepor===1?'dia pra repor':'dias pra repor'}</span></div>
+      </div>`:''})()}
       <table class="fat">
         <tr><th>Item</th><th class="r">Qtd</th><th class="r">Valor</th><th class="r">Total</th></tr>
         ${it.map(x=>x.hotel?`<tr class="hotel"><td>🏡 ${x.d}</td><td class="r">${x.q}</td><td class="r">${brl(x.v)}</td><td class="r">${brl(x.t)}</td></tr>`:x.desc?`<tr class="descto"><td>🏷 ${x.d}</td><td class="r"></td><td class="r"></td><td class="r">− ${brl(-x.t)}</td></tr>`:`<tr><td>${x.d}</td><td class="r">${x.q}</td><td class="r">${brl(x.v)}</td><td class="r">${brl(x.t)}</td></tr>`).join('')}
@@ -6985,7 +7106,9 @@ function abrirCobrancaCreche(id,ym){
   $('#cc-pix').onchange=()=>{salvarCob();$('#cc-msg').value=msgCobrancaCreche(p,ym)};
   $('#cc-pdf').onclick=()=>{salvarCob();pdfCobrancaCreche(p,ym,+$('#cc-pix').value)};
   const bz=$('#cc-zapbtn');if(bz)bz.onclick=()=>{salvarCob();p.cobrancas[ym].enviada=HOJE;render();abrirZap(p.telefone,$('#cc-msg').value,{tipo:'cobranca',pet:p.nome,petId:p.id,via:zapDe(+$('#cc-zap').value).nome,tel:p.telefone});bz.innerHTML=`${ICO_ZAP} Enviar cobrança no WhatsApp ✓`;toast(p,'Cobrança aberta no WhatsApp 💬','A mensagem também foi copiada — se precisar, é só colar.',true)};
-  const bs=$('#cc-sim');if(bs)bs.onclick=()=>{salvarCob();p.pagamentos[ym]=true;p.pagamentos[ym+'_em']=HOJE;hospedagensNaFatura(p,ym).forEach(r=>{r.pago=true});salvarHotel();fecharModal();render();toast(p,`${NOMES_MES[+ym.split('-')[1]-1]} de ${p.nome} pago ✅`,`${brl(total)} recebido.`,true)};
+  const bs=$('#cc-sim');if(bs)bs.onclick=()=>{salvarCob();p.pagamentos[ym]=true;p.pagamentos[ym+'_em']=HOJE;
+    const rc=cicloDe(p);p.pagamentos[rc.chave]=true;p.pagamentos[rc.chave+'_em']=HOJE;   // renova o pacote
+    p.log=p.log||[];p.log.push({d:HOJE,h:horaAgora(),ico:'🔄',txt:'Pacote renovado · '+fmtCurto(rc.inicio)+' a '+fmtCurto(rc.fim)});hospedagensNaFatura(p,ym).forEach(r=>{r.pago=true});salvarHotel();fecharModal();render();toast(p,`${NOMES_MES[+ym.split('-')[1]-1]} de ${p.nome} pago ✅`,`${brl(total)} recebido.`,true)};
   const bn=$('#cc-nao');if(bn)bn.onclick=()=>{salvarCob();fecharModal();render()};
   const bd=$('#cc-desf');if(bd)bd.onclick=()=>{delete p.pagamentos[ym];delete p.pagamentos[ym+'_em'];hospedagensNaFatura(p,ym).forEach(r=>{r.pago=false});salvarHotel();fecharModal();render()};
   $('#ov').addEventListener('click',e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()});
