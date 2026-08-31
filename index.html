@@ -2018,7 +2018,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.3.3</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.3.4</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -6407,30 +6407,41 @@ function valorDiaria(h,feriado){
   if(feriado)return h.aluno?HOTEL.ferAluno:(h.peso<=10?HOTEL.ferPequeno:HOTEL.ferGrande);
   return h.aluno?HOTEL.aluno:(h.peso<=10?HOTEL.pequeno:HOTEL.grande);
 }
+/* quantos cachorros essa reserva hospeda: irmãos contam todos */
+const petsDaReserva=r=>{const p=r.petId?pets.find(x=>x.id===r.petId):null;return p?qtdPets(p):Math.max(1,+r.qtdPets||1)};
+/* quanto custa a diária dessa reserva, já com todos os cachorros.
+   Se você digitou um valor combinado, é ele que vale. */
+function diariaDaReserva(r,h,feriado){
+  if(r.valorDiaria!=null&&r.valorDiaria!=='')return Math.max(0,+r.valorDiaria);
+  return valorDiaria(h,feriado)*petsDaReserva(r);
+}
 /* uma linha por diária, do check-in até a véspera do check-out */
 function diariasDetalhe(r,h){
   h=h||hospede(r);
   const n=diarias(r), out=[], d=new Date(r.checkin+'T12:00:00');
   for(let i=0;i<n;i++){
     const iso=isoLocal(d), fer=ehFeriadoHotel(iso);
-    out.push({iso,feriado:fer,valor:valorDiaria(h,fer)});
+    out.push({iso,feriado:fer,valor:diariaDaReserva(r,h,fer)});
     d.setDate(d.getDate()+1);
   }
   return out;
 }
 function contaHotel(r){
-  const h=hospede(r);const n=diarias(r);const v=diariaValor(h);
+  const h=hospede(r);const n=diarias(r);
+  const qtd=petsDaReserva(r), manual=(r.valorDiaria!=null&&r.valorDiaria!=='');
+  const v=diariaDaReserva(r,h,false);
   const tp=TRANSPORTE[r.transporteCidade||''].preco;
   const dias=diariasDetalhe(r,h);
   const nFer=dias.filter(x=>x.feriado).length, nNorm=n-nFer;
-  const vFer=valorDiaria(h,true);
+  const vFer=diariaDaReserva(r,h,true);
   const subtotal=dias.reduce((a,x)=>a+x.valor,0), transp=(r.transporteVezes||0)*tp, bruto=subtotal+transp;
-  const resumoDiarias=nFer
+  const porQtd=(qtd>1&&!manual)?' ('+qtd+' aumigos)':(manual?' (valor combinado)':'');
+  const resumoDiarias=(nFer
     ? (nNorm?nNorm+' '+(nNorm===1?'diária':'diárias')+' × '+brl(v)+' + ':'')+nFer+' de feriado × '+brl(vFer)
-    : n+' '+(n===1?'diária':'diárias')+' × '+brl(v);
+    : n+' '+(n===1?'diária':'diárias')+' × '+brl(v))+porQtd;
   const abat=calcDesc(r.desconto,bruto), total=Math.max(0,bruto-abat);
   const sinal=Math.round(subtotal*HOTEL.sinal*100)/100;
-  return {h,n,v,tp,subtotal,transp,bruto,abatimento:abat,total,sinal,restante:Math.max(0,total-(r.sinalPago?sinal:0)),dias,nFeriado:nFer,vFeriado:vFer,resumoDiarias};
+  return {h,n,v,tp,subtotal,transp,bruto,abatimento:abat,total,sinal,restante:Math.max(0,total-(r.sinalPago?sinal:0)),dias,nFeriado:nFer,vFeriado:vFer,resumoDiarias,qtd,manual};
 }
 const fmtData=d=>{const [y,m,dd]=d.split('-');return `${dd}/${m}`};
 function renderHotel(){
@@ -6531,6 +6542,8 @@ function abrirReserva(id,diaSugerido){
       <div class="campo"><label>🎒 Pertences que o pet trouxe (nome + foto — entram no relatório em PDF)</label>
         <div class="pert" id="r-pert"></div>
       </div>
+      <label class="check" style="justify-content:flex-start"><input type="checkbox" id="r-valor-chk" ${(r.valorDiaria!=null&&r.valorDiaria!=='')?'checked':''}> 💰 Mudar o valor da diária</label>
+      <div class="campo ${(r.valorDiaria!=null&&r.valorDiaria!=='')?'':'hidden'}" id="r-valor-box"><label for="r-valor">Valor combinado da diária (R$) <small style="font-weight:700;color:#A38560">· vale pra estadia toda, já com todos os aumigos</small></label><input id="r-valor" type="number" min="0" step="5" value="${r.valorDiaria!=null?r.valorDiaria:''}" placeholder="Ex.: 150"></div>
       <label class="check" style="justify-content:flex-start"><input type="checkbox" id="r-sinal" ${r.sinalPago?'checked':''}> 💳 Sinal de 30% já foi pago</label>
       <div class="conta" id="r-prev" style="margin-top:14px"></div>
       <button class="btn primario" id="r-ok" style="margin-top:6px">${st('check')} ${id?'Salvar reserva':'Confirmar reserva'}</button>
@@ -6560,7 +6573,7 @@ function abrirReserva(id,diaSugerido){
   const prev=()=>{
     const tmp=ler(false);if(!tmp)return;
     const c=contaHotel(tmp);
-    $('#r-prev').innerHTML=`<div class="l"><span>${c.resumoDiarias} ${c.h.aluno?'(aluno)':(c.h.peso<=10?'(até 10 kg)':'(acima de 10 kg)')}</span><b>${brl(c.subtotal)}</b></div><div class="l"><span>Sinal 30% na reserva</span><b>${brl(c.sinal)}</b></div>`;
+    $('#r-prev').innerHTML=`<div class="l"><span>${c.resumoDiarias} ${c.manual?'':(c.h.aluno?'(aluno)':(c.h.peso<=10?'(até 10 kg)':'(acima de 10 kg)'))}</span><b>${brl(c.subtotal)}</b></div><div class="l"><span>Sinal 30% na reserva</span><b>${brl(c.sinal)}</b></div>`;
   };
   const ler=(validar)=>{
     const isAluno=!$('#r-aluno').classList.contains('hidden');
@@ -6571,9 +6584,13 @@ function abrirReserva(id,diaSugerido){
         if(o.telefone.length<10){$('#r-tel').focus();$('#r-tel').style.borderColor='var(--vermelho)';return null}}}
     o.checkin=$('#r-in').value;o.checkout=$('#r-out').value;o.horaIn=$('#r-hin').value||'09:00';o.horaOut=$('#r-hout').value||'17:00';
     if(!o.checkin||!o.checkout||o.checkout<o.checkin){if(validar){$('#r-out').style.borderColor='var(--vermelho)'}return validar?null:o}
-    o.transporteCidade=$('#r-transp').value;o.obs=$('#r-obs').value.trim();o.sinalPago=$('#r-sinal').checked;o.pertences=pert.filter(x=>x.nome.trim()).map(x=>({...x,nome:x.nome.trim()}));
+    o.transporteCidade=$('#r-transp').value;o.obs=$('#r-obs').value.trim();o.sinalPago=$('#r-sinal').checked;
+    if(($('#r-valor-chk')||{}).checked){const vv=parseFloat(($('#r-valor')||{value:''}).value);o.valorDiaria=isNaN(vv)?null:Math.max(0,vv)}else o.valorDiaria=null;o.pertences=pert.filter(x=>x.nome.trim()).map(x=>({...x,nome:x.nome.trim()}));
     return o;
   };
+  const chkVal=$('#r-valor-chk');
+  if(chkVal)chkVal.onchange=()=>{$('#r-valor-box').classList.toggle('hidden',!chkVal.checked);if(chkVal.checked)$('#r-valor').focus();prev()};
+  const inpVal=$('#r-valor');if(inpVal)inpVal.oninput=prev;
   $('#r-tipo-aluno').onclick=()=>{$('#r-aluno').classList.remove('hidden');$('#r-vis').classList.add('hidden');$('#r-tipo-aluno').classList.add('on');$('#r-tipo-vis').classList.remove('on');prev()};
   $('#r-tipo-vis').onclick=()=>{$('#r-vis').classList.remove('hidden');$('#r-aluno').classList.add('hidden');$('#r-tipo-vis').classList.add('on');$('#r-tipo-aluno').classList.remove('on');prev()};
   ['r-pet','r-peso','r-in','r-out','r-transp'].forEach(x=>$('#'+x).addEventListener('input',prev));
