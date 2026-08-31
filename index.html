@@ -2018,7 +2018,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.3.2</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.3.3</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -5211,10 +5211,10 @@ function renderInicio(){
   $('#in-pend').innerHTML=pendLista.length?pendLista.slice(0,14).map((x,i)=>`<li class="p${cores[x.n]}"><span class="ico">${x.ico}</span><span class="txt">${x.txt}</span><button class="btn-mini" data-pend="${i}">Resolver →</button></li>`).join('')+(pendLista.length>14?`<li class="mais">+ ${pendLista.length-14} outras pendências</li>`:''):'<li class="mais">Tudo em dia! Nenhuma pendência. 💛</li>';
   // aniversários próximos (30 dias)
   const nivs=pets.filter(p=>p.ativo!==false&&p.aniversario).map(p=>({p,n:niverInfo(p)})).filter(x=>x.n.dias<=30).sort((a,b)=>a.n.dias-b.n.dias);
-  $('#in-niver').innerHTML=nivs.length?nivs.map(({p,n})=>`<li><span class="mini">${avatar(p)}</span><div><b>${p.nome}</b><span>${n.hoje?'🎂 Hoje!':n.dias===1?'Amanhã':'Em '+n.dias+' dias'} · ${n.txt}</span></div>${p.telefone&&n.dias<=1?`<button class="btn-mini" data-parabens="${p.id}">🎉 Parabéns no WhatsApp</button>`:''}</li>`).join(''):'<li class="mais">Nenhum aniversário nos próximos 30 dias.</li>';
+  $('#in-niver').innerHTML=nivs.length?nivs.map(({p,n})=>`<li><span class="mini">${avatar(p)}</span><div><b>${nomeCompleto(p)}</b><span>${n.hoje?'🎂 Hoje!':n.dias===1?'Amanhã':'Em '+n.dias+' dias'} · ${n.txt}</span></div>${p.telefone&&n.dias<=1?`<button class="btn-mini" data-parabens="${p.id}">🎉 Parabéns no WhatsApp</button>`:''}</li>`).join(''):'<li class="mais">Nenhum aniversário nos próximos 30 dias.</li>';
   // clientes sumindo
   const ina=inativos();
-  $('#in-crm').innerHTML=ina.length?ina.slice(0,6).map(({p,d,f})=>`<li class="p${f.cor}"><span class="mini">${avatar(p)}</span><div><b>${p.nome}</b><span>${f.txt}${p.ativo===false?' · cancelou':''}${p.crm&&p.crm.ultimo?' · último contato '+fmtData(p.crm.ultimo):''}</span></div><button class="btn-mini" data-crm="${p.id}" data-etapa="${f.k}">${f.acao}</button></li>`).join(''):'<li class="mais">Ninguém sumido. Turma em dia! 🐾</li>';
+  $('#in-crm').innerHTML=ina.length?ina.slice(0,6).map(({p,d,f})=>`<li class="p${f.cor}"><span class="mini">${avatar(p)}</span><div><b>${nomeCompleto(p)}</b><span>${f.txt}${p.ativo===false?' · cancelou':''}${p.crm&&p.crm.ultimo?' · último contato '+fmtData(p.crm.ultimo):''}</span></div><button class="btn-mini" data-crm="${p.id}" data-etapa="${f.k}">${f.acao}</button></li>`).join(''):'<li class="mais">Ninguém sumido. Turma em dia! 🐾</li>';
   // hotel hoje
   const hosp=reservas.filter(r=>r.status==='hospedado');
   $('#in-hotel').textContent=`${hosp.length} ${hosp.length===1?'hospedado':'hospedados'} · ${reservas.filter(r=>r.status==='reservado'&&r.checkin===HOJE).length} chegam hoje · ${hosp.filter(r=>r.checkout<=HOJE).length} saem hoje`;
@@ -5608,7 +5608,7 @@ function abrirMontarChamada(){
   const pinta=()=>{
     $('#mc-lista').innerHTML=todos.map(p=>`<button type="button" class="add-pet ${sel.has(p.id)?'on':''}" data-mc="${p.id}">
       <span class="mais">${sel.has(p.id)?'✓':'＋'}</span><span class="mini">${avatar(p)}</span>
-      <span class="info-p"><b>${p.nome}</b><span>${nomePlano(p)}</span></span></button>`).join('');
+      <span class="info-p"><b>${nomeCompleto(p)}</b><span>${nomePlano(p)}</span></span></button>`).join('');
     $('#mc-cont').textContent=`· ${sel.size} de ${todos.length} na creche`;
     $('#mc-ok').disabled=sel.size===0;
   };
@@ -5742,7 +5742,7 @@ function render(){
     const pago=!!p.pagamentos[MES];const cls=pago?'pago':((mesCobravel(MES)&&hojeDia>p.pagamentoDia)?'atrasado':'aberto');
     return `<li>
       <div class="mini">${avatar(p)}</div>
-      <div><b>${p.nome}</b><span>${PLANOS[p.plano].nome} · ${m.vindas} dias${m.extras?` · +${m.extras} extras`:''}${m.transpVezes?` · transporte ${m.transpVezes}x`:''} · vence dia ${p.pagamentoDia}${p.cobrancas[MES]&&p.cobrancas[MES].enviada?' · cobrança enviada '+fmtData(p.cobrancas[MES].enviada):''}</span></div>
+      <div><b>${nomeCompleto(p)}</b><span>${PLANOS[p.plano].nome} · ${m.vindas} dias${m.extras?` · +${m.extras} extras`:''}${m.transpVezes?` · transporte ${m.transpVezes}x`:''} · vence dia ${p.pagamentoDia}${p.cobrancas[MES]&&p.cobrancas[MES].enviada?' · cobrança enviada '+fmtData(p.cobrancas[MES].enviada):''}</span></div>
       <span class="valor">${brl(m.total)}</span>
       <span class="st-pag ${cls}">${pago?'✓ pago':(cls==='atrasado'?'vencido':'em aberto')}</span>
       <button class="btn-mini" data-cobrar="${p.id}">${pago?'📄 Fatura':'💳 Cobrar'}</button>
@@ -5754,7 +5754,7 @@ function render(){
   $('#canc-titulo').textContent=`Não vêm mais · cancelaram a creche (${canc.length})`;
   $('#canc-lista').innerHTML=canc.map(p=>`<li>
       <div class="mini">${avatar(p)}</div>
-      <div><b>${p.nome}</b><span>${RACAS[p.raca].nome} · tutor ${p.tutor} · cancelou em ${p.canceladoEm||'—'}</span></div>
+      <div><b>${nomeCompleto(p)}</b><span>${racasDoPet(p)} · tutor ${p.tutor} · cancelou em ${p.canceladoEm||'—'}</span></div>
       <div class="acoes">${p.telefone?`<button class="tel-zap" data-recuperar="${p.id}">${ICO_ZAP} Recuperar no WhatsApp${p.crm&&p.crm.ultimo?' · '+fmtData(p.crm.ultimo):''}</button>`:`<span class="tel-zap" style="opacity:.5">${ICO_ZAP} sem telefone</span>`}<button class="btn-mini" data-reativar="${p.id}">↩ Voltar pra turma</button><button class="btn-mini cinza" data-excluir="${p.id}">Excluir</button></div>
     </li>`).join('');
 
@@ -5820,10 +5820,10 @@ function abrirChamada(id){
       <div class="patas">${st('pata')}${st('pata')}${st('pata')}</div>
       ${prog}
       <div class="vez" id="md-vez">É A VEZ DE</div>
-      <h2 id="md-t">${p.nome}!</h2>
+      <h2 id="md-t">${nomeCompleto(p)}!</h2>
       <div class="ilus">${avatar(p)}</div>
       <div class="raca">🐶 ${r.nome} · tutor ${p.tutor}</div>
-      <div class="pergunta" id="md-perg">${p.nome} veio hoje?</div>
+      <div class="pergunta" id="md-perg">${temIrmao(p)?nomeCompleto(p)+' vieram':nomeCompleto(p)+' veio'} hoje?</div>
       <div class="duplo" id="md-acoes">
         <button class="btn verde" id="md-sim">${st('check')} Presente</button>
         <button class="btn vermelho" id="md-nao">✕ Faltou</button>
@@ -5995,7 +5995,7 @@ function abrirRecepcao(){
   const pres=ativos().filter(p=>p.status==='presente').sort((a,b)=>a.chegou.localeCompare(b.chegou));
   const pend=pendentes();
   const falt=ativos().filter(p=>p.status==='faltou');
-  const li=(p,extra)=>`<li><span class="mini">${avatar(p)}</span><div><b>${p.nome}</b><span>${RACAS[p.raca].nome} · ${PLANOS[p.plano].curto} · ${resumoMes(p).vindas}x em ${nomeMes}</span></div><span class="n">${extra}</span></li>`;
+  const li=(p,extra)=>`<li><span class="mini">${avatar(p)}</span><div><b>${nomeCompleto(p)}</b><span>${racasDoPet(p)} · ${PLANOS[p.plano].curto} · ${resumoMes(p).vindas}x em ${nomeMes}</span></div><span class="n">${extra}</span></li>`;
   $('#modais').innerHTML=`
   <div class="recepcao" id="rec">
     <div class="top">
@@ -6296,7 +6296,7 @@ function abrirPerfil(id,ym){
       <div class="cab">
         <div class="foto">${avatar(p)}</div>
         <div style="min-width:0;flex:1">
-          <h2 id="pf-t">${p.nome}</h2>
+          <h2 id="pf-t">${nomeCompleto(p)}</h2>
           <div class="sub">${r.nome} · ${p.peso} kg · tutor ${p.tutor}${p.telefone?` · ${telFmt(p.telefone)}`:''}</div>
           <div class="chips-p"><span class="plano-chip ${p.plano==='avulso'?'avulso':''}">🗓 ${PLANOS[p.plano].nome}</span>${p.transporte?`<span class="plano-chip">🚐 ${TRANSPORTE[p.transporte].nome}</span>`:''}<span class="plano-chip">💳 vence dia ${p.pagamentoDia}</span>${p.descontoFixo?`<span class="plano-chip" style="background:var(--verde-bg);border-color:#CFE3CB;color:var(--verde-txt)">🏷 ${descTxt(p.descontoFixo)}</span>`:''}${p.aniversario?`<span class="plano-chip ${niverInfo(p).hoje?'niver-chip':''}">🎂 ${niverInfo(p).txt}${niverInfo(p).hoje?' · hoje!':niverInfo(p).dias<=30?` · em ${niverInfo(p).dias} dias`:''}</span>`:''}</div>
         </div>
@@ -6394,7 +6394,7 @@ function salvarHotel(){salvarSeguro('petfarm.hotel',JSON.stringify(reservas))}
 function hospede(r){ // dados do pet (da creche ou visitante)
   const p=r.petId?pets.find(x=>x.id===r.petId):null;
   const aluno=!!(p&&p.ativo!==false);
-  return {p,aluno,nome:p?p.nome:r.nome,raca:p?p.raca:r.raca,peso:p?p.peso:r.peso,tutor:p?p.tutor:r.tutor,telefone:p?p.telefone:r.telefone,avatar:p?avatar(p):st((RACAS[r.raca]||RACAS.golden).st)};
+  return {p,aluno,nome:p?nomeCompleto(p):r.nome,raca:p?p.raca:r.raca,peso:p?p.peso:r.peso,tutor:p?p.tutor:r.tutor,telefone:p?p.telefone:r.telefone,avatar:p?avatar(p):st((RACAS[r.raca]||RACAS.golden).st)};
 }
 function diarias(r){const a=new Date(r.checkin),b=new Date(r.checkout);return Math.max(1,Math.round((b-a)/86400000))}
 function diariaValor(h){return h.aluno?HOTEL.aluno:(h.peso<=10?HOTEL.pequeno:HOTEL.grande)}
@@ -6498,7 +6498,7 @@ function abrirHMenu(id,btn){
 }
 function abrirReserva(id,diaSugerido){
   const r=id?reservas.find(x=>x.id===id):{petId:null,checkin:diaSugerido||HOJE,checkout:dAddS(diaSugerido||HOJE,1),transporteCidade:'',transporteVezes:0,sinalPago:false,status:'reservado'};
-  const alunos=ativos().map(p=>`<option value="${p.id}" ${r.petId===p.id?'selected':''}>${p.nome} · ${RACAS[p.raca].nome} · tutor ${p.tutor}</option>`).join('');
+  const alunos=ativos().map(p=>`<option value="${p.id}" ${r.petId===p.id?'selected':''}>${nomeCompleto(p)} · ${racasDoPet(p)} · tutor ${p.tutor}</option>`).join('');
   const opsR=Object.entries(RACAS).map(([k,v])=>`<option value="${k}" ${k===r.raca?'selected':''}>${v.nome}</option>`).join('');
   const opsT=Object.entries(TRANSPORTE).map(([k,v])=>`<option value="${k}" ${k===(r.transporteCidade||'')?'selected':''}>${v.nome}${v.preco?` · ${brl(v.preco)}/dia`:''}</option>`).join('');
   $('#modais').innerHTML=`
@@ -7019,7 +7019,7 @@ function renderTransporte(){
       <span class="hora">${x.hora||''}<span class="prev">${pe.embarcou?'embarcou '+pe.embarcou:pe.cheguei?'chegou '+pe.cheguei:ex&&ex.iniciada?'prev. '+previsaoHora(inicioPrev,i+1):''}</span></span>
       <div class="mini">${avatar(p)}</div>
       <div style="min-width:0;flex:1">
-        <b class="nome">${p.nome} <span class="cid ${ehTransporte()&&p._un?(p._un==='itajai'?'itj':'cam'):(cid==='bc'?'bc':'cam')}">${ehTransporte()&&p._un?nomeUnidade(p._un):(cid==='bc'?'Bal. Camboriú':'Camboriú')}${p.transporte&&podeFinTransp()?' · '+brl(tp.preco):''}</span></b>
+        <b class="nome">${nomeCompleto(p)} <span class="cid ${ehTransporte()&&p._un?(p._un==='itajai'?'itj':'cam'):(cid==='bc'?'bc':'cam')}">${ehTransporte()&&p._un?nomeUnidade(p._un):(cid==='bc'?'Bal. Camboriú':'Camboriú')}${p.transporte&&podeFinTransp()?' · '+brl(tp.preco):''}</span></b>
         <div class="end">${p.endereco?`📍 ${p.endereco} · <a class="maps-link" href="${mapsUrl(p.endereco)}" target="_blank" rel="noopener">🗺 mapa</a>`:`<span class="semend">⚠ sem endereço — </span><button class="alterar" style="margin:0" data-editar="${p.id}">cadastrar</button>`} · tutor ${p.tutor}${p.telefone?` · <a href="${wa(p.telefone,tpl('vanACaminho',{tutor:primeiroNome(p.tutor),pet:p.nome,hora:x.hora||''}))}" target="_blank" rel="noopener">avisar tutor</a>`:''}</div>
       </div>
       <div class="acoes">
@@ -7051,7 +7051,7 @@ function renderTransporte(){
   document.querySelectorAll('#view-transporte .stat.ch, #view-transporte .hsec.somente-fin').forEach(el=>el.classList.toggle('hidden',!podeFinTransp()));
   if(!podeFinTransp())return;
   $('#tr-tabela').innerHTML=`<tr><th>Aumigo</th><th>Cidade</th><th>Endereço</th><th class="r">Viagens</th><th class="r">Valor</th></tr>`+
-    rows.map(({p,m})=>`<tr><td>${p.nome}</td><td>${p.transporte?TRANSPORTE[p.transporte].nome:'—'}</td><td>${p.endereco||'<span style="color:var(--vermelho-txt)">sem endereço</span>'}</td><td class="r">${m.transpVezes}</td><td class="r">${brl(m.valorTransp)}</td></tr>`).join('')+
+    rows.map(({p,m})=>`<tr><td>${nomeCompleto(p)}</td><td>${p.transporte?TRANSPORTE[p.transporte].nome:'—'}</td><td>${p.endereco||'<span style="color:var(--vermelho-txt)">sem endereço</span>'}</td><td class="r">${m.transpVezes}</td><td class="r">${brl(m.valorTransp)}</td></tr>`).join('')+
     `<tr class="tot"><td colspan="3">Total de ${nomeMes}</td><td class="r">${viagens}</td><td class="r">${brl(valor)}</td></tr>`;
 }
 
@@ -7065,7 +7065,7 @@ function moverParada(d,i,dir){
 function copiarRota(d){
   const rota=rotaDe(d);
   const linhas=[`🚐 Rota ${fmtData(d)} — ${cfg.nome}`,`🏠 Saída: ${BASE}`]
-    .concat(rota.stops.map((x,i)=>{const p=pets.find(q=>q.id===x.petId)||{};return `${i+1}. ${x.hora?x.hora+' — ':''}${p.nome||'?'} — ${p.endereco||'⚠ sem endereço'}`}))
+    .concat(rota.stops.map((x,i)=>{const p=pets.find(q=>q.id===x.petId)||{};return `${i+1}. ${x.hora?x.hora+' — ':''}${p.nome?nomeCompleto(p):'?'} — ${p.endereco||'⚠ sem endereço'}`}))
     .concat([`🏁 Volta: ${BASE}`]);
   const txt=linhas.join('\n');
   const ok=()=>toast(pets[0]||{raca:'golden'},'Rota copiada 📋','Cole no WhatsApp, no Maps ou onde quiser.',true);
@@ -7085,7 +7085,7 @@ function folhaRota(d){
       <h2>🚐 Folha da rota · ${fmtData(d)}</h2>
       <ol class="folha">
         <li><b>🏠 Saída da base</b><span>${BASE}</span></li>
-        ${rota.stops.map((x,i)=>{const p=pets.find(q=>q.id===x.petId)||{};return `<li><b>${i+1}. ${p.nome||'?'} <small>${x.hora||''}</small></b><span>${p.endereco||'⚠ sem endereço'}</span>${p.endereco?`<a class="maps-link" href="${mapsUrl(p.endereco)}" target="_blank" rel="noopener">🗺 abrir no Google Maps</a>`:''}</li>`}).join('')}
+        ${rota.stops.map((x,i)=>{const p=pets.find(q=>q.id===x.petId)||{};return `<li><b>${i+1}. ${p.nome?nomeCompleto(p):'?'} <small>${x.hora||''}</small></b><span>${p.endereco||'⚠ sem endereço'}</span>${p.endereco?`<a class="maps-link" href="${mapsUrl(p.endereco)}" target="_blank" rel="noopener">🗺 abrir no Google Maps</a>`:''}</li>`}).join('')}
         <li><b>🏁 Volta pra base</b><span>${BASE}</span></li>
       </ol>
       <button class="btn primario" data-rcopy="1" style="margin-top:14px">📋 Copiar essa lista</button>
@@ -7150,7 +7150,7 @@ function abrirRota(d){
     $('#rt-cont').textContent=`· ${ordem.length} na rota · ${fora.length} de fora`;
     $('#rt-lista').innerHTML=fora.length?fora.map(p=>`<button type="button" class="add-pet" data-add="${p.id}">
         <span class="mais">＋</span><span class="mini">${avatar(p)}</span>
-        <span class="info-p"><b>${p.nome} <span style="font-size:11px;font-weight:800;color:#A38560">· ${cidadeDe(p)==='bc'?'Bal. Camboriú':'Camboriú'}</span></b><span>${p.endereco||'⚠ sem endereço'}</span></span>
+        <span class="info-p"><b>${nomeCompleto(p)} <span style="font-size:11px;font-weight:800;color:#A38560">· ${cidadeDe(p)==='bc'?'Bal. Camboriú':'Camboriú'}</span></b><span>${p.endereco||'⚠ sem endereço'}</span></span>
       </button>`).join('')
       :`<div class="vazio-sel">Todos os aumigos ativos já estão na rota 🎉</div>`;
   }
@@ -7263,7 +7263,7 @@ function renderTransporteFin(){
     <div class="fi-grid" style="margin-top:16px">
       <section><h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Por aumigo</h3>
         <table class="tabela-simples"><tr><th>Aumigo</th><th>Cidade</th><th class="r">Viagens</th><th class="r">Valor</th><th>Status</th></tr>
-        ${t.porPet.map(x=>`<tr><td><b>${x.p.nome}</b><br><small style="color:#A38560">${x.p.tutor}</small></td><td>${x.cidade}</td><td class="r">${x.viagens}</td><td class="r"><b>${brl(x.valor)}</b></td><td>${x.pago?'<span class="st-pag pago">✓ pago</span>':'<span class="st-pag aberto">na fatura</span>'}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#A38560">Nenhuma viagem neste mês.</td></tr>'}
+        ${t.porPet.map(x=>`<tr><td><b>${nomeCompleto(x.p)}</b><br><small style="color:#A38560">${x.p.tutor}</small></td><td>${x.cidade}</td><td class="r">${x.viagens}</td><td class="r"><b>${brl(x.valor)}</b></td><td>${x.pago?'<span class="st-pag pago">✓ pago</span>':'<span class="st-pag aberto">na fatura</span>'}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#A38560">Nenhuma viagem neste mês.</td></tr>'}
         <tr class="tot"><td colspan="2">Total</td><td class="r">${t.viagens}</td><td class="r">${brl(t.receita)}</td><td></td></tr></table>
       </section>
       <section><h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Por dia</h3>
@@ -7388,7 +7388,7 @@ function abrirCobrancaCreche(id,ym){
   <div class="overlay" id="ov">
     <div class="modal fatura" role="dialog" aria-labelledby="cc-t">
       <button class="fechar" data-fechar aria-label="Fechar">✕</button>
-      <h2 id="cc-t"><span class="mini">${avatar(p)}</span> Fatura de ${p.nome} · ${ymNome(ym)}</h2>
+      <h2 id="cc-t"><span class="mini">${avatar(p)}</span> Fatura de ${nomeCompleto(p)} · ${ymNome(ym)}</h2>
       <div class="sub">${PLANOS[p.plano].nome}${resumoMes(p,ym).hosp.length?` + ${resumoMes(p,ym).hosp.length} ${resumoMes(p,ym).hosp.length===1?'hospedagem':'hospedagens'} 🏡`:''} · tutor ${p.tutor}${p.telefone?` · ${telFmt(p.telefone)}`:''} · vence dia ${p.pagamentoDia}${cob.enviada?` · cobrança enviada ${fmtData(cob.enviada)}`:''}</div>
       ${(()=>{const rc=resumoCiclo(p);return rc.esperadas?`<div class="ciclo-box">
         <div class="ciclo-h"><b>🔄 Pacote de ${fmtCurto(rc.inicio)} a ${fmtCurto(rc.fim)}</b><span>renova quando pagar</span></div>
@@ -7417,7 +7417,7 @@ function abrirCobrancaCreche(id,ym){
   if(pode('descontos'))ligarDesconto('cc-desc',resumoMes(p,ym).bruto,d=>{p.cobrancas[ym]=Object.assign(p.cobrancas[ym]||{},{desconto:d});salvar();const nt=itensCreche(p,ym);$('#cc-msg').value=msgCobrancaCreche(p,ym);const tot=$('.modal.fatura tr.tot td.r');if(tot)tot.textContent=brl(nt.total)});
   $('#cc-pix').onchange=()=>{salvarCob();$('#cc-msg').value=msgCobrancaCreche(p,ym)};
   $('#cc-pdf').onclick=()=>{salvarCob();pdfCobrancaCreche(p,ym,+$('#cc-pix').value)};
-  const bz=$('#cc-zapbtn');if(bz)bz.onclick=()=>{salvarCob();p.cobrancas[ym].enviada=HOJE;render();abrirZapPet(p,$('#cc-msg').value,{tipo:'cobranca',pet:p.nome,petId:p.id,via:zapDe(+$('#cc-zap').value).nome,tel:p.telefone});bz.innerHTML=`${ICO_ZAP} Enviar cobrança no WhatsApp ✓`;toast(p,'Cobrança aberta no WhatsApp 💬','A mensagem também foi copiada — se precisar, é só colar.',true)};
+  const bz=$('#cc-zapbtn');if(bz)bz.onclick=()=>{salvarCob();p.cobrancas[ym].enviada=HOJE;render();enviarEscolhendo(p,$('#cc-msg').value,{tipo:'cobranca',pet:p.nome,petId:p.id,via:zapDe(+$('#cc-zap').value).nome,tel:p.telefone},'cobranca');bz.innerHTML=`${ICO_ZAP} Enviar cobrança no WhatsApp ✓`;toast(p,'Cobrança aberta no WhatsApp 💬','A mensagem também foi copiada — se precisar, é só colar.',true)};
   const bs=$('#cc-sim');if(bs)bs.onclick=()=>{salvarCob();p.pagamentos[ym]=true;p.pagamentos[ym+'_em']=HOJE;
     const rc=cicloDe(p);p.pagamentos[rc.chave]=true;p.pagamentos[rc.chave+'_em']=HOJE;   // renova o pacote
     p.log=p.log||[];p.log.push({d:HOJE,h:horaAgora(),ico:'🔄',txt:'Pacote renovado · '+fmtCurto(rc.inicio)+' a '+fmtCurto(rc.fim)});hospedagensNaFatura(p,ym).forEach(r=>{r.pago=true});salvarHotel();fecharModal();render();toast(p,`${NOMES_MES[+ym.split('-')[1]-1]} de ${p.nome} pago ✅`,`${brl(total)} recebido.`,true)};
@@ -7479,7 +7479,7 @@ function renderCobranca(){
     <div class="stat pr"><b>${brl(soma(pagos))}</b><span>Recebido</span></div>`;
   const linha=(x,tipo)=>`<li class="cob ${tipo}">
       <span class="mini">${avatar(x.p)}</span>
-      <div class="cob-i"><b>${x.p.nome}</b><span>${x.p.tutor}${x.p.telefone?' · '+telFmt(x.p.telefone):''} · vence dia ${x.p.pagamentoDia}</span></div>
+      <div class="cob-i"><b>${nomeCompleto(x.p)}</b><span>${x.p.tutor}${temDois(x.p)?' e '+(x.p.dono2.nome||'2º dono'):''}${x.p.telefone?' · '+telFmt(x.p.telefone):''} · vence dia ${x.p.pagamentoDia}</span></div>
       <b class="cob-v">${brl(x.m.total)}</b>
       <button class="btn-mini" data-cobrar="${x.p.id}" data-ym="${ym}">${x.pago?'ver':'cobrar'}</button>
     </li>`;
@@ -7494,7 +7494,7 @@ function renderCobranca(){
   $('#cb-n0').textContent=venceHoje.length;$('#cb-n1').textContent=aVencer.length;$('#cb-n2').textContent=vencidos.length;$('#cb-n3').textContent=pagos.length;
   $('#cb-inad').innerHTML=`<tr><th>Cliente</th><th class="r">Valor</th><th>Vence</th><th>Contato</th></tr>`+
     (f.atrasoL.length?f.atrasoL.sort((a,b)=>b.m.total-a.m.total).map(x=>
-      `<tr><td><b>${x.p.nome}</b><small style="display:block;color:#A38560">${x.p.tutor}</small></td><td class="r">${brl(x.m.total)}</td><td>dia ${x.p.pagamentoDia}</td><td>${x.p.telefone?telFmt(x.p.telefone):'—'}</td></tr>`).join('')
+      `<tr><td><b>${nomeCompleto(x.p)}</b><small style="display:block;color:#A38560">${x.p.tutor}</small></td><td class="r">${brl(x.m.total)}</td><td>dia ${x.p.pagamentoDia}</td><td>${x.p.telefone?telFmt(x.p.telefone):'—'}</td></tr>`).join('')
       :`<tr><td colspan="4" style="text-align:center;color:#A38560;font-weight:700;padding:14px">Ninguém inadimplente. 🎉</td></tr>`);
 }
 let finMes=null;
@@ -7508,7 +7508,7 @@ function renderFinanceiro(){
     ['Previsão do mês',brl(f.total-f.transporte),'sem transporte'],['Hotel',brl(f.hotel),''],
     ['Inadimplência',clientes?`${Math.round(inad/clientes*100)}% · ${inad} ${inad===1?'cliente':'clientes'}`:'—','fa'],
   ].map(([k,v,c])=>`<div class="stat ${c==='sem transporte'?'':c}"><b style="font-size:22px">${v}</b><span>${k}${c==='sem transporte'?' <small>(sem van)</small>':''}</span></div>`).join('')+`<div class="nota" style="flex:100%;font-size:12px;font-weight:700;color:#A38560">🚐 O transporte fica em <button class="alterar" style="margin:0" data-view="fintransp">Financeiro do Transporte</button>, separado.</div>`;
-  const porCliente=f.creche.map(x=>({nome:x.p.nome,tutor:x.p.tutor,creche:x.m.total-x.m.valorHotel+(x.m.abatimento?0:0),hotel:f.hotelL.filter(h=>h.r.petId===x.p.id).reduce((a,h)=>a+(h.r.naFatura?h.c.restante:h.c.total),0),junto:x.m.hosp.length>0,pago:x.pago,venc:x.p.pagamentoDia,id:x.p.id}));
+  const porCliente=f.creche.map(x=>({nome:nomeCompleto(x.p),tutor:x.p.tutor+(temDois(x.p)?' e '+(x.p.dono2.nome||'2º dono'):''),creche:x.m.total-x.m.valorHotel+(x.m.abatimento?0:0),hotel:f.hotelL.filter(h=>h.r.petId===x.p.id).reduce((a,h)=>a+(h.r.naFatura?h.c.restante:h.c.total),0),junto:x.m.hosp.length>0,pago:x.pago,venc:x.p.pagamentoDia,id:x.p.id}));
   f.hotelSolto.filter(h=>!h.r.petId).forEach(h=>porCliente.push({nome:h.r.nome+' (visitante)',tutor:h.r.tutor,creche:0,hotel:h.c.total,pago:h.r.pago,venc:null,rid:h.r.id}));
   porCliente.sort((a,b)=>(b.creche+b.hotel)-(a.creche+a.hotel));
   $('#fi-clientes').innerHTML=`<tr><th>Cliente</th><th class="r">Creche</th><th class="r">Hotel</th><th class="r">Total</th><th>Status</th></tr>`+porCliente.map(c=>`<tr><td><b>${c.nome}</b><br><small style="color:#A38560">${c.tutor}</small></td><td class="r">${c.creche?brl(c.creche):'—'}</td><td class="r">${c.hotel?brl(c.hotel)+(c.junto?'<br><small style="color:var(--verde-txt)">na fatura</small>':''):'—'}</td><td class="r"><b>${brl(c.creche+c.hotel)}</b></td><td>${c.pago?'<span class="st-pag pago">✓ pago</span>':(c.venc&&finMes===MES&&hojeDia>c.venc)||finMes<MES?'<span class="st-pag aberto" style="background:var(--vermelho-bg);color:var(--vermelho-txt)">vencido</span>':'<span class="st-pag aberto" style="background:var(--amarelo-claro)">em aberto</span>'}</td></tr>`).join('')+`<tr class="tot"><td>Total</td><td class="r">${brl(f.previsao-f.creche.reduce((a,x)=>a+x.m.valorHotel,0))}</td><td class="r">${brl(f.hotel)}</td><td class="r">${brl(f.previsao+f.hotelSolto.reduce((a,x)=>a+x.c.total,0))}</td><td colspan="2"></td></tr>`;
@@ -8479,7 +8479,7 @@ function abrirAgendaDia(d){
   const blocos=[];
   if(ci.length||co.length||hosp.length)blocos.push(`<div class="cfg-h">🏡 Hotel</div><ul class="pn-ev" style="margin-top:6px">${ci.map(r=>li('🔑',`Check-in de ${hospede(r).nome} · ${r.horaIn||'09:00'}`,`data-hperfil="${r.id}"`)).join('')}${co.map(r=>li('🏁',`Check-out de ${hospede(r).nome} · ${r.horaOut||'17:00'}`,`data-hperfil="${r.id}"`)).join('')}${hosp.filter(r=>!ci.includes(r)&&!co.includes(r)).map(r=>li('🏡',`${hospede(r).nome} hospedado`,`data-hperfil="${r.id}"`)).join('')}</ul>`);
   if(nv.length||venc.length||ren.length)blocos.push(`<div class="cfg-h">📌 Lembretes</div><ul class="pn-ev" style="margin-top:6px">${nv.map(p=>li('🎂',`Aniversário de ${p.nome}`,`data-perfil="${p.id}"`)).join('')}${venc.map(p=>li('💳',`Vence o pagamento de ${p.nome} · ${brl(resumoMes(p,d.slice(0,7)).total)}`,`data-cobrar="${p.id}" data-ym="${d.slice(0,7)}"`)).join('')}${ren.map(p=>li('🗓',`Renovação do plano de ${p.nome}`,`data-perfil="${p.id}"`)).join('')}</ul>`);
-  if(rt.stops.length)blocos.push(`<div class="cfg-h">🚐 Transporte · ${rt.stops.length} ${rt.stops.length===1?'parada':'paradas'}</div><ul class="pn-ev" style="margin-top:6px">${rt.stops.map((x,i)=>{const p=pets.find(q=>q.id===x.petId);return li(String(i+1),`${x.hora?x.hora+' · ':''}${p.nome}${p.endereco?' · '+p.endereco.split(' - ')[0]:''}`,`data-perfil="${p.id}"`)}).join('')}<li><button class="btn secund" data-irrota="${d}" style="margin:0;width:100%">Abrir a rota desse dia</button></li></ul>`);
+  if(rt.stops.length)blocos.push(`<div class="cfg-h">🚐 Transporte · ${rt.stops.length} ${rt.stops.length===1?'parada':'paradas'}</div><ul class="pn-ev" style="margin-top:6px">${rt.stops.map((x,i)=>{const p=pets.find(q=>q.id===x.petId);return li(String(i+1),`${x.hora?x.hora+' · ':''}${nomeCompleto(p)}${p.endereco?' · '+p.endereco.split(' - ')[0]:''}`,`data-perfil="${p.id}"`)}).join('')}<li><button class="btn secund" data-irrota="${d}" style="margin:0;width:100%">Abrir a rota desse dia</button></li></ul>`);
   if(previstos.length)blocos.push(`<div class="cfg-h">🏫 Creche · ${previstos.length} ${previstos.length===1?'pet previsto':'pets previstos'}</div><div class="pert-card" style="margin:6px 0 0;gap:6px">${previstos.map(p=>`<span class="th" title="${p.nome}" data-perfil="${p.id}" style="width:36px;height:36px;border-radius:50%;cursor:pointer">${avatar(p)}</span>`).join('')}</div>`);
   $('#modais').innerHTML=`<div class="overlay" id="ov"><div class="modal form" role="dialog">
     <button class="fechar" data-fechar aria-label="Fechar">✕</button>
