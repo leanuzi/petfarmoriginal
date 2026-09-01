@@ -1016,6 +1016,11 @@ table.fat tr.hotel td{background:#FFFCF3}
    uma parede de caixinhas e ninguem sabia qual era de quem */
 .irm-cx{background:var(--bege-claro);border:1px solid var(--bege);border-radius:16px;padding:2px 12px 12px;margin-top:12px}
 .irm-cx .cfg-h{font-size:12px}
+/* ideia de video do dia */
+.in-box.reels{background:linear-gradient(135deg,#FFF4E2,var(--creme));border-color:var(--amarelo)}
+.reels .rl-tipo{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#A38560;margin-top:8px}
+.reels .rl-txt{font-family:var(--display);font-weight:600;font-size:19px;line-height:1.25;color:var(--marrom-escuro);margin-top:4px}
+.reels .rl-acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 /* Data e hora lado a lado: o navegador da uma largura minima propria pra
    esses campos e eles se recusavam a encolher, entao o Check-out saia pra
    FORA do modal em telas medias (768px). min-width:0 libera o encolhimento. */
@@ -1972,6 +1977,15 @@ img,svg,video,canvas{max-width:100%}
             <button class="btn secund" data-view="financeiro">💳 Ver cobranças <small id="in-fin"></small></button>
           </div>
         </section>
+        <section class="in-box reels" id="in-reels-box">
+          <h3>🎬 Ideia de vídeo pra hoje</h3>
+          <p class="rl-tipo" id="in-reels-tipo"></p>
+          <p class="rl-txt" id="in-reels"></p>
+          <div class="rl-acoes">
+            <button class="btn-mini" id="in-reels-copiar">📋 Copiar</button>
+            <button class="btn-mini cinza" id="in-reels-outra">🔀 Outra ideia</button>
+          </div>
+        </section>
         <section class="in-box"><h3>🎂 Aniversários</h3><ul class="pend lista-p" id="in-niver"></ul></section>
         <section class="in-box"><h3>🐕 Retornar clientes</h3><ul class="pend lista-p" id="in-crm"></ul></section>
       </div>
@@ -2125,7 +2139,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.4.4</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.5.0</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -4992,7 +5006,23 @@ const doMes=(arr,ym=MES)=>arr.filter(d=>d.startsWith(ym));
    no pet. Se o vencimento é dia 10, o ciclo vai de 10/09 a 09/10. */
 /* a Pet Farm começou a usar o sistema em setembro/2026: cobrança de mês
    anterior não pode aparecer como vencida. Dá pra mudar em cfg.inicioCobranca. */
-const INICIO_COBRANCA='2026-09';
+/* ====== quando vence a cobranca de um mes ======
+   A Pet Farm cobra o mes FECHADO: o que o aumigo usou em agosto e cobrado
+   no dia de pagamento de SETEMBRO. Antes o sistema tratava o mes corrente
+   como o mes a cobrar, entao agosto ja nascia vencido no dia 1o de setembro. */
+const mesSeguinte=ym=>ymAdd(ym,1);
+function diaVencimento(p,ym){
+  const prox=mesSeguinte(ym);
+  const [y,m]=prox.split('-').map(Number);
+  const ultimo=new Date(y,m,0).getDate();          // 28, 29, 30 ou 31
+  return prox+'-'+pad(Math.min(p&&p.pagamentoDia||10,ultimo));
+}
+/* ja passou do dia de pagar? */
+const jaVenceu=(p,ym)=>HOJE>diaVencimento(p,ym);
+const venceHojeMesmo=(p,ym)=>HOJE===diaVencimento(p,ym);
+/* qual mes esta sendo cobrado agora: o passado */
+const mesACobrar=()=>ymAdd(MES,-1);
+const INICIO_COBRANCA='2026-08';                   // agosto e o 1o mes cobrado (vence em setembro)
 const inicioCobranca=()=>((typeof cfg!=='undefined'&&cfg.inicioCobranca)||INICIO_COBRANCA).slice(0,7);
 const mesCobravel=ym=>(ym||MES)>=inicioCobranca();
 function cicloDe(p,ref){
@@ -5314,6 +5344,13 @@ function niverInfo(p){
   let prox=new Date(y,m-1,d);const hoje=new Date();hoje.setHours(0,0,0,0);if(prox<hoje)prox=new Date(y+1,m-1,d);
   const dias=Math.round((prox-hoje)/86400000);return {dias,txt:`${pad(d)}/${pad(m)}`,hoje:dias===0};
 }
+let reelsPulo=0;
+function pintarReels(){
+  const cx=document.getElementById('in-reels');if(!cx)return;
+  const [tipo,txt]=ideiaDoDia(HOJE,reelsPulo);
+  const t=document.getElementById('in-reels-tipo');if(t)t.textContent=tipo;
+  cx.textContent=txt;
+}
 function hojeStr(){return new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}
 function pendentes(){return naChamada().filter(p=>p.status==='pendente').sort((a,b)=>a.nome.localeCompare(b.nome))}
 
@@ -5397,13 +5434,66 @@ function salvarTurmaDasUnidades(){
 function salvarSeguro(chave,valor){try{localStorage.setItem(chaveReal(chave),valor);return true}catch(e){if(!salvarSeguro.avisou){salvarSeguro.avisou=true;toast(pets[0]||{raca:'golden'},'Memória do navegador cheia','Reduza fotos ou exclua pets antigos; o que já estava salvo continua.')}return false}}
 
 
+/* ====== ideia de vídeo do dia ======
+   Uma por dia, igual pra todo mundo da equipe: o indice sai da data, não
+   do sorteio, senão cada aparelho mostraria uma coisa. Sempre curtinha e
+   possível de gravar no celular no meio do dia. */
+const REELS=[
+  ['POV','POV: você é o primeiro a chegar na creche e a festa é só sua.'],
+  ['POV','POV: chegou a hora do lanche e todo mundo já sabe.'],
+  ['POV','POV: você é o cachorro que acha que o colo é dele por direito.'],
+  ['POV','POV: a van encostou na sua rua e você reconheceu o barulho.'],
+  ['POV','POV: você dormiu 4 horas na creche e vai dormir a noite toda em casa também.'],
+  ['POV','POV: é sexta-feira e você é o mais animado da turma.'],
+  ['Engaja','Marque o dono de um aumigo que faz exatamente isso.'],
+  ['Engaja','Adivinha a raça só pela patinha. Comenta antes de ver o final.'],
+  ['Engaja','Qual desses seria o seu cachorro? Comenta o número.'],
+  ['Engaja','Escolha: bolinha ou colo? Os aumigos já escolheram.'],
+  ['Engaja','Comenta o nome do seu aumigo e a gente responde com a energia dele.'],
+  ['Antes e depois','Chegou tímido no primeiro dia · hoje entra correndo. Mostre os dois.'],
+  ['Antes e depois','Antes do banho e depois do banho, mesma pose.'],
+  ['Antes e depois','8h da manhã cheio de energia · 17h dormindo no sofá.'],
+  ['Rotina','Um dia inteiro na creche em 15 segundos: chegada, brincadeira, soneca, volta.'],
+  ['Rotina','Como a gente separa a turma por tamanho e temperamento.'],
+  ['Rotina','O que vai na mochila de quem fica no hotel.'],
+  ['Rotina','A hora da soneca coletiva. Só o vídeo, sem narração.'],
+  ['Rotina','Mostra a chegada da van e a recepção de cada um.'],
+  ['Bastidor','Quem trabalha aqui apresenta o aumigo mais grudento do dia.'],
+  ['Bastidor','O que a gente faz quando chega um cachorro tímido.'],
+  ['Bastidor','Como fica a creche 5 minutos antes de todo mundo chegar.'],
+  ['Bastidor','A tia que todo cachorro corre pra ver primeiro.'],
+  ['Dica','3 sinais de que seu cachorro precisa gastar mais energia.'],
+  ['Dica','Por que cachorro que brinca com outros dorme melhor.'],
+  ['Dica','O que levar no primeiro dia de creche.'],
+  ['Dica','Como saber se seu cachorro gostou da creche.'],
+  ['Dica','Cachorro cansado não é cachorro triste: mostra a diferença.'],
+  ['Fofura','Close nas orelhas de cada um, uma atrás da outra.'],
+  ['Fofura','A cara de quem acabou de acordar da soneca.'],
+  ['Fofura','O jeito que cada um pede carinho. Um por vez.'],
+  ['Fofura','Câmera lenta na hora que soltam todo mundo pra brincar.'],
+  ['Fofura','O aumigo que sempre carrega o mesmo brinquedo.'],
+  ['Aniversário','Parabéns pro aniversariante do dia. Bolinho, chapeuzinho e a turma junto.'],
+  ['Trend','Grava a turma e coloca uma música que combine com a bagunça.'],
+  ['Trend','Cada cachorro com uma legenda do que ele estaria pensando.'],
+  ['Trend','Ranking: o mais dorminhoco, o mais rápido, o mais carinhoso.'],
+  ['Trend','Entrevista de rua, mas com cachorro: pergunta e mostra a reação.'],
+  ['Depoimento','Peça pra um tutor contar em 20 segundos como o cachorro mudou.'],
+  ['Depoimento','Mostre uma mensagem de tutor agradecendo (com autorização).']
+];
+/* mesmo dia = mesma ideia em todos os aparelhos */
+function ideiaDoDia(iso,pulo){
+  const d=String(iso||HOJE);
+  let soma=0;for(let i=0;i<d.length;i++)soma=(soma*31+d.charCodeAt(i))%100000;
+  return REELS[(soma+(pulo||0))%REELS.length];
+}
 /* ====== INÍCIO: o que precisa ser feito agora ====== */
 let pendLista=[];
 function pendencias(){
   const out=[];const hojeDia=new Date().getDate();const $fin=pode('financeiro');
   ativos().forEach(p=>{
     if(!p.telefone)out.push({n:2,ico:'📵',txt:`${nomeCompleto(p)} sem WhatsApp do tutor`,acao:()=>abrirEditar(p.id)});
-    if($fin&&mesCobravel(MES)&&!p.pagamentos[MES]&&hojeDia>p.pagamentoDia)out.push({n:1,ico:'💳',txt:`${nomeCompleto(p)}: pagamento venceu dia ${p.pagamentoDia} · ${brl(resumoMes(p).total)}`,acao:()=>abrirCobrancaCreche(p.id)});
+    const ymCob=mesACobrar();
+    if($fin&&mesCobravel(ymCob)&&!p.pagamentos[ymCob]&&jaVenceu(p,ymCob))out.push({n:1,ico:'💳',txt:`${nomeCompleto(p)}: pagamento de ${ymNome(ymCob)} venceu dia ${p.pagamentoDia} · ${brl(resumoMes(p,ymCob).total)}`,acao:()=>abrirCobrancaCreche(p.id)});
     if(p.status==='presente'&&!p.midias.includes(HOJE))out.push({n:3,ico:'📸',txt:`${nomeCompleto(p)} sem foto/vídeo enviado hoje`,acao:()=>trocarAba('creche')});
     if(p.transporte&&!p.endereco)out.push({n:2,ico:'🚐',txt:`${nomeCompleto(p)} usa transporte e está sem endereço`,acao:()=>abrirEditar(p.id)});
     const m=resumoMes(p);if(m.faltas>=3&&m.faltas>=m.vindas/2)out.push({n:2,ico:'📉',txt:`${nomeCompleto(p)} faltando acima do normal (${m.faltas} faltas em ${nomeMes})`,acao:()=>abrirPerfil(p.id)});
@@ -5429,6 +5519,21 @@ function renderInicio(){
   $('#in-saud').textContent=`${saudacao()}, ${cfg.usuario||'equipe'}! 🐾`;
   $('#in-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
   $('#in-k1').textContent=contaCaes(ativos());$('#in-k2').textContent=pr;$('#in-k3').textContent=fa;$('#in-k4').textContent=pe;
+  pintarReels();
+  // os dois botoes: copiar o texto e pular pra outra ideia
+  const bc=document.getElementById('in-reels-copiar');
+  if(bc&&!bc.dataset.pronto){
+    bc.dataset.pronto='1';
+    bc.onclick=()=>{
+      const t=(document.getElementById('in-reels')||{}).textContent||'';
+      const ok=()=>toast(pets[0]||{raca:'golden'},'Ideia copiada 🎬','Cola na legenda ou no bloco de notas.',true);
+      if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok).catch(()=>{});
+      else{const c=document.createElement('textarea');c.value=t;document.body.appendChild(c);c.select();
+           try{document.execCommand('copy')}catch(e){}c.remove();ok()}
+    };
+  }
+  const bo=document.getElementById('in-reels-outra');
+  if(bo&&!bo.dataset.pronto){bo.dataset.pronto='1';bo.onclick=()=>{reelsPulo++;pintarReels()}}
   pendLista=pendencias();
   const cont=(f)=>pendLista.filter(f).length;
   const resumo=[
@@ -5983,7 +6088,8 @@ function render(){
   $('#fech-tot').innerHTML=`<span>A receber: <b>${brl(aReceber)}</b></span><span>Recebido: <b>${brl(recebido)}</b></span><span>Total do mês: <b>${brl(aReceber+recebido)}</b></span>`;
   const hojeDia=new Date().getDate();
   $('#fech-lista').innerHTML=fech.sort((a,b)=>(a.p.pagamentos[MES]?1:0)-(b.p.pagamentos[MES]?1:0)||a.p.pagamentoDia-b.p.pagamentoDia).map(({p,m})=>{
-    const pago=!!p.pagamentos[MES];const cls=pago?'pago':((mesCobravel(MES)&&hojeDia>p.pagamentoDia)?'atrasado':'aberto');
+    const ymC=mesACobrar();
+    const pago=!!p.pagamentos[ymC];const cls=pago?'pago':((mesCobravel(ymC)&&jaVenceu(p,ymC))?'atrasado':'aberto');
     return `<li>
       <div class="mini">${avatar(p)}</div>
       <div><b>${nomeCompleto(p)}</b><span>${PLANOS[p.plano].nome} · ${m.vindas} dias${m.extras?` · +${m.extras} extras`:''}${m.transpVezes?` · transporte ${m.transpVezes}x`:''} · vence dia ${p.pagamentoDia}${p.cobrancas[MES]&&p.cobrancas[MES].enviada?' · cobrança enviada '+fmtData(p.cobrancas[MES].enviada):''}</span></div>
@@ -7885,11 +7991,11 @@ function abrirCobrancaCreche(id,ym){
 
 /* ====== FINANCEIRO ====== */
 function financeiroResumo(ym){
-  const hojeDia=new Date().getDate();const mesAtual=ym===MES;
+  const hojeDia=new Date().getDate();
   const creche=pets.filter(p=>p.ativo!==false||doMes(p.presencas,ym).length).map(p=>({p,m:resumoMes(p,ym),pago:!!p.pagamentos[ym]}));
   const aReceber=creche.filter(x=>!x.pago).reduce((a,x)=>a+x.m.total,0);
   const recebido=creche.filter(x=>x.pago).reduce((a,x)=>a+x.m.total,0);
-  const atrasoL=creche.filter(x=>!x.pago&&x.m.total>0&&mesCobravel(ym)&&(!mesAtual||hojeDia>x.p.pagamentoDia));
+  const atrasoL=creche.filter(x=>!x.pago&&x.m.total>0&&mesCobravel(ym)&&jaVenceu(x.p,ym));
   const atraso=atrasoL.reduce((a,x)=>a+x.m.total,0);
   const previsao=creche.reduce((a,x)=>a+x.m.total,0);
   const hotelL=reservas.filter(r=>r.status!=='reservado'&&r.status!=='cancelado'&&(r.checkout||'').startsWith(ym)).map(r=>({r,c:contaHotel(r)}));
@@ -7909,7 +8015,7 @@ function financeiroResumo(ym){
 /* ---- Cobrança: a vencer, vencidos e pagos, separado do Financeiro ---- */
 let cobMes=null;
 function renderCobranca(){
-  const ym=cobMes||MES;
+  const ym=cobMes||mesACobrar();      // abre no mes fechado, que e o que se cobra agora
   const sel=$('#cb-mes');
   if(sel&&!sel.dataset.pronto){
     const meses=[];for(let i=0;i<6;i++)meses.push(ymAdd(MES,-i));
@@ -7918,9 +8024,8 @@ function renderCobranca(){
   }
   if(sel)sel.value=ym;
   const f=financeiroResumo(ym);
-  const hojeDia=new Date().getDate(), mesAtual=ym===MES;
-  const venceu=x=>mesCobravel(ym)&&(!mesAtual||hojeDia>x.p.pagamentoDia);
-  const ehHoje=x=>mesCobravel(ym)&&mesAtual&&x.p.pagamentoDia===hojeDia;
+  const venceu=x=>mesCobravel(ym)&&jaVenceu(x.p,ym);
+  const ehHoje=x=>mesCobravel(ym)&&venceHojeMesmo(x.p,ym);
   const comValor=f.creche.filter(x=>x.m.total>0);
   const pagos=comValor.filter(x=>x.pago);
   const vencidos=comValor.filter(x=>!x.pago&&venceu(x));
