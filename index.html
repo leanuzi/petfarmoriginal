@@ -63,7 +63,11 @@ input,select{font-family:inherit;color:inherit}
   background:rgba(255,249,239,.88);backdrop-filter:blur(10px);
   border-bottom:1px solid var(--bege);
 }
-.topbar .in{max-width:1240px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:18px}
+/* O miolo das paginas fica em 1240px de proposito (texto largo demais cansa),
+   mas a BARRA DE CIMA nao: com 11 abas ela precisa de ~1860px pra caber numa
+   linha. Presa em 1240 num monitor de 1920 ela quebrava em 3 fileiras e
+   passava por cima da logo. */
+.topbar .in{max-width:1880px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:18px}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .logo .st{width:44px;height:44px}
 .logo b{font-family:var(--display);font-weight:700;font-size:24px;color:var(--marrom-escuro)}
@@ -1006,6 +1010,11 @@ table.fat tr.hotel td{background:#FFFCF3}
    uma parede de caixinhas e ninguem sabia qual era de quem */
 .irm-cx{background:var(--bege-claro);border:1px solid var(--bege);border-radius:16px;padding:2px 12px 12px;margin-top:12px}
 .irm-cx .cfg-h{font-size:12px}
+/* Data e hora lado a lado: o navegador da uma largura minima propria pra
+   esses campos e eles se recusavam a encolher, entao o Check-out saia pra
+   FORA do modal em telas medias (768px). min-width:0 libera o encolhimento. */
+.modal .campo input[type=date],.modal .campo input[type=time]{min-width:0}
+.row2>*,.row3>*,.modal .campo>div{min-width:0}
 /* login sem acesso a dinheiro: o numero ja vira ••• pelo brl(), e os
    blocos que existem SO pra falar de valor somem inteiros */
 body.sem-valor .somente-fin,
@@ -1096,6 +1105,7 @@ button,a,label,.rota li,.dias-rotas button,[data-acao]{-webkit-tap-highlight-col
 .tag{font-size:10px;font-weight:800;border-radius:999px;padding:2px 8px;background:var(--bege-claro);border:1px solid var(--bege);color:var(--marrom)}
 .tag.t-creche{background:var(--verde-bg);border-color:#CFE3CB;color:var(--verde-txt)}
 .tag.t-hotel{background:#E8F0FB;border-color:#C9DAF5;color:#2F5BA8}
+.t-visitante{background:#F3E8FB;border-color:#E0C9F5;color:#6B3FA0}
 .tag.t-fim-de-ano{background:var(--vermelho-bg);border-color:#F1C9C9;color:var(--vermelho-txt)}
 .tag.t-off{opacity:.7}
 .pet-card{padding:12px 14px}
@@ -1297,9 +1307,31 @@ a.maps-link:hover{text-decoration:underline}
       sozinho e o bloco da direita nunca é empurrado pra fora. */
 .topbar .in>*{min-width:0}
 .topbar .right{flex:none}
-/* com muitas abas (perfil Master tem 10), o menu passava do espaço e as duas
-   últimas ficavam inacessíveis. Agora ele quebra pra segunda linha. */
-.nav{flex-wrap:wrap;row-gap:4px}
+/* Quebrar em varias fileiras deixava a barra com 149px de altura e ainda
+   espremia a logo ate o texto dela sair da caixa e ficar POR BAIXO do menu.
+   Agora o menu e sempre uma fileira so e rola de lado quando nao cabe,
+   do mesmo jeito que ja fazia no celular e no tablet. */
+.nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;flex:1 1 auto;min-width:0}
+.nav::-webkit-scrollbar{display:none}
+.nav button{flex:none}
+/* a logo nunca encolhe: era o min-width:0 de cima que deixava a caixa dela
+   virar quase nada enquanto o desenho e o texto continuavam do tamanho normal */
+@media (min-width:1101px){                 /* abaixo disso a barra ja se vira de outro jeito;
+                                             manter flex:none la estourava 6px em 768px */
+  .topbar .logo{flex:none;min-width:auto}
+}
+/* num PC menor as 11 abas nao cabem inteiras; apertar um pouco o botao faz
+   caber bem mais antes de precisar rolar */
+@media (min-width:761px) and (max-width:1560px){
+  .nav button{padding:8px 11px}
+}
+/* a data por extenso ("segunda-feira, 31 de agosto") come quase 200px da
+   barra — espaco de umas 2 abas. Em tela menor ela vira "seg., 31/08". */
+.d-curta{display:none}
+@media (max-width:1700px){
+  .d-longa{display:none}
+  .d-curta{display:inline}
+}
 @media (max-width:760px){                       /* no celular rola de lado, ocupa menos altura */
   .nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
   .nav::-webkit-scrollbar{display:none}
@@ -2057,7 +2089,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.4.0</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.4.1</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -5127,17 +5159,25 @@ function pintarIrmaos(pre,qtd,dados){
     // cada irmão tem o aniversário e a idade dele: são cachorros diferentes
     h+=`<div class="irm-cx">
       <div class="cfg-h" style="margin-top:0">${i+2}º aumigo</div>
-      <div class="row2">
-        <div class="campo"><label>Nome</label><input data-irm-nome="${i}" value="${esc(d.nome)}" placeholder="Ex.: Luna"></div>
+      <div class="campo"><label>Nome</label><input data-irm-nome="${i}" value="${esc(d.nome)}" placeholder="Ex.: Luna"></div>
+      <div class="row3">
         <div class="campo"><label>Raça</label><select data-irm-raca="${i}">${ops(d.raca)}</select></div>
-      </div>
-      <div class="row2">
-        <div class="campo"><label>🎂 Aniversário (dia/mês)</label><input data-irm-niver="${i}" value="${d.aniversario?d.aniversario.split('-').reverse().join('/'):''}" placeholder="25/08" inputmode="numeric"></div>
+        <div class="campo"><label>Porte</label><select data-irm-porte="${i}">${['P','M','G'].map(x=>`<option value="${x}" ${x===(d.porte||'M')?'selected':''}>${{P:'Pequeno',M:'Médio',G:'Grande'}[x]}</option>`).join('')}</select></div>
         <div class="campo"><label>Idade</label><input data-irm-idade="${i}" value="${esc(d.idade)}" placeholder="Ex.: 3 anos"></div>
       </div>
+      <div class="campo"><label>🎂 Aniversário (dia/mês)</label><input data-irm-niver="${i}" value="${d.aniversario?d.aniversario.split('-').reverse().join('/'):''}" placeholder="25/08" inputmode="numeric"></div>
     </div>`;
   }
   cx.innerHTML=h;
+}
+/* Liga/desliga o rotulo "1º aumigo" e troca o titulo da secao.
+   Sem isso, com irmaos marcados a primeira caixa ficava sem nome e a
+   pessoa nao sabia de qual cachorro eram aqueles campos. */
+function rotularAumigos(pre,saoIrmaos){
+  const t=document.getElementById(pre+'-h-aumigos');
+  if(t)t.textContent=saoIrmaos?'🐶 Os aumigos':'🐶 O aumigo';
+  const r=document.getElementById(pre+'-rot1');
+  if(r)r.style.display=saoIrmaos?'block':'none';
 }
 /* lê os irmãos preenchidos no formulário */
 function lerIrmaos(pre){
@@ -5150,6 +5190,7 @@ function lerIrmaos(pre){
     const i=inp.dataset.irmNome;
     const peguei=k=>{const el=cx.querySelector('[data-irm-'+k+'="'+i+'"]');return el?el.value:''};
     const irm={nome:nome,raca:cx.querySelector('[data-irm-raca="'+i+'"]')?cx.querySelector('[data-irm-raca="'+i+'"]').value:Object.keys(RACAS)[0]};
+    irm.porte=peguei('porte')||'M';
     const niver=lerNiver(peguei('niver'));if(niver)irm.aniversario=niver;
     const idade=peguei('idade').trim();if(idade)irm.idade=idade;
     out.push(irm);
@@ -5417,7 +5458,8 @@ function iniciar(){
   try{const sv=lerLocal('petfarm.msgs');if(sv)msgLog=JSON.parse(sv)}catch(e){}
   try{const sv=lerLocal('petfarm.ops');if(sv)ops=JSON.parse(sv)}catch(e){}
   iniciarHotel();iniciarTransporte();
-  $('#data-hoje').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  $('#data-hoje').innerHTML='<span class="d-longa">'+new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})+
+    '</span><span class="d-curta">'+new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'})+'</span>';
 
 document.addEventListener('click',e=>{
   const zl=e.target.closest('a[href*="whatsapp.com"]');
@@ -5738,6 +5780,9 @@ function pintarDiaChamada(){
     :new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
   const bh=$('#ch-hoje-btn');if(bh)bh.classList.toggle('hidden',d===HOJE);
 }
+/* Um cadastro de irmaos e UMA linha na tela, mas SAO 2 ou 3 cachorros
+   dentro da creche. Vaga, presenca e falta contam cachorro. */
+const contaCaes=lista=>(lista||[]).reduce((n,p)=>n+qtdPets(p),0);
 /* ---- montar a chamada do dia: escolher quem está na creche ---- */
 function naChamada(){
   const t=(ops[diaChamada()]||{}).turma;
@@ -5839,10 +5884,10 @@ function render(){
   }
   const bl=$('#btn-limpar');if(bl)bl.classList.remove('hidden');
   const bt=$('#btn-turma');
-  if(bt){bt.classList.remove('hidden');const t=(ops[D]||{}).turma;bt.textContent='👥 Quem está hoje'+(Array.isArray(t)?' ('+t.length+')':'')}
-  const pe=naChamada().filter(p=>p.status==='pendente').length;
-  const pr=naChamada().filter(p=>p.status==='presente').length;
-  const fa=naChamada().filter(p=>p.status==='faltou').length;
+  if(bt){bt.classList.remove('hidden');const t=(ops[D]||{}).turma;bt.textContent='👥 Quem está hoje'+(Array.isArray(t)?' ('+contaCaes(pets.filter(p=>t.indexOf(p.id)>=0))+')':'')}
+  const pe=contaCaes(naChamada().filter(p=>p.status==='pendente'));
+  const pr=contaCaes(naChamada().filter(p=>p.status==='presente'));
+  const fa=contaCaes(naChamada().filter(p=>p.status==='faltou'));
   $('#n-ag').textContent=pe;$('#n-pr').textContent=pr;$('#n-fa').textContent=fa;
   $('#saudacao').textContent = pe===0 ? 'Uhuu! Chamada concluída! 🐶💛' : `${saudacao()}! Vamos fazer a chamada dos aumigos? 🐾`;
   $('#resumo').textContent = pe===0
@@ -5865,7 +5910,7 @@ function render(){
 
     const pill={pendente:'Sem marcar',presente:`Presente · ${p.chegou}`,faltou:'Faltou hoje'}[p.status];
     const nv=niverInfo(p);
-    const selo=nv&&nv.hoje?'<span class="selo-mini">🎂 hoje</span>':nv&&nv.dias<=7?`<span class="selo-mini">🎂 ${nv.dias}d</span>`:p.estrela?`<span class="selo-mini">⭐</span>`:'';
+    const selo=nv&&nv.hoje?'<span class="selo-mini">🎂 hoje</span>':nv&&nv.dias<=7?`<span class="selo-mini">🎂 ${nv.dias}d</span>`:'';
     const chips=[
       `<span>🗓 ${PLANOS[p.plano].curto}</span>`,
       `<span class="ok">✅ ${m.vindas} ${m.vindas===1?'dia':'dias'}</span>`,
@@ -6083,12 +6128,19 @@ function abrirEntrada(){
           <small>JPG ou PNG · dá pra colocar ou trocar depois também</small>
         </div>
       </div>
-      <div class="campo"><label for="f-nome">Nome do aumigo</label><input id="f-nome" placeholder="Ex.: Bolt" autofocus></div>
-      <div class="row2">
-        <div class="campo"><label for="f-raca">Raça</label><select id="f-raca">${ops}</select></div>
-        <div class="campo"><label for="f-porte">Porte</label><select id="f-porte"><option value="P">Pequeno</option><option value="M" selected>Médio</option><option value="G">Grande</option></select></div>
+      <div class="cfg-h" id="f-h-aumigos">🐶 O aumigo</div>
+      <div class="irm-cx" id="f-cx1">
+        <div class="cfg-h" id="f-rot1" style="margin-top:0;display:none">1º aumigo</div>
+        <div class="campo"><label for="f-nome">Nome</label><input id="f-nome" placeholder="Ex.: Bolt" autofocus></div>
+        <div class="row3">
+          <div class="campo"><label for="f-raca">Raça</label><select id="f-raca">${ops}</select></div>
+          <div class="campo"><label for="f-porte">Porte</label><select id="f-porte"><option value="P">Pequeno</option><option value="M" selected>Médio</option><option value="G">Grande</option></select></div>
+          <div class="campo"><label for="f-idade">Idade</label><input id="f-idade" placeholder="Ex.: 3 anos"></div>
+        </div>
+        <div class="campo"><label for="f-niver">🎂 Aniversário (dia/mês)</label><input id="f-niver" placeholder="25/08" inputmode="numeric"></div>
       </div>
       <div class="hidden" id="f-irmao-box"></div>
+      <div class="cfg-h">👤 Quem cuida dele</div>
       <div class="row2">
         <div class="campo obrig"><label for="f-tutor">Tutor</label><input id="f-tutor" placeholder="Nome do tutor"></div>
         <div class="campo obrig"><label for="f-tel">WhatsApp do tutor (cobrança)</label><input id="f-tel" placeholder="(47) 99999-9999" inputmode="tel"></div>
@@ -6104,15 +6156,13 @@ function abrirEntrada(){
         </div>
       </div>
       <div class="campo"><label for="f-grupo">Link do grupo no WhatsApp <small style="font-weight:700;color:#A38560">· opcional · quando houver, as mensagens vão pro grupo</small></label><input id="f-grupo" placeholder="https://chat.whatsapp.com/..." inputmode="url"></div>
+      <div class="cfg-h">🗓 Plano e pagamento</div>
       <div class="row2">
         <div class="campo obrig"><label for="f-pag">Dia do pagamento</label><input id="f-pag" type="number" min="1" max="31" value="10"></div>
       </div>
-      <div class="row2">
-        <div class="campo"><label for="f-niver">🎂 Aniversário (dia/mês)</label><input id="f-niver" placeholder="25/08" inputmode="numeric"></div>
-        <div class="campo"><label for="f-idade">Idade</label><input id="f-idade" placeholder="Ex.: 3 anos"></div>
-      </div>
       ${camposPlano()}
       <div class="campo"><label>Onde esse pet frequenta</label><div class="tipos-sel">${Object.entries(TIPOS_PET).map(([k,v])=>`<label class="${(['creche']).includes(k)?'on':''}"><input type="checkbox" data-tipo="${k}" ${(['creche']).includes(k)?'checked':''}> ${v[0]} ${v[1]}</label>`).join('')}</div></div>
+      <div class="cfg-h">📍 Onde busca e leva</div>
       <div class="campo"><label for="f-end">Endereço (pro transporte)</label><input id="f-end" placeholder="Rua, número · bairro · cidade"></div>
       ${camposDocs('f',null)}
       <div class="campo"><label for="f-obs">Observações do aumigo</label><textarea id="f-obs" style="min-height:60px" placeholder="Alergias, remédios, temperamento…"></textarea></div>
@@ -6126,6 +6176,7 @@ function abrirEntrada(){
     const on=chkIrmao.checked;
     $('#f-irmao-box').classList.toggle('hidden',!on);
     $('#f-qtd-box').classList.toggle('hidden',!on);
+    rotularAumigos('f',on);
     if(on){pintarIrmaos('f',qtdIrmao.value,lerIrmaos('f'));const p1=$('#f-irmao-box').querySelector('input');if(p1)p1.focus()}
   };
   if(chkIrmao)chkIrmao.onchange=repintaIrm;
@@ -6310,14 +6361,19 @@ function abrirEditar(id){
           <small>JPG ou PNG · a foto fica salva neste navegador</small>
         </div>
       </div>
-      <div class="row2">
+      <div class="cfg-h" id="e-h-aumigos">${temIrmao(p)?'🐶 Os aumigos':'🐶 O aumigo'}</div>
+      <div class="irm-cx" id="e-cx1">
+        <div class="cfg-h" id="e-rot1" style="margin-top:0;display:${temIrmao(p)?'block':'none'}">1º aumigo</div>
         <div class="campo"><label for="e-nome">Nome</label><input id="e-nome" value="${p.nome}"></div>
-        <div class="campo"><label for="e-selo">Selo (opcional)</label><input id="e-selo" value="${p.estrela||''}" placeholder="Ex.: Aniversariante"></div>
+        <div class="row3">
+          <div class="campo"><label for="e-raca">Raça</label><select id="e-raca">${ops}</select></div>
+          <div class="campo"><label for="e-porte">Porte</label><select id="e-porte">${['P','M','G'].map(x=>`<option value="${x}" ${x===p.porte?'selected':''}>${{P:'Pequeno',M:'Médio',G:'Grande'}[x]}</option>`).join('')}</select></div>
+          <div class="campo"><label for="e-idade">Idade</label><input id="e-idade" value="${(p.idade||'').split('"').join('&quot;')}" placeholder="Ex.: 3 anos"></div>
+        </div>
+        <div class="campo"><label for="e-niver">🎂 Aniversário (dia/mês)</label><input id="e-niver" placeholder="25/08" value="${p.aniversario?p.aniversario.split('-').reverse().join('/'):''}" inputmode="numeric"></div>
       </div>
-      <div class="row2">
-        <div class="campo"><label for="e-raca">Raça</label><select id="e-raca">${ops}</select></div>
-        <div class="campo"><label for="e-porte">Porte</label><select id="e-porte">${['P','M','G'].map(x=>`<option value="${x}" ${x===p.porte?'selected':''}>${{P:'Pequeno',M:'Médio',G:'Grande'}[x]}</option>`).join('')}</select></div>
-      </div>
+      <div class="${temIrmao(p)?'':'hidden'}" id="e-irmao-box"></div>
+      <div class="cfg-h">👤 Quem cuida dele</div>
       <div class="row2">
         <div class="campo obrig"><label for="e-tutor">Tutor</label><input id="e-tutor" value="${p.tutor}" required></div>
         <div class="campo obrig"><label for="e-tel">WhatsApp do tutor (cobrança)</label><input id="e-tel" value="${p.telefone||''}" placeholder="(47) 99999-9999" inputmode="tel"></div>
@@ -6329,7 +6385,6 @@ function abrirEditar(id){
         <label class="campo-qtd ${temIrmao(p)?'':'hidden'}" id="e-qtd-box"><span>Quantos aumigos?</span><select id="e-irmao-qtd">${[2,3,4,5,6].map(n=>`<option value="${n}" ${qtdPets(p)===n?'selected':''}>${n}</option>`).join('')}</select></label>
         <label class="check"><input type="checkbox" id="e-dono2-chk" ${temDois(p)?'checked':''}> 👥 Tem dois donos</label>
       </div>
-      <div class="${temIrmao(p)?'':'hidden'}" id="e-irmao-box"></div>
       <div class="${temDois(p)?'':'hidden'}" id="e-dono2-box">
         <div class="cfg-h">👥 Segundo dono</div>
         <div class="row3">
@@ -6339,15 +6394,13 @@ function abrirEditar(id){
         </div>
       </div>
       <div class="campo"><label for="e-grupo">Link do grupo no WhatsApp <small style="font-weight:700;color:#A38560">· opcional · quando houver, as mensagens vão pro grupo</small></label><input id="e-grupo" value="${p.zapGrupo||''}" placeholder="https://chat.whatsapp.com/..." inputmode="url"></div>
+      <div class="cfg-h">🗓 Plano e pagamento</div>
       <div class="row2">
         <div class="campo obrig"><label for="e-pag">Dia do pagamento</label><input id="e-pag" type="number" min="1" max="31" value="${p.pagamentoDia||10}"></div>
       </div>
-      <div class="row2">
-        <div class="campo"><label for="e-niver">🎂 Aniversário (dia/mês)</label><input id="e-niver" placeholder="25/08" value="${p.aniversario?p.aniversario.split('-').reverse().join('/'):''}" inputmode="numeric"></div>
-        <div class="campo"><label for="e-idade">Idade</label><input id="e-idade" value="${(p.idade||'').replace(/"/g,'&quot;')}" placeholder="Ex.: 3 anos"></div>
-      </div>
       ${camposPlano(p)}
       <div class="campo"><label>Onde esse pet frequenta</label><div class="tipos-sel">${Object.entries(TIPOS_PET).map(([k,v])=>`<label class="${(tiposDe(p)).includes(k)?'on':''}"><input type="checkbox" data-tipo="${k}" ${(tiposDe(p)).includes(k)?'checked':''}> ${v[0]} ${v[1]}</label>`).join('')}</div></div>
+      <div class="cfg-h">📍 Onde busca e leva</div>
       <div class="campo"><label for="e-end">Endereço (pro transporte)</label><input id="e-end" value="${(p.endereco||'').replace(/"/g,'&quot;')}" placeholder="Rua, número · bairro · cidade"></div>
       <div class="row2">
         <div class="campo"><label for="e-desc">🏷 Desconto fixo mensal</label><div style="display:flex;gap:6px"><select id="e-desc-tipo" style="flex:none;width:72px"><option value="R$" ${(p.descontoFixo||{}).tipo!=='%'?'selected':''}>R$</option><option value="%" ${(p.descontoFixo||{}).tipo==='%'?'selected':''}>%</option></select><input id="e-desc-valor" type="number" min="0" step="0.5" value="${(p.descontoFixo||{}).valor||''}" placeholder="0"></div></div>
@@ -6364,6 +6417,7 @@ function abrirEditar(id){
   const repintaIrmE=()=>{
     const on=chkIrm.checked;
     $('#e-irmao-box').classList.toggle('hidden',!on);
+    rotularAumigos('e',on);
     $('#e-qtd-box').classList.toggle('hidden',!on);
     if(on){pintarIrmaos('e',qtdIrm.value,lerIrmaos('e'));const p1=$('#e-irmao-box').querySelector('input');if(p1)p1.focus()}
   };
@@ -6402,7 +6456,8 @@ function abrirEditar(id){
       const tt2=($('#e-d2-tel2')||{value:''}).value.replace(/[^0-9]/g,'');
       if(n2||t2.length>=10)p.dono2={nome:n2||'2º dono',telefone:t2,telefoneTransporte:tt2.length>=10?tt2:''};else delete p.dono2;
     }else delete p.dono2;
-    p.estrela=$('#e-selo').value.trim()||undefined;lerPlano(p);
+    delete p.estrela;   // o campo saiu do cadastro; limpa o que tinha ficado
+    lerPlano(p);
     p.tipos=[...document.querySelectorAll('[data-tipo]:checked')].map(c=>c.dataset.tipo);if(!p.tipos.length)p.tipos=['outro'];p.endereco=$('#e-end').value.trim();p.obs=$('#e-obs').value.trim();p.aniversario=lerNiver($('#e-niver').value);
     const cpfEd=cpfSo(($('#e-cpf')||{value:''}).value);if(cpfEd)p.cpf=cpfEd;else delete p.cpf;
     const idEd=($('#e-idade')||{value:''}).value.trim();if(idEd)p.idade=idEd;else delete p.idade;
@@ -6475,7 +6530,6 @@ function selos(p){
   all.forEach(d=>{if(prev){const diff=(new Date(d)-new Date(prev))/86400000;seq=(diff<=3)?seq+1:1}else seq=1;best=Math.max(best,seq);prev=d});
   if(best>=5)out.push(`<span>🔥 ${best} presenças seguidas</span>`);
   if(m.transpVezes&&m.transpVezes===m.vindas&&m.vindas>0)out.push('<span>🚐 Sempre de van</span>');
-  if(p.estrela)out.push(`<span class="ouro">⭐ ${p.estrela}</span>`);
   if(p.presencas.length>=20)out.push(`<span>🐾 ${p.presencas.length} dias na creche no total</span>`);
   return out.join('');
 }
@@ -6589,7 +6643,8 @@ function salvarHotel(){salvarSeguro('petfarm.hotel',JSON.stringify(reservas))}
 function hospede(r){ // dados do pet (da creche ou visitante)
   const p=r.petId?pets.find(x=>x.id===r.petId):null;
   const aluno=!!(p&&p.ativo!==false);
-  return {p,aluno,nome:p?nomeCompleto(p):r.nome,raca:p?p.raca:r.raca,peso:p?p.peso:r.peso,tutor:p?p.tutor:r.tutor,telefone:p?p.telefone:r.telefone,avatar:p?avatar(p):st((RACAS[r.raca]||RACAS.golden).st)};
+  const quem=caesDaReserva(r);
+  return {p,aluno,nome:(p?(quem.join(' + ')||nomeCompleto(p)):r.nome),caes:quem,raca:p?p.raca:r.raca,peso:p?p.peso:r.peso,tutor:p?p.tutor:r.tutor,telefone:p?p.telefone:r.telefone,avatar:p?avatar(p):st((RACAS[r.raca]||RACAS.golden).st)};
 }
 function diarias(r){const a=new Date(r.checkin),b=new Date(r.checkout);return Math.max(1,Math.round((b-a)/86400000))}
 function diariaValor(h){return h.aluno?HOTEL.aluno:(h.peso<=10?HOTEL.pequeno:HOTEL.grande)}
@@ -6602,8 +6657,27 @@ function valorDiaria(h,feriado){
   if(feriado)return h.aluno?HOTEL.ferAluno:(h.peso<=10?HOTEL.ferPequeno:HOTEL.ferGrande);
   return h.aluno?HOTEL.aluno:(h.peso<=10?HOTEL.pequeno:HOTEL.grande);
 }
-/* quantos cachorros essa reserva hospeda: irmãos contam todos */
-const petsDaReserva=r=>{const p=r.petId?pets.find(x=>x.id===r.petId):null;return p?qtdPets(p):Math.max(1,+r.qtdPets||1)};
+/* Quais caes desta reserva vao ficar hospedados.
+   Numa casa de 3 irmaos, as vezes so um vai pro hotel — entao a reserva
+   guarda os nomes escolhidos em r.caes. Reserva antiga (sem r.caes)
+   continua valendo todos, que era o comportamento de antes. */
+function caesDoCadastro(p){
+  if(!p)return [];
+  return [p.nome].concat(irmaosDe(p).map(x=>x.nome));
+}
+function caesDaReserva(r){
+  if(!r)return [];
+  const p=r.petId?pets.find(x=>x.id===r.petId):null;
+  const todos=p?caesDoCadastro(p):(r.nome?[r.nome]:[]);
+  if(!Array.isArray(r.caes)||!r.caes.length)return todos;
+  const sel=todos.filter(n=>r.caes.indexOf(n)>=0);
+  return sel.length?sel:todos;
+}
+/* quantos cachorros essa reserva hospeda */
+const petsDaReserva=r=>{
+  const n=caesDaReserva(r).length;
+  return n||Math.max(1,+r.qtdPets||1);
+};
 /* quanto custa a diária dessa reserva, já com todos os cachorros.
    Se você digitou um valor combinado, é ele que vale. */
 function diariaDaReserva(r,h,feriado){
@@ -6702,9 +6776,39 @@ function abrirHMenu(id,btn){
     <hr><button class="perigo" data-hcancel="${id}"><span class="ic">🚫</span> Cancelar reserva</button>`;
   abrirMenuEl(m,btn);
 }
+/* O visitante do hotel vira um cadastro de verdade na lista de Pets, com a
+   etiqueta "Visitante de hotel". Fica com ativo:false de proposito: assim
+   ele NAO entra na chamada da creche e continua pagando a diaria por peso
+   (hospede() so cobra como aluno quando o pet esta ativo). */
+function virarCadastro(o){
+  if(!o||o.petId||!o.nome)return null;
+  const achado=pets.find(p=>p.ativo===false&&tiposDe(p).includes('visitante')&&
+    p.nome.trim().toLowerCase()===o.nome.trim().toLowerCase()&&
+    (p.telefone||'')===(o.telefone||''));
+  const p=achado||{id:Date.now(),plano:'avulso',presencas:[],faltas:[],chegadas:{},transportes:[],
+                   status:'pendente',pagamentoDia:10,log:[]};
+  p.nome=o.nome; p.raca=o.raca||'golden'; p.porte=o.porte||'M'; p.peso=o.peso||0;
+  p.tutor=o.tutor||''; p.telefone=o.telefone||'';
+  if(o.cpf)p.cpf=o.cpf;
+  if(o.idade)p.idade=o.idade;
+  if(o.aniversario)p.aniversario=o.aniversario;
+  if(o.endereco)p.endereco=o.endereco;
+  if(o.vacina)p.vacina=o.vacina;
+  if(o.contrato)p.contrato=o.contrato;
+  p.tipos=['visitante']; p.ativo=false;
+  if(!achado){
+    p.log=[{d:HOJE,h:horaAgora(),ico:'🧳',txt:'Cadastrado como visitante do hotel'}];
+    pets.push(p);
+  }
+  return p;
+}
 function abrirReserva(id,diaSugerido){
   const r=id?reservas.find(x=>x.id===id):{petId:null,checkin:diaSugerido||HOJE,checkout:dAddS(diaSugerido||HOJE,1),transporteCidade:'',transporteVezes:0,sinalPago:false,status:'reservado'};
-  const alunos=ativos().map(p=>`<option value="${p.id}" ${r.petId===p.id?'selected':''}>${nomeCompleto(p)} · ${racasDoPet(p)} · tutor ${p.tutor}</option>`).join('');
+  const opt=p=>`<option value="${p.id}" ${r.petId===p.id?'selected':''}>${nomeCompleto(p)} · ${racasDoPet(p)} · tutor ${p.tutor}</option>`;
+  // quem ja se hospedou antes como visitante aparece aqui pra nao cadastrar de novo
+  const jaVeio=pets.filter(p=>p.ativo===false&&tiposDe(p).includes('visitante'));
+  const alunos=ativos().map(opt).join('')+
+    (jaVeio.length?'<optgroup label="🧳 Visitantes que já se hospedaram">'+jaVeio.map(opt).join('')+'</optgroup>':'');
   const opsR=Object.entries(RACAS).map(([k,v])=>`<option value="${k}" ${k===r.raca?'selected':''}>${v.nome}</option>`).join('');
   const opsT=Object.entries(TRANSPORTE).map(([k,v])=>`<option value="${k}" ${k===(r.transporteCidade||'')?'selected':''}>${v.nome}${v.preco?` · ${brl(v.preco)}/dia`:''}</option>`).join('');
   $('#modais').innerHTML=`
@@ -6714,7 +6818,13 @@ function abrirReserva(id,diaSugerido){
       <h2 id="r-t">${st('dog-shihtzu')} ${id?'Editar reserva':'Nova reserva no hotel'}</h2>
       <div class="campo"><label>Quem vai se hospedar?</label>
         <div class="chips" style="display:inline-flex"><button class="chip ${r.petId?'on':''}" id="r-tipo-aluno">🎓 Aluno da creche (R$ 90)</button><button class="chip ${r.petId?'':'on'}" id="r-tipo-vis">Visitante</button></div></div>
-      <div id="r-aluno" class="${r.petId?'':'hidden'}"><div class="campo"><label for="r-pet">Aluno</label><select id="r-pet">${alunos||'<option value="">Nenhum aluno ativo</option>'}</select></div></div>
+      <div id="r-aluno" class="${r.petId?'':'hidden'}">
+        <div class="campo"><label for="r-pet">Aluno</label><select id="r-pet">${alunos||'<option value="">Nenhum aluno ativo</option>'}</select></div>
+        <div class="campo hidden" id="r-caes-box"><label>Quais aumigos vão ficar?</label>
+          <div class="tipos-sel" id="r-caes"></div>
+          <small style="display:block;margin-top:6px;font-weight:700;color:#A38560">A diária é multiplicada por quantos ficarem.</small>
+        </div>
+      </div>
       <div id="r-vis" class="${r.petId?'hidden':''}">
         <div class="row2">
           <div class="campo obrig"><label for="r-nome">Nome do aumigo</label><input id="r-nome" value="${r.nome||''}" placeholder="Ex.: Bolt"></div>
@@ -6722,9 +6832,20 @@ function abrirReserva(id,diaSugerido){
         </div>
         <div class="row3">
           <div class="campo obrig"><label for="r-peso">Peso (kg)</label><input id="r-peso" type="number" min="1" step="0.5" value="${r.peso||''}"></div>
+          <div class="campo"><label for="r-porte">Porte</label><select id="r-porte">${['P','M','G'].map(x=>`<option value="${x}" ${x===(r.porte||'M')?'selected':''}>${{P:'Pequeno',M:'Médio',G:'Grande'}[x]}</option>`).join('')}</select></div>
+          <div class="campo"><label for="r-idade">Idade</label><input id="r-idade" value="${r.idade||''}" placeholder="Ex.: 3 anos"></div>
+        </div>
+        <div class="row3">
           <div class="campo obrig"><label for="r-tutor">Tutor</label><input id="r-tutor" value="${r.tutor||''}"></div>
           <div class="campo obrig"><label for="r-tel">WhatsApp</label><input id="r-tel" value="${r.telefone||''}" placeholder="(47) 9…" inputmode="tel"></div>
+          <div class="campo"><label for="r-cpf">CPF do tutor</label><input id="r-cpf" value="${cpfFmt(r.cpf||'')}" placeholder="000.000.000-00" inputmode="numeric"></div>
         </div>
+        <div class="row2">
+          <div class="campo"><label for="r-niver">🎂 Aniversário (dia/mês)</label><input id="r-niver" value="${r.aniversario?r.aniversario.split('-').reverse().join('/'):''}" placeholder="25/08" inputmode="numeric"></div>
+          <div class="campo"><label for="r-end">Endereço</label><input id="r-end" value="${(r.endereco||'').split('"').join('&quot;')}" placeholder="Rua, número · bairro · cidade"></div>
+        </div>
+        ${camposDocs('r',r)}
+        <p style="font-size:12px;font-weight:700;color:#A38560;margin:8px 0 0">🧳 Ao confirmar, o visitante entra na lista de Pets com a etiqueta <b>Visitante de hotel</b>. Ele não entra na chamada da creche.</p>
       </div>
       <div class="row2">
         <div class="campo obrig"><label for="r-in">Check-in</label><div style="display:flex;gap:6px"><input id="r-in" type="date" value="${r.checkin}" style="flex:1.4"><input id="r-hin" type="time" value="${r.horaIn||'09:00'}" style="flex:1"></div></div>
@@ -6770,11 +6891,43 @@ function abrirReserva(id,diaSugerido){
     const c=contaHotel(tmp);
     $('#r-prev').innerHTML=`<div class="l"><span>${c.resumoDiarias} ${c.manual?'':(c.h.aluno?'(aluno)':(c.h.peso<=10?'(até 10 kg)':'(acima de 10 kg)'))}</span><b>${brl(c.subtotal)}</b></div><div class="l"><span>Sinal 30% na reserva</span><b>${brl(c.sinal)}</b></div>`;
   };
+  const docsVis={};
+  /* mostra uma caixinha por cachorro do cadastro; some quando so tem um */
+  const pintarCaes=()=>{
+    const cx=$('#r-caes-box'), lst=$('#r-caes');
+    if(!cx||!lst)return;
+    const sel=$('#r-pet');
+    const p=sel&&sel.value?pets.find(x=>x.id===+sel.value):null;
+    const todos=caesDoCadastro(p);
+    if(todos.length<2){cx.classList.add('hidden');lst.innerHTML='';return}
+    const jaEscolhidos=Array.isArray(r.caes)&&r.caes.length?r.caes:todos;
+    lst.innerHTML=todos.map(n=>{
+      const on=jaEscolhidos.indexOf(n)>=0;
+      const seguro=String(n).split('"').join('&quot;');
+      return '<label class="'+(on?'on':'')+'"><input type="checkbox" data-cao="'+seguro+'" '+(on?'checked':'')+'> 🐶 '+n+'</label>';
+    }).join('');
+    cx.classList.remove('hidden');
+  };
+  const lerCaes=()=>[...document.querySelectorAll('#r-caes [data-cao]:checked')].map(c=>c.dataset.cao);
   const ler=(validar)=>{
     const isAluno=!$('#r-aluno').classList.contains('hidden');
     const o={...r};
-    if(isAluno){o.petId=parseInt($('#r-pet').value)||null;if(!o.petId){if(validar)toast(pets[0]||{raca:'golden'},'Escolha um aluno','Ou cadastre como visitante.');return null}}
+    if(isAluno){o.petId=parseInt($('#r-pet').value)||null;if(!o.petId){if(validar)toast(pets[0]||{raca:'golden'},'Escolha um aluno','Ou cadastre como visitante.');return null}
+      const esc=lerCaes();
+      if(esc.length)o.caes=esc;
+      else if(document.querySelectorAll('#r-caes [data-cao]').length){
+        if(validar){toast(pets[0]||{raca:'golden'},'Escolha pelo menos um aumigo','Marque quem vai ficar no hotel.');return null}
+        delete o.caes;
+      }else delete o.caes;
+    }
     else{o.petId=null;o.nome=$('#r-nome').value.trim();o.raca=$('#r-raca').value;o.peso=parseFloat($('#r-peso').value)||0;o.tutor=$('#r-tutor').value.trim();o.telefone=$('#r-tel').value.replace(/\D/g,'');
+      o.porte=($('#r-porte')||{value:'M'}).value;
+      o.idade=($('#r-idade')||{value:''}).value.trim();
+      o.cpf=cpfSo(($('#r-cpf')||{value:''}).value);
+      o.aniversario=lerNiver(($('#r-niver')||{value:''}).value);
+      o.endereco=($('#r-end')||{value:''}).value.trim();
+      if(docsVis.vacina)o.vacina=docsVis.vacina;
+      if(docsVis.contrato)o.contrato=docsVis.contrato;
       if(validar){for(const [k,id2] of [['nome','r-nome'],['peso','r-peso'],['tutor','r-tutor']]){if(!o[k]){$('#'+id2).focus();$('#'+id2).style.borderColor='var(--vermelho)';return null}}
         if(o.telefone.length<10){$('#r-tel').focus();$('#r-tel').style.borderColor='var(--vermelho)';return null}}}
     o.checkin=$('#r-in').value;o.checkout=$('#r-out').value;o.horaIn=$('#r-hin').value||'09:00';o.horaOut=$('#r-hout').value||'17:00';
@@ -6783,17 +6936,34 @@ function abrirReserva(id,diaSugerido){
     if(($('#r-valor-chk')||{}).checked){const vv=parseFloat(($('#r-valor')||{value:''}).value);o.valorDiaria=isNaN(vv)?null:Math.max(0,vv)}else o.valorDiaria=null;o.pertences=pert.filter(x=>x.nome.trim()).map(x=>({...x,nome:x.nome.trim()}));
     return o;
   };
+  ligarCpf('r-cpf');
+  ligarDoc('r-vac','r-vac-st','vacina',c=>docsVis.vacina=c);
+  ligarDoc('r-cont','r-cont-st','contrato',c=>docsVis.contrato=c);
   const chkVal=$('#r-valor-chk');
   if(chkVal)chkVal.onchange=()=>{$('#r-valor-box').classList.toggle('hidden',!chkVal.checked);if(chkVal.checked)$('#r-valor').focus();prev()};
   const inpVal=$('#r-valor');if(inpVal)inpVal.oninput=prev;
   $('#r-tipo-aluno').onclick=()=>{$('#r-aluno').classList.remove('hidden');$('#r-vis').classList.add('hidden');$('#r-tipo-aluno').classList.add('on');$('#r-tipo-vis').classList.remove('on');prev()};
   $('#r-tipo-vis').onclick=()=>{$('#r-vis').classList.remove('hidden');$('#r-aluno').classList.add('hidden');$('#r-tipo-vis').classList.add('on');$('#r-tipo-aluno').classList.remove('on');prev()};
   ['r-pet','r-peso','r-in','r-out','r-transp'].forEach(x=>$('#'+x).addEventListener('input',prev));
+  const selPet=$('#r-pet');
+  if(selPet)selPet.addEventListener('change',()=>{pintarCaes();prev()});
+  const lstCaes=$('#r-caes');
+  if(lstCaes)lstCaes.addEventListener('change',e=>{
+    const c=e.target.closest('[data-cao]');
+    if(c)c.closest('label').classList.toggle('on',c.checked);
+    prev();
+  });
+  $('#r-tipo-aluno').addEventListener('click',pintarCaes);
+  pintarCaes();
   prev();
   $('#r-ok').onclick=()=>{
     const o=ler(true);if(!o)return;
+    // visitante: entra na lista de Pets e a reserva passa a apontar pra ele
+    let novoCad=null;
+    if(!o.petId&&o.nome){novoCad=virarCadastro(o);if(novoCad)o.petId=novoCad.id}
     if(id){Object.assign(r,o)}else{o.id=Date.now();o.status='reservado';reservas.push(o)}
     fecharModal();renderHotel();
+    if(novoCad)setTimeout(()=>toast(novoCad,`${novoCad.nome} entrou na lista de Pets 🧳`,'Filtro "Visitante de hotel". Não entra na chamada da creche.',true),1400);
     const h=hospede(o);toast(h.p||{raca:h.raca},id?'Reserva atualizada 🏡':`Reserva de ${h.nome} confirmada 🏡`,`${fmtData(o.checkin)} → ${fmtData(o.checkout)} · ${diarias(o)} ${diarias(o)===1?'diária':'diárias'}.`,true);
   };
   $('#ov').onclick=e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()};
@@ -7960,7 +8130,9 @@ function indicadores(ym){
   const contatados=pets.filter(p=>((p.crm||{}).contatos||[]).some(c=>c.d.startsWith(ym)&&c.tipo!=='inativo'));
   const voltaram=contatados.filter(p=>{const c=p.crm.contatos.filter(x=>x.d.startsWith(ym)).map(x=>x.d).sort()[0];return p.presencas.some(d=>d>c)}).length;
   const pres=at.map(p=>resumoMes(p,ym));
-  const presencasMes=pres.reduce((a,m)=>a+m.vindas,0),faltasMes=pres.reduce((a,m)=>a+m.faltas,0);
+  // vezes qtdPets: irmaos vem juntos, entao cada vinda do cadastro sao N caes na creche
+  const presencasMes=at.reduce((a,p,i)=>a+pres[i].vindas*qtdPets(p),0),
+        faltasMes=at.reduce((a,p,i)=>a+pres[i].faltas*qtdPets(p),0);
   const freq=pres.filter(m=>m.vindas+m.faltas).map(m=>m.vindas/(m.vindas+m.faltas));
   const planos={};at.forEach(p=>planos[p.plano]=(planos[p.plano]||0)+1);const planoTop=Object.entries(planos).sort((a,b)=>b[1]-a[1])[0];
   const hotelL=reservas.filter(r=>r.status!=='cancelado'&&r.status!=='reservado'&&(r.checkout||'').startsWith(ym)).map(r=>({r,c:contaHotel(r)}));
@@ -8135,7 +8307,7 @@ function enviarBoletim(pid,ym){const p=pets.find(x=>x.id===pid);if(!p.telefone){
 </script>
 <script>
 /* Pet Farm · pets.js — cadastro geral (creche, hotel, fim de ano, outros) e prospecção de fim de ano */
-const TIPOS_PET={creche:['🏫','Creche'],hotel:['🏡','Hotel'],'fim-de-ano':['🎄','Fim de ano'],outro:['🐾','Outro']};
+const TIPOS_PET={creche:['🏫','Creche'],hotel:['🏡','Hotel'],visitante:['🧳','Visitante de hotel'],'fim-de-ano':['🎄','Fim de ano'],outro:['🐾','Outro']};
 function tiposDe(p){if(!p.tipos||!p.tipos.length)p.tipos=['creche'];return p.tipos}
 function ehFimDeAno(p){
   if(tiposDe(p).includes('fim-de-ano'))return true;
@@ -8165,14 +8337,16 @@ function renderPets(){
     const t=tiposDe(p);
     if(petsFiltro==='creche'&&!(t.includes('creche')&&p.ativo!==false))return false;
     if(petsFiltro==='hotel'&&!(t.includes('hotel')||reservas.some(r=>r.petId===p.id)))return false;
+    if(petsFiltro==='visitante'&&!t.includes('visitante'))return false;
     if(petsFiltro==='fim-de-ano'&&!ehFimDeAno(p))return false;
     if(petsFiltro==='outro'&&!t.includes('outro'))return false;
-    if(petsFiltro==='inativos'&&!(p.ativo===false||(p.crm||{}).inativo))return false;
+    // visitante do hotel nao e cliente que sumiu: tem filtro proprio
+    if(petsFiltro==='inativos'&&!((p.ativo===false||(p.crm||{}).inativo)&&!tiposDe(p).includes('visitante')))return false;
     if(q&&![p.nome,p.tutor,RACAS[p.raca].nome,p.telefone||''].join(' ').toLowerCase().includes(q))return false;
     return true;
   }).sort((a,b)=>a.nome.localeCompare(b.nome));
-  const cont=k=>pets.filter(p=>{const t=tiposDe(p);return k==='todos'?true:k==='creche'?(t.includes('creche')&&p.ativo!==false):k==='hotel'?(t.includes('hotel')||reservas.some(r=>r.petId===p.id)):k==='fim-de-ano'?ehFimDeAno(p):k==='outro'?t.includes('outro'):(p.ativo===false||(p.crm||{}).inativo)}).length;
-  $('#pets-filtros').innerHTML=[['todos','Todos'],['creche','🏫 Creche'],['hotel','🏡 Hotel'],['fim-de-ano','🎄 Fim de ano'],['outro','🐾 Outros'],['inativos','💤 Inativos']].map(([k,n])=>`<button class="chip ${petsFiltro===k?'on':''}" data-petsf="${k}">${n} <b>${cont(k)}</b></button>`).join('');
+  const cont=k=>pets.filter(p=>{const t=tiposDe(p);return k==='todos'?true:k==='creche'?(t.includes('creche')&&p.ativo!==false):k==='hotel'?(t.includes('hotel')||reservas.some(r=>r.petId===p.id)):k==='visitante'?t.includes('visitante'):k==='fim-de-ano'?ehFimDeAno(p):k==='outro'?t.includes('outro'):((p.ativo===false||(p.crm||{}).inativo)&&!t.includes('visitante'))}).length;
+  $('#pets-filtros').innerHTML=[['todos','Todos'],['creche','🏫 Creche'],['hotel','🏡 Hotel'],['visitante','🧳 Visitante de hotel'],['fim-de-ano','🎄 Fim de ano'],['outro','🐾 Outros'],['inativos','💤 Inativos']].map(([k,n])=>`<button class="chip ${petsFiltro===k?'on':''}" data-petsf="${k}">${n} <b>${cont(k)}</b></button>`).join('');
   const visit=reservas.filter(r=>!r.petId&&r.status!=='cancelado').length;
   $('#pets-import').classList.toggle('hidden',!visit);if(visit)$('#pets-import').textContent=`⬇ Trazer ${visit} ${visit===1?'hóspede visitante':'hóspedes visitantes'} pro cadastro`;
   $('#pets-grid').innerHTML=lista.length?lista.map(p=>{
@@ -8210,7 +8384,7 @@ function renderPainel(){
   const box=$('#pn-corpo');if(!box)return;
   const meses=serieMeses(6);const serie=meses.map(fatMes);const atual=serie[serie.length-1],ant=serie[serie.length-2]||atual;
   const var_=(a,b)=>b?Math.round((a-b)/b*100):0;
-  const at=ativos();const du=diasUteis(MES)||1;const presMes=at.reduce((a,p)=>a+resumoMes(p).vindas,0);
+  const at=ativos();const du=diasUteis(MES)||1;const presMes=at.reduce((a,p)=>a+resumoMes(p).vindas*qtdPets(p),0);
   const ocupC=Math.round(presMes/du/(cfg.capacidadeCreche||20)*100);
   const mp=mapaMesHotel(MES);
   const t=transporteMes(MES);
