@@ -287,6 +287,12 @@ input,select{font-family:inherit;color:inherit}
 
 /* ===== MODAL DE CHAMADA ===== */
 .overlay{position:fixed;inset:0;z-index:80;background:rgba(62,48,39,.45);backdrop-filter:blur(6px);display:grid;place-items:center;padding:20px;animation:fade .25s;overflow:auto}
+/* Formulario mais alto que a tela: centralizar empurrava o TOPO pra fora
+   (o cadastro tem 1754px numa tela de 900 e comecava em y=-427), entao
+   abria no meio do formulario, sem titulo e sem o X de fechar.
+   "safe center" centraliza quando cabe e encosta no topo quando nao cabe.
+   Navegador antigo ignora a linha e continua como estava. */
+.overlay{align-items:safe center}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .modal{
   position:relative;width:min(560px,100%);border-radius:36px;overflow:hidden;text-align:center;
@@ -1532,6 +1538,10 @@ img,svg,video,canvas{max-width:100%}
   .etapas>.duplo{flex:1 1 100%;display:flex;gap:10px}
   .etapas>.duplo .btn{flex:1}
   .modal.form{width:min(720px,100%)}
+/* No PC sobrava 360px de tela vazia de cada lado enquanto o formulario
+   tinha 1754px de altura. Mais largo, as duplas e trios de campo cabem
+   melhor e a rolagem encurta. No celular o min() ja devolve 100%. */
+@media (min-width:1100px){ .modal.form{width:min(880px,100%)} }
 }
 @media (max-width:900px){
   .modo-rota{grid-template-columns:1fr}
@@ -2089,7 +2099,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.4.1</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.4.2</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -5377,14 +5387,14 @@ let pendLista=[];
 function pendencias(){
   const out=[];const hojeDia=new Date().getDate();const $fin=pode('financeiro');
   ativos().forEach(p=>{
-    if(!p.telefone)out.push({n:2,ico:'📵',txt:`${p.nome} sem WhatsApp do tutor`,acao:()=>abrirEditar(p.id)});
-    if($fin&&mesCobravel(MES)&&!p.pagamentos[MES]&&hojeDia>p.pagamentoDia)out.push({n:1,ico:'💳',txt:`${p.nome}: pagamento venceu dia ${p.pagamentoDia} · ${brl(resumoMes(p).total)}`,acao:()=>abrirCobrancaCreche(p.id)});
-    if(p.status==='presente'&&!p.midias.includes(HOJE))out.push({n:3,ico:'📸',txt:`${p.nome} sem foto/vídeo enviado hoje`,acao:()=>trocarAba('creche')});
-    if(p.transporte&&!p.endereco)out.push({n:2,ico:'🚐',txt:`${p.nome} usa transporte e está sem endereço`,acao:()=>abrirEditar(p.id)});
-    const m=resumoMes(p);if(m.faltas>=3&&m.faltas>=m.vindas/2)out.push({n:2,ico:'📉',txt:`${p.nome} faltando acima do normal (${m.faltas} faltas em ${nomeMes})`,acao:()=>abrirPerfil(p.id)});
-    const rn=renovacao(p);if(rn.acabando)out.push({n:3,ico:'🗓',txt:`Plano de ${p.nome} acabando (${rn.vindas}/${rn.meta} dias) · renovação em ${rn.emDias} ${rn.emDias===1?'dia':'dias'}`,acao:()=>avisarRenovacao(p.id)});
-    const qf=quedaFrequencia(p);if(qf)out.push({n:3,ico:'📉',txt:`${p.nome}: queda de frequência (normalmente ${qf.base}x/semana, agora ${qf.atual}x)`,acao:()=>avisarFrequencia(p.id)});
-    const nv=niverInfo(p);if(nv&&nv.dias<=7)out.push({n:4,ico:'🎂',txt:`${p.nome} faz aniversário ${nv.hoje?'hoje!':nv.dias===1?'amanhã':'em '+nv.dias+' dias'}`,acao:()=>abrirPerfil(p.id)});
+    if(!p.telefone)out.push({n:2,ico:'📵',txt:`${nomeCompleto(p)} sem WhatsApp do tutor`,acao:()=>abrirEditar(p.id)});
+    if($fin&&mesCobravel(MES)&&!p.pagamentos[MES]&&hojeDia>p.pagamentoDia)out.push({n:1,ico:'💳',txt:`${nomeCompleto(p)}: pagamento venceu dia ${p.pagamentoDia} · ${brl(resumoMes(p).total)}`,acao:()=>abrirCobrancaCreche(p.id)});
+    if(p.status==='presente'&&!p.midias.includes(HOJE))out.push({n:3,ico:'📸',txt:`${nomeCompleto(p)} sem foto/vídeo enviado hoje`,acao:()=>trocarAba('creche')});
+    if(p.transporte&&!p.endereco)out.push({n:2,ico:'🚐',txt:`${nomeCompleto(p)} usa transporte e está sem endereço`,acao:()=>abrirEditar(p.id)});
+    const m=resumoMes(p);if(m.faltas>=3&&m.faltas>=m.vindas/2)out.push({n:2,ico:'📉',txt:`${nomeCompleto(p)} faltando acima do normal (${m.faltas} faltas em ${nomeMes})`,acao:()=>abrirPerfil(p.id)});
+    const rn=renovacao(p);if(rn.acabando)out.push({n:3,ico:'🗓',txt:`Plano de ${nomeCompleto(p)} acabando (${rn.vindas}/${rn.meta} dias) · renovação em ${rn.emDias} ${rn.emDias===1?'dia':'dias'}`,acao:()=>avisarRenovacao(p.id)});
+    const qf=quedaFrequencia(p);if(qf)out.push({n:3,ico:'📉',txt:`${nomeCompleto(p)}: queda de frequência (normalmente ${qf.base}x/semana, agora ${qf.atual}x)`,acao:()=>avisarFrequencia(p.id)});
+    const nv=niverInfo(p);if(nv&&nv.dias<=7)out.push({n:4,ico:'🎂',txt:`${nomeCompleto(p)} faz aniversário ${nv.hoje?'hoje!':nv.dias===1?'amanhã':'em '+nv.dias+' dias'}`,acao:()=>abrirPerfil(p.id)});
   });
   reservas.forEach(r=>{const h=hospede(r);
     if(r.status==='reservado'&&!r.sinalPago)out.push({n:2,ico:'🏡',txt:`Reserva de ${h.nome} (${fmtData(r.checkin)}) sem sinal pago`,acao:()=>trocarAba('hotel')});
@@ -5568,8 +5578,8 @@ $('#btn-add').onclick=abrirEntrada;
 const _br=$('#btn-recepcao');if(_br)_br.onclick=abrirRecepcao;
 $('#btn-notif').onclick=()=>{
   const avisos=[];
-  ativos().filter(p=>!p.telefone).forEach(p=>avisos.push([p,`${p.nome} sem telefone do tutor`,'Cadastro obrigatório: WhatsApp e dia de pagamento.']));
-  ativos().filter(p=>p.status==='presente'&&!p.midias.includes(HOJE)).forEach(p=>avisos.push([p,`📸 ${p.nome} sem foto/vídeo hoje`,`Tutor ${p.tutor} ainda não recebeu.`]));
+  ativos().filter(p=>!p.telefone).forEach(p=>avisos.push([p,`${nomeCompleto(p)} sem telefone do tutor`,'Cadastro obrigatório: WhatsApp e dia de pagamento.']));
+  ativos().filter(p=>p.status==='presente'&&!p.midias.includes(HOJE)).forEach(p=>avisos.push([p,`📸 ${nomeCompleto(p)} sem foto/vídeo hoje`,`Tutor ${p.tutor} ainda não recebeu.`]));
   avisos.length?avisos.slice(0,5).forEach(a=>toast(...a)):toast(pets[0]||{raca:'golden'},'Tudo em dia! 🐾','Nenhuma pendência.',true)};
 
 
@@ -5816,7 +5826,9 @@ function abrirMontarChamada(){
   const D=diaChamada();
   const o=opDia(D);
   const todos=ativos().slice().sort((a,b)=>a.nome.localeCompare(b.nome));
-  let sel=new Set(Array.isArray(o.turma)?o.turma:todos.map(p=>p.id));
+  // comeca vazia: quem chegou voce marca. Antes vinha todo mundo marcado
+  // e era preciso ir TIRANDO quem faltou, o que dava presenca errada.
+  let sel=new Set(Array.isArray(o.turma)?o.turma:[]);
   const nomeDia=D===HOJE?'de hoje':D===dAddS(HOJE,-1)?'de ontem':'de '+fmtData(D);
   const pinta=()=>{
     $('#mc-lista').innerHTML=todos.map(p=>`<button type="button" class="add-pet ${sel.has(p.id)?'on':''}" data-mc="${p.id}">
@@ -5829,7 +5841,7 @@ function abrirMontarChamada(){
   <div class="overlay" id="ov"><div class="modal form" role="dialog" aria-labelledby="mc-t">
     <button class="fechar" data-fechar aria-label="Fechar">✕</button>
     <h2 id="mc-t">${st('dog-beagle')} Chamada ${nomeDia} 🐾</h2>
-    <div class="nota" style="font-size:12px;font-weight:700;color:#A38560">Toque pra tirar quem não vem. Quem ficar marcado entra na lista do dia.</div>
+    <div class="nota" style="font-size:12px;font-weight:700;color:#A38560">Toque em quem veio hoje. Só os marcados entram na chamada do dia.</div>
     <div class="campo" style="margin-top:10px">
       <label>Quem está na creche <small style="font-weight:700;color:#A38560" id="mc-cont"></small></label>
       <div class="pet-sel escolher" id="mc-lista"></div>
@@ -6802,13 +6814,17 @@ function virarCadastro(o){
   }
   return p;
 }
+/* visitante de hotel ja cadastrado (entrou pela reserva, nao e da creche) */
+const visitantesHotel=()=>pets.filter(p=>p.ativo===false&&tiposDe(p).includes('visitante'));
+function ehVisitante(r){
+  if(!r||!r.petId)return false;
+  const p=pets.find(x=>x.id===r.petId);
+  return !!(p&&tiposDe(p).includes('visitante'));
+}
 function abrirReserva(id,diaSugerido){
   const r=id?reservas.find(x=>x.id===id):{petId:null,checkin:diaSugerido||HOJE,checkout:dAddS(diaSugerido||HOJE,1),transporteCidade:'',transporteVezes:0,sinalPago:false,status:'reservado'};
   const opt=p=>`<option value="${p.id}" ${r.petId===p.id?'selected':''}>${nomeCompleto(p)} · ${racasDoPet(p)} · tutor ${p.tutor}</option>`;
-  // quem ja se hospedou antes como visitante aparece aqui pra nao cadastrar de novo
-  const jaVeio=pets.filter(p=>p.ativo===false&&tiposDe(p).includes('visitante'));
-  const alunos=ativos().map(opt).join('')+
-    (jaVeio.length?'<optgroup label="🧳 Visitantes que já se hospedaram">'+jaVeio.map(opt).join('')+'</optgroup>':'');
+  const alunos=ativos().map(opt).join('');
   const opsR=Object.entries(RACAS).map(([k,v])=>`<option value="${k}" ${k===r.raca?'selected':''}>${v.nome}</option>`).join('');
   const opsT=Object.entries(TRANSPORTE).map(([k,v])=>`<option value="${k}" ${k===(r.transporteCidade||'')?'selected':''}>${v.nome}${v.preco?` · ${brl(v.preco)}/dia`:''}</option>`).join('');
   $('#modais').innerHTML=`
@@ -6817,9 +6833,9 @@ function abrirReserva(id,diaSugerido){
       <button class="fechar" data-fechar aria-label="Fechar">✕</button>
       <h2 id="r-t">${st('dog-shihtzu')} ${id?'Editar reserva':'Nova reserva no hotel'}</h2>
       <div class="campo"><label>Quem vai se hospedar?</label>
-        <div class="chips" style="display:inline-flex"><button class="chip ${r.petId?'on':''}" id="r-tipo-aluno">🎓 Aluno da creche (R$ 90)</button><button class="chip ${r.petId?'':'on'}" id="r-tipo-vis">Visitante</button></div></div>
+        <div class="chips" style="display:inline-flex;flex-wrap:wrap"><button class="chip ${r.petId&&!ehVisitante(r)?'on':''}" id="r-tipo-aluno">🎓 Aluno da creche</button><button class="chip ${r.petId&&ehVisitante(r)?'on':''}" id="r-tipo-vishot">🧳 Visitante de hotel</button><button class="chip ${r.petId?'':'on'}" id="r-tipo-vis">＋ Novo visitante</button></div></div>
       <div id="r-aluno" class="${r.petId?'':'hidden'}">
-        <div class="campo"><label for="r-pet">Aluno</label><select id="r-pet">${alunos||'<option value="">Nenhum aluno ativo</option>'}</select></div>
+        <div class="campo"><label for="r-pet" id="r-pet-rot">Aluno</label><select id="r-pet">${alunos||'<option value="">Nenhum aluno ativo</option>'}</select></div>
         <div class="campo hidden" id="r-caes-box"><label>Quais aumigos vão ficar?</label>
           <div class="tipos-sel" id="r-caes"></div>
           <small style="display:block;margin-top:6px;font-weight:700;color:#A38560">A diária é multiplicada por quantos ficarem.</small>
@@ -6942,8 +6958,28 @@ function abrirReserva(id,diaSugerido){
   const chkVal=$('#r-valor-chk');
   if(chkVal)chkVal.onchange=()=>{$('#r-valor-box').classList.toggle('hidden',!chkVal.checked);if(chkVal.checked)$('#r-valor').focus();prev()};
   const inpVal=$('#r-valor');if(inpVal)inpVal.oninput=prev;
-  $('#r-tipo-aluno').onclick=()=>{$('#r-aluno').classList.remove('hidden');$('#r-vis').classList.add('hidden');$('#r-tipo-aluno').classList.add('on');$('#r-tipo-vis').classList.remove('on');prev()};
-  $('#r-tipo-vis').onclick=()=>{$('#r-vis').classList.remove('hidden');$('#r-aluno').classList.add('hidden');$('#r-tipo-vis').classList.add('on');$('#r-tipo-aluno').classList.remove('on');prev()};
+  /* um lugar so decide qual lista aparece e qual botao fica aceso */
+  const escolherTipo=(qual)=>{
+    const ehNovo = qual==='novo';
+    $('#r-vis').classList.toggle('hidden',!ehNovo);
+    $('#r-aluno').classList.toggle('hidden',ehNovo);
+    [['aluno','r-tipo-aluno'],['visitante','r-tipo-vishot'],['novo','r-tipo-vis']].forEach(([k,id])=>{
+      const b=$('#'+id);if(b)b.classList.toggle('on',k===qual);
+    });
+    if(!ehNovo){
+      const lista = qual==='aluno' ? ativos() : visitantesHotel();
+      const sel=$('#r-pet');
+      sel.innerHTML = lista.length
+        ? lista.map(opt).join('')
+        : '<option value="">'+(qual==='aluno'?'Nenhum aluno ativo':'Nenhum visitante cadastrado ainda')+'</option>';
+      $('#r-pet-rot').textContent = qual==='aluno' ? 'Aluno' : 'Visitante já cadastrado';
+      pintarCaes();
+    }
+    prev();
+  };
+  $('#r-tipo-aluno').onclick=()=>escolherTipo('aluno');
+  $('#r-tipo-vishot').onclick=()=>escolherTipo('visitante');
+  $('#r-tipo-vis').onclick=()=>escolherTipo('novo');
   ['r-pet','r-peso','r-in','r-out','r-transp'].forEach(x=>$('#'+x).addEventListener('input',prev));
   const selPet=$('#r-pet');
   if(selPet)selPet.addEventListener('change',()=>{pintarCaes();prev()});
@@ -6953,7 +6989,8 @@ function abrirReserva(id,diaSugerido){
     if(c)c.closest('label').classList.toggle('on',c.checked);
     prev();
   });
-  $('#r-tipo-aluno').addEventListener('click',pintarCaes);
+  escolherTipo(r.petId ? (ehVisitante(r)?'visitante':'aluno') : 'novo');
+  if(r.petId)$('#r-pet').value=r.petId;
   pintarCaes();
   prev();
   $('#r-ok').onclick=()=>{
@@ -8172,7 +8209,7 @@ function renderGestao(){
     const status=p.ativo===false?['cancelou','r']:(p.crm||{}).inativo?['inativo','r']:f?[f.txt,f.cor]:q?['queda de frequência','a']:['em dia','v'];
     return {p,d,f,q,ren,ult,ct,status}}).sort((a,b)=>(b.d===null?-1:b.d)-(a.d===null?-1:a.d));
   $('#ge-clientes').innerHTML=`<tr><th>Pet</th><th>Plano</th><th>Última presença</th><th class="r">Dias sem vir</th><th>Situação</th><th>Último contato</th><th></th></tr>`+rows.map(({p,d,f,q,ren,ult,ct,status})=>`<tr>
-    <td><b>${p.nome}</b><br><small style="color:#A38560">${p.tutor}</small></td><td>${PLANOS[p.plano].curto}${ren.meta?`<br><small style="color:#A38560">${ren.vindas}/${ren.meta} dias</small>`:''}</td>
+    <td><b>${nomeCompleto(p)}</b><br><small style="color:#A38560">${p.tutor}</small></td><td>${PLANOS[p.plano].curto}${ren.meta?`<br><small style="color:#A38560">${ren.vindas}/${ren.meta} dias</small>`:''}</td>
     <td>${ult?fmtData(ult):'nunca'}</td><td class="r"><b>${d===null?'—':d}</b></td>
     <td><span class="sit s-${status[1]}">${status[0]}</span>${q?`<br><small style="color:#A38560">${q.base}x/sem → ${q.atual}x/sem</small>`:''}</td>
     <td>${ct?fmtData(ct):'—'}</td>
@@ -8211,12 +8248,12 @@ function renderBoletim(){
   const bc=boletimCfg();const lista=pets.filter(p=>p.ativo!==false);
   boPet=boPet&&lista.some(p=>p.id===boPet)?boPet:(lista[0]&&lista[0].id);boMes=boMes||MES;
   const meses=[];for(let i=0;i<6;i++)meses.push(ymAdd(MES,-i));
-  $('#bo-pet').innerHTML=lista.map(p=>`<option value="${p.id}" ${p.id===boPet?'selected':''}>${p.nome} · ${p.tutor}</option>`).join('');
+  $('#bo-pet').innerHTML=lista.map(p=>`<option value="${p.id}" ${p.id===boPet?'selected':''}>${nomeCompleto(p)} · ${p.tutor}</option>`).join('');
   $('#bo-mes').innerHTML=meses.map(m=>`<option value="${m}" ${m===boMes?'selected':''}>${ymNome(m)}</option>`).join('');
   const p=pets.find(x=>x.id===boPet);if(!p){$('#bo-preview').innerHTML='<div class="nada">Cadastre um pet primeiro.</div>';return}
   $('#bo-preview').innerHTML=boletimHtml(p,boMes,true);
   const todos=lista.map(q=>({q,s:statsBoletim(q,boMes)}));
-  $('#bo-lista').innerHTML=todos.map(({q,s})=>`<button class="bo-item ${q.id===boPet?'on':''}" data-bopet="${q.id}"><span class="mini">${avatar(q)}</span><div><b>${q.nome}</b><span>${s.notas?`${s.notas}/${bc.materias.length} matérias · média ${s.media}`:'sem notas'}${q.boletins&&q.boletins[boMes]&&q.boletins[boMes].enviadoEm?' · ✓ enviado':''}</span></div></button>`).join('');
+  $('#bo-lista').innerHTML=todos.map(({q,s})=>`<button class="bo-item ${q.id===boPet?'on':''}" data-bopet="${q.id}"><span class="mini">${avatar(q)}</span><div><b>${nomeCompleto(q)}</b><span>${s.notas?`${s.notas}/${bc.materias.length} matérias · média ${s.media}`:'sem notas'}${q.boletins&&q.boletins[boMes]&&q.boletins[boMes].enviadoEm?' · ✓ enviado':''}</span></div></button>`).join('');
 }
 function boletimHtml(p,ym,edit){
   const bc=boletimCfg();const b=boletimDe(p,ym);const s=statsBoletim(p,ym);const r=RACAS[p.raca];
@@ -8345,7 +8382,8 @@ function renderPets(){
     if(q&&![p.nome,p.tutor,RACAS[p.raca].nome,p.telefone||''].join(' ').toLowerCase().includes(q))return false;
     return true;
   }).sort((a,b)=>a.nome.localeCompare(b.nome));
-  const cont=k=>pets.filter(p=>{const t=tiposDe(p);return k==='todos'?true:k==='creche'?(t.includes('creche')&&p.ativo!==false):k==='hotel'?(t.includes('hotel')||reservas.some(r=>r.petId===p.id)):k==='visitante'?t.includes('visitante'):k==='fim-de-ano'?ehFimDeAno(p):k==='outro'?t.includes('outro'):((p.ativo===false||(p.crm||{}).inativo)&&!t.includes('visitante'))}).length;
+  // aqui a conta e de CACHORRO: um cadastro de 3 irmaos sao 3 pets
+  const cont=k=>contaCaes(pets.filter(p=>{const t=tiposDe(p);return k==='todos'?true:k==='creche'?(t.includes('creche')&&p.ativo!==false):k==='hotel'?(t.includes('hotel')||reservas.some(r=>r.petId===p.id)):k==='visitante'?t.includes('visitante'):k==='fim-de-ano'?ehFimDeAno(p):k==='outro'?t.includes('outro'):((p.ativo===false||(p.crm||{}).inativo)&&!t.includes('visitante'))}));
   $('#pets-filtros').innerHTML=[['todos','Todos'],['creche','🏫 Creche'],['hotel','🏡 Hotel'],['visitante','🧳 Visitante de hotel'],['fim-de-ano','🎄 Fim de ano'],['outro','🐾 Outros'],['inativos','💤 Inativos']].map(([k,n])=>`<button class="chip ${petsFiltro===k?'on':''}" data-petsf="${k}">${n} <b>${cont(k)}</b></button>`).join('');
   const visit=reservas.filter(r=>!r.petId&&r.status!=='cancelado').length;
   $('#pets-import').classList.toggle('hidden',!visit);if(visit)$('#pets-import').textContent=`⬇ Trazer ${visit} ${visit===1?'hóspede visitante':'hóspedes visitantes'} pro cadastro`;
@@ -8389,7 +8427,7 @@ function renderPainel(){
   const mp=mapaMesHotel(MES);
   const t=transporteMes(MES);
   const pend=pendencias();const urg=pend.filter(x=>x.n===1).length;
-  const top=financeiroResumo(MES).creche.map(x=>({n:x.p.nome,v:x.m.total,pago:x.pago,p:x.p})).sort((a,b)=>b.v-a.v).slice(0,5);
+  const top=financeiroResumo(MES).creche.map(x=>({n:nomeCompleto(x.p),v:x.m.total,pago:x.pago,p:x.p})).sort((a,b)=>b.v-a.v).slice(0,5);
   const mx=Math.max(1,...serie.map(s=>s.total));
   const prox7=[];const eventos=[];
   for(let i=0;i<7;i++){const d=dAddS(HOJE,i);
@@ -8627,7 +8665,7 @@ function renderFinTransp(){
     <div class="fi-grid" style="margin-top:16px">
       <section><h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Por aumigo</h3>
         <table class="tabela-simples"><tr><th>Aumigo</th><th>Cidade</th><th class="r">Viagens</th><th class="r">Valor</th><th>Status</th></tr>
-        ${t.porPet.map(x=>`<tr><td><b>${x.p.nome}</b><br><small style="color:#A38560">${x.p.tutor}</small></td><td>${cidadeEndereco(x.p)}</td><td class="r">${x.viagens}</td><td class="r"><b>${brl(x.valor)}</b></td><td>${x.pago?'<span class="st-pag pago">pago</span>':'<span class="st-pag">em aberto</span>'}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#A38560">Sem viagens nesse mês.</td></tr>'}
+        ${t.porPet.map(x=>`<tr><td><b>${nomeCompleto(x.p)}</b><br><small style="color:#A38560">${x.p.tutor}</small></td><td>${cidadeEndereco(x.p)}</td><td class="r">${x.viagens}</td><td class="r"><b>${brl(x.valor)}</b></td><td>${x.pago?'<span class="st-pag pago">pago</span>':'<span class="st-pag">em aberto</span>'}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#A38560">Sem viagens nesse mês.</td></tr>'}
         <tr class="tot"><td colspan="2">Total</td><td class="r">${t.viagens}</td><td class="r">${brl(t.receita)}</td><td></td></tr></table></section>
       <section><h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Por dia (rota a rota)</h3>
         <table class="tabela-simples"><tr><th>Dia</th><th class="r">Paradas</th><th>Início</th><th>Fim</th><th class="r">Duração</th><th class="r">Km ≈</th><th class="r">⛽</th></tr>
