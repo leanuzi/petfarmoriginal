@@ -1121,6 +1121,32 @@ button,a,label,.rota li,.dias-rotas button,[data-acao]{-webkit-tap-highlight-col
 .pet-card h3{text-align:left;font-size:20px;line-height:1.05}
 .pet-card .raca{text-align:left;font-size:12px}
 .pet-card .menubtn{position:absolute;top:10px;right:10px;z-index:2}
+/* No celular fica exatamente como sempre foi: raça, peso e tutor na mesma
+   frase, separados por ponto. A regra do PC vem depois e só vale lá. */
+.pet-card .raca .tt::before{content:" · "}
+
+@media (min-width:761px){
+  /* No PC o tutor ia na mesma linha da raça e um nome comprido quebrava no
+     meio ("Dani / Abreu"), deixando cada card com uma altura e o conjunto
+     todo desalinhado. Agora tutor tem linha propria: altura sempre igual. */
+  .pet-card .raca .tt{display:block;margin-top:2px;color:#A38560}
+  .pet-card .raca .tt::before{content:"👤 "}
+  .pet-card .raca .rc{display:block}
+  .pet-card .raca{line-height:1.35}
+  /* nome nao encosta no botao de opcoes nem quebra letra por letra */
+  /* nome um pouco menor no PC: "JONNIE + EROS" cabia so em duas linhas e
+     isso esticava a fileira inteira, abrindo vao nos cards vizinhos */
+  .pet-card h3{font-size:17px;letter-spacing:.01em;overflow-wrap:anywhere}
+  /* as etiquetas e os chips descem pro pe do card: com isso a linha de
+     "3x/sem · nunca veio" fica na mesma altura em todos os cards da fileira */
+  .pet-card{padding:14px 16px 14px}
+  .pet-card .c-linha{align-items:flex-start}
+  .pet-card .c-chips{margin-top:auto;padding-top:10px}
+  .pet-card .foto{width:64px;height:64px}
+  .pet-card .foto .st{width:52px;height:52px}
+}
+/* telas grandes: mais colunas em vez de card gigante */
+@media (min-width:1500px){ .grid{grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:16px} }
 .fim-box{margin-top:26px;background:linear-gradient(135deg,#FFF1F1,var(--creme));border:1px solid #F1C9C9;border-radius:var(--r-xl);padding:16px 18px}
 .fim-box h3{font-size:22px;font-weight:600;display:flex;align-items:center;gap:8px}
 .fim-box .sub{font-size:13px;font-weight:700;color:#8C7355;margin-top:2px}
@@ -2099,7 +2125,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.4.2</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.4.3</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -4933,27 +4959,16 @@ function hospedagensNaFatura(p,ym){
 }
 function descontoDe(p,ym){const c=(p.cobrancas||{})[ym||MES];return (c&&c.desconto)||p.descontoFixo||null}
 
-/* histórico de demonstração: preenche o mês atual com presenças plausíveis pelo plano */
+/* Prepara um cadastro que chegou sem as listas de presenca (backup antigo,
+   importacao, registro editado na mao). ANTES daqui saia um "historico de
+   demonstracao" que INVENTAVA presencas pelo plano: num backup restaurado
+   isso viraria presenca e cobranca que nunca existiram. E quebrava de vez
+   quando o plano nao existisse mais (PLANOS[p.plano].vezes de undefined). */
 function semearHistorico(p){
-  if(p.presencas)return;
-  p.presencas=[];p.faltas=[];p.chegadas={};
-  const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-2);
-  const vezes=PLANOS[p.plano].vezes||2;
-  const limite=p.demoSumiu?dAddS(HOJE,-18):HOJE;
-  while(isoLocal(d)<limite){
-    const dow=d.getDay();
-    if(dow>=1&&dow<=6){
-      const dias={2:[2,4],3:[1,3,5],4:[1,2,4,5],5:[1,2,3,4,5],6:[1,2,3,4,5,6]}[vezes];
-      if(dias.includes(dow)&&!(p.demoQueda&&isoLocal(d)>dAddS(HOJE,-14)&&dow!==2)){
-        if((d.getDate()*7+p.id)%11===0)p.faltas.push(isoLocal(d));
-        else{p.presencas.push(isoLocal(d));p.chegadas[isoLocal(d)]=''}
-      }
-    }
-    d.setDate(d.getDate()+1);
-  }
-  // marcação de hoje que já vinha no exemplo
-  if(p.status==='presente'){p.presencas.push(HOJE);p.chegadas[HOJE]=p.chegou}
-  if(p.status==='faltou')p.faltas.push(HOJE);
+  if(!p)return;
+  if(!Array.isArray(p.presencas))p.presencas=[];
+  if(!Array.isArray(p.faltas))p.faltas=[];
+  if(!p.chegadas||typeof p.chegadas!=='object')p.chegadas={};
 }
 let chamadaDia=null;                    // dia que a chamada está mostrando (null = hoje)
 const diaChamada=()=>chamadaDia||HOJE;
@@ -6171,6 +6186,7 @@ function abrirEntrada(){
       <div class="cfg-h">🗓 Plano e pagamento</div>
       <div class="row2">
         <div class="campo obrig"><label for="f-pag">Dia do pagamento</label><input id="f-pag" type="number" min="1" max="31" value="10"></div>
+        <div class="campo"><label for="f-diaria">🏡 Diária no hotel <small style="font-weight:700;color:#A38560">· opcional</small></label><input id="f-diaria" type="number" min="0" step="5" placeholder="Vazio = usa a tabela"></div>
       </div>
       ${camposPlano()}
       <div class="campo"><label>Onde esse pet frequenta</label><div class="tipos-sel">${Object.entries(TIPOS_PET).map(([k,v])=>`<label class="${(['creche']).includes(k)?'on':''}"><input type="checkbox" data-tipo="${k}" ${(['creche']).includes(k)?'checked':''}> ${v[0]} ${v[1]}</label>`).join('')}</div></div>
@@ -6227,6 +6243,7 @@ function abrirEntrada(){
     p.log=[{d:HOJE,h:horaAgora(),ico:'🐾',txt:'Cadastrado na turma'}];p.tipos=[...document.querySelectorAll('[data-tipo]:checked')].map(c=>c.dataset.tipo);if(!p.tipos.length)p.tipos=['outro'];if(!p.tipos.includes('creche'))p.ativo=false;lerPlano(p);p.aniversario=lerNiver($('#f-niver').value);
     const cpfCad=cpfSo(($('#f-cpf')||{value:''}).value);if(cpfCad)p.cpf=cpfCad;
     const idCad=($('#f-idade')||{value:''}).value.trim();if(idCad)p.idade=idCad;
+    const dhCad=parseFloat(($('#f-diaria')||{value:''}).value);if(dhCad>0)p.diariaHotel=dhCad;
     if(docsPend.vacina)p.vacina=docsPend.vacina;
     if(docsPend.contrato)p.contrato=docsPend.contrato;
     p.endereco=$('#f-end').value.trim();p.obs=$('#f-obs').value.trim();sincronizarHoje(p);pets.push(p);fecharModal();render();toast(p,`${nome} entrou na chamada 🐾`,'Já dá pra marcar a presença.');
@@ -6240,6 +6257,8 @@ function abrirRecepcao(){
   const pres=ativos().filter(p=>p.status==='presente').sort((a,b)=>a.chegou.localeCompare(b.chegou));
   const pend=pendentes();
   const falt=ativos().filter(p=>p.status==='faltou');
+  // um cadastro de irmaos e UMA linha na lista, mas sao 2 ou 3 caes na creche
+  const nPres=contaCaes(pres), nPend=contaCaes(pend), nFalt=contaCaes(falt);
   const li=(p,extra)=>`<li><span class="mini">${avatar(p)}</span><div><b>${nomeCompleto(p)}</b><span>${racasDoPet(p)} · ${PLANOS[p.plano].curto} · ${resumoMes(p).vindas}x em ${nomeMes}</span></div><span class="n">${extra}</span></li>`;
   $('#modais').innerHTML=`
   <div class="recepcao" id="rec">
@@ -6255,18 +6274,18 @@ function abrirRecepcao(){
         <div class="deco float d4" style="right:40px;bottom:30px;width:70px;height:34px;color:#fff">${st('osso')}</div>
         <div class="deco float d2" style="left:30px;bottom:40px;width:30px;height:30px;color:var(--amarelo)">${st('estrela')}</div>
         <div class="tag">NA CRECHE HOJE</div>
-        <div class="grande">${pres.length}</div>
-        <div class="raca">${pres.length===1?'aumigo presente':'aumigos presentes'}${pend.length?` · ${pend.length} ainda sem marcar`:''}</div>
+        <div class="grande">${nPres}</div>
+        <div class="raca">${nPres===1?'aumigo presente':'aumigos presentes'}${nPend?` · ${nPend} ainda sem marcar`:''}</div>
         <div class="ilus" style="width:170px;height:170px">${st('dog-golden')}</div>
-        ${pres.length?`<div class="turma">${pres.map(p=>`<span><span class="mini">${avatar(p)}</span> ${p.nome}</span>`).join('')}</div>`
+        ${pres.length?`<div class="turma">${pres.map(p=>`<span><span class="mini">${avatar(p)}</span> ${nomeCompleto(p)}</span>`).join('')}</div>`
           :`<div class="fala">"Ninguém chegou ainda… 🐾"</div>`}
       </div>
       <div class="fila-lado">
-        <h3>${st('dog-beagle')} Ainda sem marcar (${pend.length})</h3>
+        <h3>${st('dog-beagle')} Ainda sem marcar (${nPend})</h3>
         <ol>${pend.length?pend.map(p=>li(p,'')).join(''):`<li><span style="font-weight:700;color:#A38560">Chamada concluída! Todo mundo já foi marcado. 💛</span></li>`}</ol>
-        <div class="presentes"><h3>${st('dog-bulldog')} Chegaram (${pres.length})</h3>
+        <div class="presentes"><h3>${st('dog-bulldog')} Chegaram (${nPres})</h3>
         <ol>${pres.length?pres.map(p=>li(p,`✓ ${p.chegou}`)).join(''):`<li><span style="font-weight:700;color:#A38560">Ninguém chegou ainda.</span></li>`}</ol></div>
-        <div class="faltas"><h3>${st('dog-dachshund')} Faltaram (${falt.length})</h3>
+        <div class="faltas"><h3>${st('dog-dachshund')} Faltaram (${nFalt})</h3>
         <ol>${falt.length?falt.map(p=>li(p,'✕ faltou')).join(''):`<li><span style="font-weight:700;color:#A38560">Ninguém faltou hoje! 🎉</span></li>`}</ol></div>
       </div>
     </div>
@@ -6409,6 +6428,7 @@ function abrirEditar(id){
       <div class="cfg-h">🗓 Plano e pagamento</div>
       <div class="row2">
         <div class="campo obrig"><label for="e-pag">Dia do pagamento</label><input id="e-pag" type="number" min="1" max="31" value="${p.pagamentoDia||10}"></div>
+        <div class="campo"><label for="e-diaria">🏡 Diária no hotel <small style="font-weight:700;color:#A38560">· opcional</small></label><input id="e-diaria" type="number" min="0" step="5" value="${p.diariaHotel||''}" placeholder="Vazio = usa a tabela"></div>
       </div>
       ${camposPlano(p)}
       <div class="campo"><label>Onde esse pet frequenta</label><div class="tipos-sel">${Object.entries(TIPOS_PET).map(([k,v])=>`<label class="${(tiposDe(p)).includes(k)?'on':''}"><input type="checkbox" data-tipo="${k}" ${(tiposDe(p)).includes(k)?'checked':''}> ${v[0]} ${v[1]}</label>`).join('')}</div></div>
@@ -6473,6 +6493,7 @@ function abrirEditar(id){
     p.tipos=[...document.querySelectorAll('[data-tipo]:checked')].map(c=>c.dataset.tipo);if(!p.tipos.length)p.tipos=['outro'];p.endereco=$('#e-end').value.trim();p.obs=$('#e-obs').value.trim();p.aniversario=lerNiver($('#e-niver').value);
     const cpfEd=cpfSo(($('#e-cpf')||{value:''}).value);if(cpfEd)p.cpf=cpfEd;else delete p.cpf;
     const idEd=($('#e-idade')||{value:''}).value.trim();if(idEd)p.idade=idEd;else delete p.idade;
+    const dhEd=parseFloat(($('#e-diaria')||{value:''}).value);if(dhEd>0)p.diariaHotel=dhEd;else delete p.diariaHotel;
     if(docsPend.vacina)p.vacina=docsPend.vacina;
     if(docsPend.contrato)p.contrato=docsPend.contrato;
     const dv=parseFloat($('#e-desc-valor').value)||0;const dAntes=JSON.stringify(p.descontoFixo||null);
@@ -6667,6 +6688,10 @@ const FERIADOS_HOTEL=['12-24','12-25','12-31','01-01'];
 const ehFeriadoHotel=iso=>FERIADOS_HOTEL.indexOf(String(iso).slice(5))>=0;
 function valorDiaria(h,feriado){
   if(feriado)return h.aluno?HOTEL.ferAluno:(h.peso<=10?HOTEL.ferPequeno:HOTEL.ferGrande);
+  // diaria combinada com ESTE cliente, se tiver. Vale so em dia normal:
+  // no feriado a tabela de feriado continua mandando.
+  const dele=h&&h.p?+h.p.diariaHotel:0;
+  if(dele>0)return dele;
   return h.aluno?HOTEL.aluno:(h.peso<=10?HOTEL.pequeno:HOTEL.grande);
 }
 /* Quais caes desta reserva vao ficar hospedados.
@@ -7202,8 +7227,11 @@ function mapaMesHotel(ym){
     const iso=`${ym}-${pad(d)}`;const lista=ocupacaoDia(iso);
     const entram=reservas.filter(r=>r.status!=='cancelado'&&r.checkin===iso);
     const saem=reservas.filter(r=>r.status!=='cancelado'&&r.checkout===iso);
-    somaOcup+=lista.length;diarias+=lista.length;if(lista.length>=cap)cheios++;
-    out.push({iso,d,dow:new Date(y,m-1,d).getDay(),n:lista.length,lista,entram,saem});
+    // vaga de hotel e fisica: uma reserva de 3 irmaos ocupa 3, nao 1.
+    // a diaria tambem e cobrada por cachorro, entao conta igual.
+    const caes=lista.reduce((n,r)=>n+petsDaReserva(r),0);
+    somaOcup+=caes;diarias+=caes;if(caes>=cap)cheios++;
+    out.push({iso,d,dow:new Date(y,m-1,d).getDay(),n:caes,lista,entram,saem});
   }
   return {out,cap,dias,media:somaOcup/dias,cheios,diarias,taxa:Math.round(diarias/(cap*dias)*100)};
 }
@@ -8394,7 +8422,7 @@ function renderPets(){
       <button class="menubtn" data-menu="${p.id}" aria-label="Opções">···</button>
       <div class="c-linha" data-perfil="${p.id}">
         <div class="foto">${avatar(p)}</div>
-        <div class="c-info"><h3>${nomeCompleto(p)}</h3><div class="raca">${racasDoPet(p)} · ${p.peso} kg · ${p.tutor}${temDois(p)?' e '+(p.dono2.nome||'2º dono'):''}</div>
+        <div class="c-info"><h3>${nomeCompleto(p)}</h3><div class="raca"><span class="rc">${racasDoPet(p)} · ${p.peso} kg</span><span class="tt">${p.tutor}${temDois(p)?' e '+(p.dono2.nome||'2º dono'):''}</span></div>
         ${temIrmao(p)||temDois(p)?`<div class="tags">${temIrmao(p)?'<span class="irmaos-tag">🐶🐕 '+qtdPets(p)+' irmãos</span>':''}${temDois(p)?'<span class="donos-tag">👥 dois donos</span>':''}</div>`:''}
         <div class="tags">${t.map(k=>`<span class="tag t-${k}">${TIPOS_PET[k][0]} ${TIPOS_PET[k][1]}</span>`).join('')}${fim&&!t.includes('fim-de-ano')?'<span class="tag t-fim-de-ano">🎄 vem no fim do ano</span>':''}${p.ativo===false?'<span class="tag t-off">💤 inativo na creche</span>':''}</div></div>
       </div>
@@ -8427,7 +8455,10 @@ function renderPainel(){
   const mp=mapaMesHotel(MES);
   const t=transporteMes(MES);
   const pend=pendencias();const urg=pend.filter(x=>x.n===1).length;
-  const top=financeiroResumo(MES).creche.map(x=>({n:nomeCompleto(x.p),v:x.m.total,pago:x.pago,p:x.p})).sort((a,b)=>b.v-a.v).slice(0,5);
+  // financeiroResumo percorre todos os pets e todas as reservas do mes.
+  // Estava sendo chamado 4x no mesmo desenho; agora e uma vez so.
+  const fin=financeiroResumo(MES);
+  const top=fin.creche.map(x=>({n:nomeCompleto(x.p),v:x.m.total,pago:x.pago,p:x.p})).sort((a,b)=>b.v-a.v).slice(0,5);
   const mx=Math.max(1,...serie.map(s=>s.total));
   const prox7=[];const eventos=[];
   for(let i=0;i<7;i++){const d=dAddS(HOJE,i);
@@ -8450,7 +8481,7 @@ function renderPainel(){
     <div class="pn-grid">
       ${kpi('Faturamento do mês',brl(atual.total),`${var_(atual.total,ant.total)>=0?'▲':'▼'} ${Math.abs(var_(atual.total,ant.total))}% vs ${NOMES_MES[+ant.ym.split('-')[1]-1]}`,var_(atual.total,ant.total)>=0?'up':'down',spark(serie.map(s=>s.total)))}
       ${kpi('Recebido',brl(atual.recebido),`${atual.total?Math.round(atual.recebido/atual.total*100):0}% do mês`,'ok',spark(serie.map(s=>s.recebido)))}
-      ${kpi('Em atraso',brl(atual.atraso),`${financeiroResumo(MES).atrasoL.length} ${financeiroResumo(MES).atrasoL.length===1?'cliente':'clientes'}`,atual.atraso?'bad':'ok')}
+      ${kpi('Em atraso',brl(atual.atraso),`${fin.atrasoL.length} ${fin.atrasoL.length===1?'cliente':'clientes'}`,atual.atraso?'bad':'ok')}
       ${kpi('Ticket médio',atual.clientes?brl(atual.total/atual.clientes):'—',`${atual.clientes} clientes faturados`)}
       ${kpi('Creche',brl(atual.creche),`ocupação ${ocupC}% · ${presMes} presenças`,'',spark(serie.map(s=>s.creche)))}
       ${kpi('Hotel',brl(atual.hotel),`ocupação ${mp.taxa}% · ${mp.diarias} diárias`,'',spark(serie.map(s=>s.hotel)))}
@@ -8476,7 +8507,7 @@ function renderPainel(){
           <div><span>Ocupação da creche</span><b>${ocupC}% <small>de ${cfg.capacidadeCreche||20} vagas</small></b></div>
           <div><span>Ocupação do hotel</span><b>${mp.taxa}%</b></div>
           <div><span>Frequência média</span><b>${(()=>{const f=at.map(p=>resumoMes(p)).filter(m=>m.vindas+m.faltas);return f.length?Math.round(f.reduce((a,m)=>a+m.vindas/(m.vindas+m.faltas),0)/f.length*100)+'%':'—'})()}</b></div>
-          <div><span>Inadimplência</span><b>${atual.clientes?Math.round(financeiroResumo(MES).atrasoL.length/atual.clientes*100)+'%':'—'}</b></div>
+          <div><span>Inadimplência</span><b>${atual.clientes?Math.round(fin.atrasoL.length/atual.clientes*100)+'%':'—'}</b></div>
           <div><span>Clientes ativos</span><b>${at.length}</b></div>
           <div><span>Pets de fim de ano</span><b>${pets.filter(ehFimDeAno).length}</b></div>
           <div><span>Repasse do transporte</span><b>${brl(t.pagMot)} ${t.jaPago?'<small>pago ✓</small>':'<small>a repassar</small>'}</b></div>
