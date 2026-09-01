@@ -942,9 +942,22 @@ table.fat tr.hotel td{background:#FFFCF3}
 .h-datas div{flex:1;background:var(--bege-claro);border:1px solid var(--bege);border-radius:12px;padding:6px 10px;text-align:center}
 .h-datas span{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#A38560}
 .h-datas b{font-size:14px;font-weight:800;color:var(--marrom-escuro)}
-.h-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;background:var(--amarelo-suave);border:1px solid var(--amarelo);border-radius:12px;padding:7px 12px;font-size:12px;font-weight:800;color:var(--marrom)}
-.h-total b{font-family:var(--display);font-weight:600;font-size:18px;color:var(--marrom-escuro)}
-.h-acoes{display:flex;gap:8px;margin-top:10px}
+/* gap e min-width:0 no texto da esquerda: sem isso o preço era espremido e
+   o número quebrava no meio ("R$ 756,0" numa linha e "0" na outra) */
+.h-total{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:10px;background:var(--amarelo-suave);border:1px solid var(--amarelo);border-radius:12px;padding:7px 12px;font-size:12px;font-weight:800;color:var(--marrom)}
+.h-total>span:first-child{min-width:0}
+.h-total b{font-family:var(--display);font-weight:600;font-size:18px;color:var(--marrom-escuro);flex:none;white-space:nowrap}
+/* A fileira de cards fica toda com a altura do card mais alto. Sem isso os
+   botoes de cada card paravam numa altura diferente e a secao inteira
+   parecia desalinhada. margin-top:auto empurra o rodape do card pro pe. */
+.h-acoes{display:flex;gap:8px;margin-top:auto;padding-top:10px}
+.hsec .grid>.card{display:flex;flex-direction:column}
+.hsec .grid>.card .h-total{margin-top:auto}
+.hsec .grid>.card .h-total+.h-acoes{margin-top:10px;padding-top:0}
+@media (min-width:761px){
+  /* nome grande demais quebrava em duas linhas e esticava a fileira toda */
+  .hsec .grid>.card h3{font-size:18px}
+}
 .h-acoes .btn{margin:0;flex:1;font-size:15px;padding:11px}
 .h-acoes .ico-btn{background:var(--marrom-escuro);color:var(--creme);box-shadow:0 3px 0 #24191A}
 .h-acoes .ico-btn:hover{background:var(--marrom)}
@@ -974,12 +987,23 @@ table.fat tr.hotel td{background:#FFFCF3}
 .perfil-fin .kv a{color:#1F8F4E;text-decoration:none;font-weight:800}
 
 /* ===== mapa do hotel ===== */
-.cal.hcal{gap:6px}
+/* align-content:start impede o grid de ESTICAR as linhas pra preencher a
+   altura do container: as linhas viravam 76px enquanto os quadradinhos tem
+   54px, e cada dia ficava 22px abaixo do topo da propria linha. */
+.cal.hcal{gap:6px;align-content:start;align-items:start}
 .cal.hcal .hd{height:54px;border-radius:12px;background:var(--bege-claro);border:1px solid var(--bege);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative;cursor:pointer;transition:.15s;padding:0}
 .cal.hcal .hd:hover{transform:scale(1.05)}
 .cal.hcal .hd .dn{font-size:12px;font-weight:800;color:var(--marrom)}
 .cal.hcal .hd .qt{font-family:var(--display);font-weight:600;font-size:17px;line-height:1;color:var(--marrom-escuro)}
-.cal.hcal .hd.vazio .qt{display:none}
+/* visibility em vez de display: o quadradinho do dia sem hospede precisa
+   guardar o MESMO espaco por dentro. Com display:none a caixa mudava de
+   forma e o grid alinhava esses dias 22px abaixo dos outros. */
+.cal.hcal .hd.livre .qt{visibility:hidden}
+/* Os quadradinhos vazios do começo do mês usavam a altura do calendário do
+   pet (46px) dentro do calendário do hotel (54px). Isso jogava a primeira
+   semana inteira fora de linha. */
+.cal.hcal .hd.blank{background:transparent;border:0;cursor:default;transform:none}
+.cal.hcal .hd.blank:hover{transform:none}
 .cal.hcal .hd.ok{background:#DCEBD8;border-color:#CFE3CB}
 .cal.hcal .hd.quase{background:var(--amarelo-claro);border-color:var(--amarelo)}
 .cal.hcal .hd.cheio{background:#F1C9C9;border-color:var(--vermelho)}
@@ -1016,6 +1040,8 @@ table.fat tr.hotel td{background:#FFFCF3}
    uma parede de caixinhas e ninguem sabia qual era de quem */
 .irm-cx{background:var(--bege-claro);border:1px solid var(--bege);border-radius:16px;padding:2px 12px 12px;margin-top:12px}
 .irm-cx .cfg-h{font-size:12px}
+/* nenhum valor em reais pode quebrar no meio do número */
+.h-total b,.tot b{white-space:nowrap}
 /* ideia de video do dia */
 .in-box.reels{background:linear-gradient(135deg,#FFF4E2,var(--creme));border-color:var(--amarelo)}
 .reels .rl-tipo{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#A38560;margin-top:8px}
@@ -2139,7 +2165,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.5.0</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.5.1</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -5434,6 +5460,107 @@ function salvarTurmaDasUnidades(){
 function salvarSeguro(chave,valor){try{localStorage.setItem(chaveReal(chave),valor);return true}catch(e){if(!salvarSeguro.avisou){salvarSeguro.avisou=true;toast(pets[0]||{raca:'golden'},'Memória do navegador cheia','Reduza fotos ou exclua pets antigos; o que já estava salvo continua.')}return false}}
 
 
+/* ====== preencher um mês fechado com presença cheia ======
+   Serve pra quando a creche já rodava antes do sistema: agosto existiu de
+   verdade, mas não tem chamada lançada. Preenche pelo plano de cada um
+   (3x/sem = seg/qua/sex) e NUNCA apaga nada: só acrescenta dia que ainda
+   não está lá, e pula dia que já está marcado como falta. */
+const DIAS_DO_PLANO={2:[2,4],3:[1,3,5],4:[1,2,4,5],5:[1,2,3,4,5],6:[1,2,3,4,5,6]};
+function diasCheiosDoMes(ym,p,incluirSabado){
+  const vezes=(PLANOS[p.plano]||{}).vezes||0;
+  const permitidos=DIAS_DO_PLANO[vezes];         // avulso não tem "vezes"
+  const [y,m]=ym.split('-').map(Number);
+  const ultimo=new Date(y,m,0).getDate();
+  const out=[];
+  for(let d=1;d<=ultimo;d++){
+    const dow=new Date(y,m-1,d).getDay();
+    const vale = permitidos ? permitidos.indexOf(dow)>=0
+                            : (dow>=1&&dow<=(incluirSabado?6:5));
+    if(vale)out.push(ym+'-'+pad(d));
+  }
+  return out;
+}
+/* o que MUDARIA, sem mexer em nada: serve pro resumo antes de confirmar */
+function previaPreencher(ym,opc){
+  opc=opc||{};
+  const alvo=pets.filter(p=>p.ativo!==false&&tiposDe(p).includes('creche'))
+                 .filter(p=>opc.incluirAvulso||p.plano!=='avulso');
+  return alvo.map(p=>{
+    const ja=new Set(p.presencas||[]);
+    const faltou=new Set(p.faltas||[]);
+    const novos=diasCheiosDoMes(ym,p,opc.sabado).filter(d=>!ja.has(d)&&!faltou.has(d));
+    const jaTinha=(p.presencas||[]).filter(d=>d.startsWith(ym)).length;
+    const total=jaTinha+novos.length;
+    // o pacote e vezes x 4 semanas. Mes com 5 segundas passa disso e o dia
+    // que sobra vira diaria extra na fatura - melhor avisar antes.
+    const meta=((PLANOS[p.plano]||{}).vezes||0)*4;
+    return {p,novos,jaTinha,total,meta,extras:meta?Math.max(0,total-meta):0};
+  }).filter(x=>x.novos.length||x.jaTinha);
+}
+function preencherMes(ym,opc){
+  const lista=previaPreencher(ym,opc);
+  let dias=0;
+  lista.forEach(({p,novos})=>{
+    if(!novos.length)return;
+    p.presencas=(p.presencas||[]).concat(novos).sort();
+    novos.forEach(d=>{p.chegadas=p.chegadas||{};if(!(d in p.chegadas))p.chegadas[d]=''});
+    dias+=novos.length;
+    p.log=p.log||[];
+    p.log.push({d:HOJE,h:horaAgora(),ico:'📅',txt:'Mês de '+ymNome(ym)+' preenchido: +'+novos.length+' presenças'});
+  });
+  pets.forEach(p=>{try{sincronizarHoje(p)}catch(e){}});
+  salvar();
+  return {pets:lista.filter(x=>x.novos.length).length,dias};
+}
+function abrirPreencherMes(){
+  let ym=ymAdd(MES,-1), incluirAvulso=false, sabado=false;
+  const meses=[];for(let i=1;i<=6;i++)meses.push(ymAdd(MES,-i));
+  $('#modais').innerHTML=`
+  <div class="overlay" id="ov"><div class="modal form" role="dialog" aria-labelledby="pm-t">
+    <button class="fechar" data-fechar aria-label="Fechar">✕</button>
+    <h2 id="pm-t">${st('dog-beagle')} Preencher um mês</h2>
+    <p style="font-size:13px;font-weight:700;color:#8C7355;margin-top:6px">Pra quando a creche já funcionava antes do sistema. Marca presença nos dias do plano de cada aumigo. <b>Não apaga nada</b>: dia que já está lançado ou marcado como falta fica como está.</p>
+    <div class="row2" style="margin-top:12px">
+      <div class="campo"><label for="pm-mes">Mês</label><select id="pm-mes">${meses.map(m=>`<option value="${m}">${ymNome(m)}</option>`).join('')}</select></div>
+    </div>
+    <label class="check" style="justify-content:flex-start"><input type="checkbox" id="pm-avulso"> Incluir quem é <b>avulso</b> <small style="font-weight:700;color:#A38560">· avulso cobra por dia, então isso cria valor</small></label>
+    <label class="check" style="justify-content:flex-start"><input type="checkbox" id="pm-sab"> Contar sábado nos avulsos</label>
+    <div class="cfg-h">O que vai mudar</div>
+    <div id="pm-previa" style="max-height:260px;overflow:auto"></div>
+    <button class="btn primario" id="pm-ok" style="margin-top:16px">${st('check')} Preencher</button>
+  </div></div>`;
+  lock();
+  const pinta=()=>{
+    ym=$('#pm-mes').value; incluirAvulso=$('#pm-avulso').checked; sabado=$('#pm-sab').checked;
+    const l=previaPreencher(ym,{incluirAvulso,sabado});
+    const totalDias=l.reduce((a,x)=>a+x.novos.length,0);
+    const mexem=l.filter(x=>x.novos.length);
+    $('#pm-previa').innerHTML = mexem.length
+      ? '<p style="font-size:13px;font-weight:800;color:var(--marrom);margin-bottom:8px">'+mexem.length+' aumigo(s) · +'+totalDias+' presenças no total</p>'+
+        '<table class="tabela-simples"><tr><th>Aumigo</th><th>Plano</th><th class="r">Já tinha</th><th class="r">Entra</th><th class="r">Fica com</th></tr>'+
+        mexem.map(x=>'<tr><td>'+nomeCompleto(x.p)+'</td><td>'+((PLANOS[x.p.plano]||{}).curto||x.p.plano)+'</td><td class="r">'+x.jaTinha+'</td><td class="r"><b>+'+x.novos.length+'</b></td><td class="r">'+x.total+(x.extras?' <span style="color:var(--vermelho-txt)">+'+x.extras+' extra</span>':'')+'</td></tr>').join('')+
+        '</table>'+
+        (mexem.some(x=>x.extras)?'<p style="font-size:12px;font-weight:700;color:var(--vermelho-txt);margin-top:8px">⚠ '+mexem.filter(x=>x.extras).length+' aumigo(s) passam da meta do pacote ('+'vezes por semana × 4'+'). O dia que sobra e cobrado como diaria avulsa na fatura.</p>':'')
+      : '<p style="font-size:13px;font-weight:700;color:#8C7355">Nada a preencher nesse mês: já está tudo lançado.</p>';
+    $('#pm-ok').disabled=!mexem.length;
+  };
+  ['pm-mes','pm-avulso','pm-sab'].forEach(i=>{const e=$('#'+i);if(e)e.onchange=pinta});
+  pinta();
+  $('#pm-ok').onclick=()=>{
+    const l=previaPreencher(ym,{incluirAvulso,sabado});
+    const totalDias=l.reduce((a,x)=>a+x.novos.length,0);
+    const mexem=l.filter(x=>x.novos.length).length;
+    confirmar({titulo:'Preencher '+ymNome(ym)+'?',
+      texto:mexem+' aumigo(s) ganham '+totalDias+' presenças. Isso muda o valor da cobrança desse mês. Dá pra desfazer tirando as presenças na chamada de cada dia.',
+      botao:'Preencher',onOk:()=>{
+        const r=preencherMes(ym,{incluirAvulso,sabado});
+        fecharModal();render();
+        toast(pets[0]||{raca:'golden'},ymNome(ym)+' preenchido 📅',r.pets+' aumigo(s) · '+r.dias+' presenças lançadas.',true);
+      }});
+  };
+  $('#ov').onclick=e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()};
+  document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
+}
 /* ====== ideia de vídeo do dia ======
    Uma por dia, igual pra todo mundo da equipe: o indice sai da data, não
    do sorteio, senão cada aparelho mostraria uma coisa. Sempre curtinha e
@@ -5846,6 +5973,8 @@ function abrirConfig(){
       <div class="cfg-h">⛽ Van <button class="btn-mini" id="cf-comb" type="button">Combustível e custos</button> <button class="btn-mini" id="cf-mot" type="button">Como o motorista é pago</button></div>`:''}
       ${pode('config')?`<div class="cfg-h">🐶 Raças <button class="btn-mini" id="cf-racas" type="button">Cadastrar raças</button></div>`:''}
       ${pode('config')?`<div class="cfg-h">🔒 Logins <button class="btn-mini" id="cf-logins" type="button">Gerenciar acessos</button></div>`:''}
+      ${pode('config')?`<div class="cfg-h">📅 Mês antes do sistema <span style="font-size:11px;font-weight:700;color:#A38560">lança a presença de um mês que já aconteceu</span></div>
+      <div class="row2"><button class="btn-mini" id="cf-preencher" type="button">📅 Preencher um mês</button><span></span></div>`:''}
       <div class="cfg-h">💾 Backup <span style="font-size:11px;font-weight:700;color:#A38560">exporte de vez em quando e guarde o arquivo</span></div>
       ${pode('config')?`<div class="cfg-h">📸 Fotos <span style="font-size:11px;font-weight:700;color:#A38560">tira as fotos de dentro do cadastro e deixa o sistema mais leve</span></div>
       <div class="row2"><button class="btn-mini" id="cf-fotos" type="button">☁️ Mandar fotos pra nuvem</button><span></span></div>`:''}
@@ -5876,6 +6005,7 @@ function abrirConfig(){
     cfg.zaps=[...document.querySelectorAll('#cf-zaps .row')].map(r=>({id:+r.dataset.zap,nome:r.querySelector('[data-k=nome]').value.trim(),numero:r.querySelector('[data-k=numero]').value.replace(/\D/g,'')})).filter(z=>z.nome);
     cfg.zapHotel=+$('#cf-zh').value;cfg.zapCobranca=+$('#cf-zc').value;cfg.pixPadrao=+$('#cf-px').value;
   };
+  const bpm=$('#cf-preencher');if(bpm)bpm.onclick=abrirPreencherMes;
   const br=$('#cf-racas');if(br)br.onclick=abrirRacas;
   const bl=$('#cf-logins');if(bl)bl.onclick=abrirLogins;const bp=$('#cf-precos');if(bp)bp.onclick=abrirPrecos;const bcb=$('#cf-comb');if(bcb)bcb.onclick=abrirCombustivel;const bmo=$('#cf-mot');if(bmo)bmo.onclick=abrirCfgMotorista;
   $('#cf-exp').onclick=exportarBackup;$('#cf-imp').onchange=e=>importarBackup(e.target.files[0]);
@@ -7353,12 +7483,15 @@ function renderHotelCal(){
   const box=$('#h-mapa');if(!box)return;
   hcMes=hcMes||MES;const mp=mapaMesHotel(hcMes);
   const meses=[];for(let i=-1;i<5;i++)meses.push(ymAdd(MES,-i));
-  const cel=x=>{
+  /* col = em qual coluna o dia 1o do mes comeca. Antes isso era feito com
+     <div> vazios antes dos dias, mas os dias sao <button>: o grid alinha os
+     dois de jeitos diferentes e a primeira semana saia 22px fora de linha. */
+  const cel=(x,col)=>{
     const pct=mp.cap?x.n/mp.cap:0;
-    const cls=['hd',x.n===0?'vazio':pct>=1?'cheio':pct>=.6?'quase':'ok',x.iso===HOJE?'hoje':'',x.dow===0?'fds':''].join(' ');
-    return `<button class="${cls}" data-hdia="${x.iso}" title="${x.n} ${x.n===1?'hóspede':'hóspedes'}${x.entram.length?' · '+x.entram.length+' chega':''}${x.saem.length?' · '+x.saem.length+' sai':''}">
+    const cls=['hd',x.n===0?'livre':pct>=1?'cheio':pct>=.6?'quase':'ok',x.iso===HOJE?'hoje':'',x.dow===0?'fds':''].join(' ');
+    return `<button class="${cls}"${col?` style="grid-column-start:${col}"`:''} data-hdia="${x.iso}" title="${x.n} ${x.n===1?'hóspede':'hóspedes'}${x.entram.length?' · '+x.entram.length+' chega':''}${x.saem.length?' · '+x.saem.length+' sai':''}">
       <span class="dn">${x.d}</span>
-      ${x.n?`<span class="qt">${x.n}</span>`:''}
+      <span class="qt">${x.n||0}</span>
       <span class="ios">${x.entram.length?'<i class="ent"></i>':''}${x.saem.length?'<i class="sai"></i>':''}</span>
     </button>`;
   };
@@ -7374,7 +7507,7 @@ function renderHotelCal(){
       <div class="stat ag"><b style="font-size:20px">${mp.media.toFixed(1)}</b><span>Média por dia</span></div>
       <div class="stat fa"><b style="font-size:20px">${mp.cheios}</b><span>Dias lotados</span></div>
     </div>
-    <div class="cal hcal">${['D','S','T','Q','Q','S','S'].map(d=>`<div class="dow">${d}</div>`).join('')}${Array.from({length:primeiro},()=>'<div class="d blank"></div>').join('')}${mp.out.map(cel).join('')}</div>
+    <div class="cal hcal">${['D','S','T','Q','Q','S','S'].map(d=>`<div class="dow">${d}</div>`).join('')}${mp.out.map((x,i)=>cel(x,i===0?primeiro+1:0)).join('')}</div>
     <div class="legenda"><span><i style="background:var(--bege-claro)"></i>livre</span><span><i style="background:#DCEBD8"></i>com hóspedes</span><span><i style="background:var(--amarelo-claro)"></i>quase cheio</span><span><i style="background:#F1C9C9"></i>lotado</span><span><i class="pt-ent"></i>chega</span><span><i class="pt-sai"></i>sai</span><span>· toque num dia pra ver quem está</span></div>`;
 }
 function abrirDiaHotel(iso){
