@@ -1002,6 +1002,15 @@ table.fat tr.hotel td{background:#FFFCF3}
 /* no celular, ao chegar no fim de um modal a pagina de tras comecava a rolar
    junto e voce perdia o lugar. contain prende a rolagem dentro do modal. */
 .overlay,.modal{overscroll-behavior:contain}
+/* cada irmao numa caixa propria: com 3 ou 4 cachorros os campos viravam
+   uma parede de caixinhas e ninguem sabia qual era de quem */
+.irm-cx{background:var(--bege-claro);border:1px solid var(--bege);border-radius:16px;padding:2px 12px 12px;margin-top:12px}
+.irm-cx .cfg-h{font-size:12px}
+/* login sem acesso a dinheiro: o numero ja vira ••• pelo brl(), e os
+   blocos que existem SO pra falar de valor somem inteiros */
+body.sem-valor .somente-fin,
+body.sem-valor .stat.ch,
+body.sem-valor .perfil-fin{display:none!important}
 html{-webkit-text-size-adjust:100%}
 
 /* =====================================================================
@@ -2048,7 +2057,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.3.5</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.4.0</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -4796,7 +4805,16 @@ const PLANOS={
 };
 const AVULSO={ate10:60,acima10:80};
 const TRANSPORTE={'':{nome:'Sem transporte',preco:0},camboriu:{nome:'Camboriú',preco:35},bc:{nome:'Bal. Camboriú',preco:45}};
-const brl=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+/* Quem nao mexe com dinheiro (Recepcao) nao ve valor nenhum.
+   Da pra fechar num lugar so porque brl() e o unico ponto do sistema
+   que escreve dinheiro na tela, no PDF e nas mensagens. */
+function podeValor(){
+  try{return (typeof usuario==='undefined')||!usuario||pode('financeiro')||pode('meu_pagamento')}
+  catch(e){return true}
+}
+const brl=v=>podeValor()
+  ?'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})
+  :'R$ •••';
 const BASE='Av. Rio Amazonas, 1937 - Rio Pequeno, Camboriú - SC, 88343-400';
 /* Mensagens prontas (variáveis: {tutor} {pet} {creche} {hora}) */
 const TEMPLATES_PADRAO={
@@ -5011,18 +5029,112 @@ function racasDoPet(p){
   const nomes=[(RACAS[p.raca]||{}).nome].concat(irmaosDe(p).map(x=>(RACAS[x.raca]||{}).nome)).filter(Boolean);
   return nomes.filter((n,i)=>nomes.indexOf(n)===i).join(' · ');
 }
+/* ====== CPF do tutor ======
+   Sem regex de proposito: escrever \d dentro de texto aqui ja me mordeu antes. */
+function cpfSo(v){let d='';const t=String(v||'');for(let i=0;i<t.length&&d.length<11;i++){const c=t[i];if(c>='0'&&c<='9')d+=c}return d}
+function cpfFmt(v){
+  const d=cpfSo(v);
+  if(d.length<=3)return d;
+  if(d.length<=6)return d.slice(0,3)+'.'+d.slice(3);
+  if(d.length<=9)return d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6);
+  return d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'-'+d.slice(9);
+}
+/* confere os dois digitos do fim. serve pra avisar de erro de digitacao,
+   nao pra impedir de salvar: as vezes a pessoa so tem o CPF depois. */
+function cpfValido(v){
+  const d=cpfSo(v);
+  if(d.length!==11)return false;
+  let iguais=true;for(let i=1;i<11;i++)if(d[i]!==d[0])iguais=false;
+  if(iguais)return false;
+  for(let t=9;t<11;t++){
+    let soma=0;for(let i=0;i<t;i++)soma+=(+d[i])*(t+1-i);
+    let r=(soma*10)%11;if(r===10)r=0;
+    if(r!==+d[t])return false;
+  }
+  return true;
+}
+function ligarCpf(id){
+  const el=document.getElementById(id);if(!el)return;
+  el.oninput=()=>{const p=el.selectionStart===el.value.length;el.value=cpfFmt(el.value);if(p)el.selectionStart=el.selectionEnd=el.value.length};
+  el.onblur=()=>{const d=cpfSo(el.value);el.style.borderColor=(d.length===0||cpfValido(d))?'':'var(--vermelho)'};
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-verdoc]');
+  if(b){e.preventDefault();abrirDocumento(b.dataset.verdoc)}
+});
+/* ====== carteira de vacina e contrato assinado ======
+   Vao pro balde 'documentos' do Supabase, que e PRIVADO: contrato tem CPF,
+   endereco e assinatura. Diferente da foto do pet, que pode ser publica.
+   O cadastro guarda so o nome do arquivo; o link de ver e feito na hora
+   e vence em 1 hora, entao nao existe link solto por ai. */
+const DOC_MAX=10*1024*1024;
+async function subirDocumento(file,marca){
+  const cli=(typeof nuvemCliente==='function')?nuvemCliente():null;
+  if(!cli||!nuvemOk)throw new Error('sem nuvem');
+  if(file.size>DOC_MAX)throw new Error('grande');
+  const ponto=file.name.lastIndexOf('.');
+  const ext=(ponto>0?file.name.slice(ponto+1):'jpg').toLowerCase();
+  const nome=marca+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,8)+'.'+ext;
+  const {error}=await cli.storage.from('documentos').upload(nome,file,{contentType:file.type||'application/octet-stream'});
+  if(error)throw error;
+  return nome;
+}
+async function abrirDocumento(caminho){
+  const cli=(typeof nuvemCliente==='function')?nuvemCliente():null;
+  if(!cli||!nuvemOk){toast(pets[0]||{raca:'golden'},'Precisa de internet','O documento fica guardado na nuvem, não no aparelho.');return}
+  try{
+    const {data,error}=await cli.storage.from('documentos').createSignedUrl(caminho,3600);
+    if(error||!data||!data.signedUrl)throw error||new Error('sem link');
+    window.open(data.signedUrl,'_blank');
+  }catch(e){toast(pets[0]||{raca:'golden'},'Não consegui abrir','Tente de novo daqui a pouco.')}
+}
+/* liga um campo de arquivo: manda pra nuvem na hora que escolhe */
+function ligarDoc(idInput,idStatus,marca,guardar){
+  const inp=document.getElementById(idInput);if(!inp)return;
+  const st=document.getElementById(idStatus);
+  inp.onchange=async()=>{
+    const f=inp.files&&inp.files[0];if(!f)return;
+    const diz=(txt,cor)=>{if(st){st.textContent=txt;st.style.color=cor||''}};
+    if(f.size>DOC_MAX){diz('Arquivo grande demais (máximo 10 MB)','var(--vermelho-txt)');inp.value='';return}
+    diz('Enviando…');
+    try{const caminho=await subirDocumento(f,marca);guardar(caminho);diz('✓ '+f.name,'var(--verde-txt)')}
+    catch(e){diz('Não consegui enviar. Precisa de internet.','var(--vermelho-txt)');inp.value=''}
+  };
+}
+/* bloquinho de documentos usado no cadastro e na edição */
+function camposDocs(pre,p){
+  const linha=(id,ico,rot,marca,atual)=>
+    '<div class="campo"><label>'+ico+' '+rot+'</label>'+
+    '<label class="btn-mini" style="width:100%;justify-content:center">📎 '+(atual?'Trocar arquivo':'Escolher arquivo')+
+    '<input type="file" id="'+pre+'-'+id+'" accept="image/*,application/pdf"></label>'+
+    (atual?'<button type="button" class="btn-mini cinza" style="width:100%;margin-top:6px" data-verdoc="'+atual+'">👁 Ver o que está guardado</button>':'')+
+    '<small id="'+pre+'-'+id+'-st" style="display:block;margin-top:4px;font-weight:700;color:#A38560">foto ou PDF · até 10 MB</small></div>';
+  return '<div class="cfg-h">📎 Documentos</div><div class="row2">'+
+    linha('vac','💉','Carteira de vacina','vacina',(p&&p.vacina)||'')+
+    linha('cont','📄','Contrato assinado','contrato',(p&&p.contrato)||'')+
+    '</div>';
+}
 /* monta os campos de nome e raça dos irmãos, conforme a quantidade escolhida */
 function pintarIrmaos(pre,qtd,dados){
   const cx=document.getElementById(pre+'-irmao-box');
   if(!cx)return;
   const n=Math.max(2,Math.min(6,parseInt(qtd)||2))-1;   // quantos ALÉM do primeiro
   const ops=r=>Object.entries(RACAS).map(([k,v])=>`<option value="${k}" ${r===k?'selected':''}>${v.nome}</option>`).join('');
+  const esc=t=>String(t||'').split('"').join('&quot;');
   let h='';
   for(let i=0;i<n;i++){
     const d=(dados&&dados[i])||{};
-    h+=`<div class="row2">
-      <div class="campo"><label>Nome do ${i+2}º aumigo</label><input data-irm-nome="${i}" value="${(d.nome||'').replace(/"/g,'&quot;')}" placeholder="Ex.: Luna"></div>
-      <div class="campo"><label>Raça do ${i+2}º aumigo</label><select data-irm-raca="${i}">${ops(d.raca)}</select></div>
+    // cada irmão tem o aniversário e a idade dele: são cachorros diferentes
+    h+=`<div class="irm-cx">
+      <div class="cfg-h" style="margin-top:0">${i+2}º aumigo</div>
+      <div class="row2">
+        <div class="campo"><label>Nome</label><input data-irm-nome="${i}" value="${esc(d.nome)}" placeholder="Ex.: Luna"></div>
+        <div class="campo"><label>Raça</label><select data-irm-raca="${i}">${ops(d.raca)}</select></div>
+      </div>
+      <div class="row2">
+        <div class="campo"><label>🎂 Aniversário (dia/mês)</label><input data-irm-niver="${i}" value="${d.aniversario?d.aniversario.split('-').reverse().join('/'):''}" placeholder="25/08" inputmode="numeric"></div>
+        <div class="campo"><label>Idade</label><input data-irm-idade="${i}" value="${esc(d.idade)}" placeholder="Ex.: 3 anos"></div>
+      </div>
     </div>`;
   }
   cx.innerHTML=h;
@@ -5035,8 +5147,12 @@ function lerIrmaos(pre){
   cx.querySelectorAll('[data-irm-nome]').forEach(inp=>{
     const nome=inp.value.trim();
     if(!nome)return;
-    const sel=cx.querySelector('[data-irm-raca="'+inp.dataset.irmNome+'"]');
-    out.push({nome,raca:sel?sel.value:Object.keys(RACAS)[0]});
+    const i=inp.dataset.irmNome;
+    const peguei=k=>{const el=cx.querySelector('[data-irm-'+k+'="'+i+'"]');return el?el.value:''};
+    const irm={nome:nome,raca:cx.querySelector('[data-irm-raca="'+i+'"]')?cx.querySelector('[data-irm-raca="'+i+'"]').value:Object.keys(RACAS)[0]};
+    const niver=lerNiver(peguei('niver'));if(niver)irm.aniversario=niver;
+    const idade=peguei('idade').trim();if(idade)irm.idade=idade;
+    out.push(irm);
   });
   return out;
 }
@@ -5114,6 +5230,19 @@ const primeiroNome=n=>{const w=(n||'').trim().split(/\s+/)[0]||'';return w.charA
 const ICO_ZAP='<svg class="st" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.4 2 11.8c0 1.9.5 3.6 1.5 5.2L2 22l5.2-1.4c1.5.8 3.1 1.2 4.8 1.2 5.5 0 10-4.4 10-9.9S17.5 2 12 2zm4.6 13.9c-.2.6-1.2 1.1-1.7 1.2-.4.1-1 .1-1.6-.1-.4-.2-.9-.3-1.5-.6-2.7-1.1-4.4-3.7-4.5-3.9-.2-.2-1.1-1.4-1.1-2.7s.7-1.9.9-2.2c.2-.2.5-.3.7-.3h.5c.2 0 .4-.1.6.4l.8 1.9c.1.1.1.3 0 .5-.1.2-.2.3-.3.5l-.4.5c-.1.1-.2.2-.1.5.2.2.7 1 1.4 1.7.9.8 1.7 1.1 2 1.2.2.1.4.1.5-.1.1-.2.6-.7.8-1 .2-.2.4-.2.6-.1.2.1 1.4.7 1.7.8.3.1.5.1.6.4 0 .1 0 .6-.2 1.2z"/></svg>';
 function msgMidia(p){return tpl('foto',varsPet(p))}
 function msgRecuperar(p){return tpl('recuperacao',varsPet(p))}
+/* Um cadastro pode ter varios cachorros. Cada irmao faz aniversario no
+   dia dele, entao a lista devolve uma entrada por cachorro, e nao por
+   cadastro. O 'pet' vai junto porque a tela precisa da foto e do zap. */
+function aniversariosDe(p){
+  const out=[];
+  if(p.aniversario)out.push({pet:p,nome:p.nome,aniversario:p.aniversario,idade:p.idade||''});
+  irmaosDe(p).forEach(i=>{if(i.aniversario)out.push({pet:p,nome:i.nome,aniversario:i.aniversario,idade:i.idade||''})});
+  return out;
+}
+/* faz aniversario nesse dia? (mmdd = "08-25") — conta os irmaos tambem */
+function fazAniversario(p,mmdd){
+  return aniversariosDe(p).some(a=>a.aniversario===mmdd);
+}
 function niverInfo(p){
   if(!p.aniversario)return null;const [m,d]=p.aniversario.split('-').map(Number);const y=new Date().getFullYear();
   let prox=new Date(y,m-1,d);const hoje=new Date();hoje.setHours(0,0,0,0);if(prox<hoje)prox=new Date(y+1,m-1,d);
@@ -5240,8 +5369,17 @@ function renderInicio(){
   const cores={1:'r',2:'l',3:'a',4:'z'};
   $('#in-pend').innerHTML=pendLista.length?pendLista.slice(0,14).map((x,i)=>`<li class="p${cores[x.n]}"><span class="ico">${x.ico}</span><span class="txt">${x.txt}</span><button class="btn-mini" data-pend="${i}">Resolver →</button></li>`).join('')+(pendLista.length>14?`<li class="mais">+ ${pendLista.length-14} outras pendências</li>`:''):'<li class="mais">Tudo em dia! Nenhuma pendência. 💛</li>';
   // aniversários próximos (30 dias)
-  const nivs=pets.filter(p=>p.ativo!==false&&p.aniversario).map(p=>({p,n:niverInfo(p)})).filter(x=>x.n.dias<=30).sort((a,b)=>a.n.dias-b.n.dias);
-  $('#in-niver').innerHTML=nivs.length?nivs.map(({p,n})=>`<li><span class="mini">${avatar(p)}</span><div><b>${nomeCompleto(p)}</b><span>${n.hoje?'🎂 Hoje!':n.dias===1?'Amanhã':'Em '+n.dias+' dias'} · ${n.txt}</span></div>${p.telefone&&n.dias<=1?`<button class="btn-mini" data-parabens="${p.id}">🎉 Parabéns no WhatsApp</button>`:''}</li>`).join(''):'<li class="mais">Nenhum aniversário nos próximos 30 dias.</li>';
+  // uma linha por CACHORRO, nao por cadastro: numa casa com 3 irmaos
+  // cada um aparece no dia dele, com o nome dele
+  const nivs=[];
+  pets.filter(p=>p.ativo!==false).forEach(p=>{
+    aniversariosDe(p).forEach(a=>{
+      const n=niverInfo(a);
+      if(n&&n.dias<=30)nivs.push({a,p,n});
+    });
+  });
+  nivs.sort((x,y)=>x.n.dias-y.n.dias);
+  $('#in-niver').innerHTML=nivs.length?nivs.map(({a,p,n})=>`<li><span class="mini">${avatar(p)}</span><div><b>${a.nome}${temIrmao(p)?` <small style="font-weight:700;color:#A38560">· irmão de ${[p.nome].concat(irmaosDe(p).map(x=>x.nome)).filter(x=>x!==a.nome).join(', ')}</small>`:''}</b><span>${n.hoje?'🎂 Hoje!':n.dias===1?'Amanhã':'Em '+n.dias+' dias'} · ${n.txt}${a.idade?' · '+a.idade:''}</span></div>${p.telefone&&n.dias<=1?`<button class="btn-mini" data-parabens="${p.id}">🎉 Parabéns no WhatsApp</button>`:''}</li>`).join(''):'<li class="mais">Nenhum aniversário nos próximos 30 dias.</li>';
   // clientes sumindo
   const ina=inativos();
   $('#in-crm').innerHTML=ina.length?ina.slice(0,6).map(({p,d,f})=>`<li class="p${f.cor}"><span class="mini">${avatar(p)}</span><div><b>${nomeCompleto(p)}</b><span>${f.txt}${p.ativo===false?' · cancelou':''}${p.crm&&p.crm.ultimo?' · último contato '+fmtData(p.crm.ultimo):''}</span></div><button class="btn-mini" data-crm="${p.id}" data-etapa="${f.k}">${f.acao}</button></li>`).join(''):'<li class="mais">Ninguém sumido. Turma em dia! 🐾</li>';
@@ -5955,6 +6093,7 @@ function abrirEntrada(){
         <div class="campo obrig"><label for="f-tutor">Tutor</label><input id="f-tutor" placeholder="Nome do tutor"></div>
         <div class="campo obrig"><label for="f-tel">WhatsApp do tutor (cobrança)</label><input id="f-tel" placeholder="(47) 99999-9999" inputmode="tel"></div>
         <div class="campo"><label for="f-tel2">WhatsApp do transporte <small style="font-weight:700;color:#A38560">· opcional</small></label><input id="f-tel2" placeholder="Vazio = usa o mesmo" inputmode="tel"></div>
+        <div class="campo"><label for="f-cpf">CPF do tutor</label><input id="f-cpf" placeholder="000.000.000-00" inputmode="numeric"></div>
       </div>
       <div class="hidden" id="f-dono2-box">
         <div class="cfg-h">👥 Segundo dono</div>
@@ -5968,10 +6107,14 @@ function abrirEntrada(){
       <div class="row2">
         <div class="campo obrig"><label for="f-pag">Dia do pagamento</label><input id="f-pag" type="number" min="1" max="31" value="10"></div>
       </div>
-      <div class="campo"><label for="f-niver">🎂 Aniversário (dia/mês)</label><input id="f-niver" placeholder="25/08" inputmode="numeric"></div>
+      <div class="row2">
+        <div class="campo"><label for="f-niver">🎂 Aniversário (dia/mês)</label><input id="f-niver" placeholder="25/08" inputmode="numeric"></div>
+        <div class="campo"><label for="f-idade">Idade</label><input id="f-idade" placeholder="Ex.: 3 anos"></div>
+      </div>
       ${camposPlano()}
       <div class="campo"><label>Onde esse pet frequenta</label><div class="tipos-sel">${Object.entries(TIPOS_PET).map(([k,v])=>`<label class="${(['creche']).includes(k)?'on':''}"><input type="checkbox" data-tipo="${k}" ${(['creche']).includes(k)?'checked':''}> ${v[0]} ${v[1]}</label>`).join('')}</div></div>
       <div class="campo"><label for="f-end">Endereço (pro transporte)</label><input id="f-end" placeholder="Rua, número · bairro · cidade"></div>
+      ${camposDocs('f',null)}
       <div class="campo"><label for="f-obs">Observações do aumigo</label><textarea id="f-obs" style="min-height:60px" placeholder="Alergias, remédios, temperamento…"></textarea></div>
       <button class="btn primario" id="f-ok" style="margin-top:20px">${st('sino')} Colocar na chamada</button>
     </div>
@@ -5990,6 +6133,10 @@ function abrirEntrada(){
   const chkD2=$('#f-dono2-chk');
   if(chkD2)chkD2.onchange=()=>{$('#f-dono2-box').classList.toggle('hidden',!chkD2.checked);if(chkD2.checked)$('#f-d2-nome').focus()};
   let fotoNova=null;
+  const docsPend={};                       // o pet ainda nao existe: guarda aqui ate salvar
+  ligarCpf('f-cpf');
+  ligarDoc('f-vac','f-vac-st','vacina',c=>docsPend.vacina=c);
+  ligarDoc('f-cont','f-cont-st','contrato',c=>docsPend.contrato=c);
   $('#f-file').onchange=e=>{lerFoto(e.target.files[0],320,d=>{
     fotoNova=d;$('#f-prev').innerHTML=`<img src="${d}" alt="">`;      // mostra na hora
     guardarFoto(d,url=>{fotoNova=url});                                  // e sobe por trás
@@ -6014,7 +6161,12 @@ function abrirEntrada(){
     const tel2=($('#f-tel2')||{value:''}).value.replace(/\D/g,'');
     if(tel2.length>=10)p.telefoneTransporte=tel2;
     if(fotoNova)p.foto=fotoNova;
-    p.log=[{d:HOJE,h:horaAgora(),ico:'🐾',txt:'Cadastrado na turma'}];p.tipos=[...document.querySelectorAll('[data-tipo]:checked')].map(c=>c.dataset.tipo);if(!p.tipos.length)p.tipos=['outro'];if(!p.tipos.includes('creche'))p.ativo=false;lerPlano(p);p.aniversario=lerNiver($('#f-niver').value);p.endereco=$('#f-end').value.trim();p.obs=$('#f-obs').value.trim();sincronizarHoje(p);pets.push(p);fecharModal();render();toast(p,`${nome} entrou na chamada 🐾`,'Já dá pra marcar a presença.');
+    p.log=[{d:HOJE,h:horaAgora(),ico:'🐾',txt:'Cadastrado na turma'}];p.tipos=[...document.querySelectorAll('[data-tipo]:checked')].map(c=>c.dataset.tipo);if(!p.tipos.length)p.tipos=['outro'];if(!p.tipos.includes('creche'))p.ativo=false;lerPlano(p);p.aniversario=lerNiver($('#f-niver').value);
+    const cpfCad=cpfSo(($('#f-cpf')||{value:''}).value);if(cpfCad)p.cpf=cpfCad;
+    const idCad=($('#f-idade')||{value:''}).value.trim();if(idCad)p.idade=idCad;
+    if(docsPend.vacina)p.vacina=docsPend.vacina;
+    if(docsPend.contrato)p.contrato=docsPend.contrato;
+    p.endereco=$('#f-end').value.trim();p.obs=$('#f-obs').value.trim();sincronizarHoje(p);pets.push(p);fecharModal();render();toast(p,`${nome} entrou na chamada 🐾`,'Já dá pra marcar a presença.');
   };
   $('#ov').onclick=e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()};
   document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
@@ -6170,6 +6322,7 @@ function abrirEditar(id){
         <div class="campo obrig"><label for="e-tutor">Tutor</label><input id="e-tutor" value="${p.tutor}" required></div>
         <div class="campo obrig"><label for="e-tel">WhatsApp do tutor (cobrança)</label><input id="e-tel" value="${p.telefone||''}" placeholder="(47) 99999-9999" inputmode="tel"></div>
         <div class="campo"><label for="e-tel2">WhatsApp do transporte <small style="font-weight:700;color:#A38560">· opcional</small></label><input id="e-tel2" value="${p.telefoneTransporte||''}" placeholder="Vazio = usa o mesmo" inputmode="tel"></div>
+        <div class="campo"><label for="e-cpf">CPF do tutor</label><input id="e-cpf" value="${cpfFmt(p.cpf||'')}" placeholder="000.000.000-00" inputmode="numeric"></div>
       </div>
       <div class="tipos-cad">
         <label class="check"><input type="checkbox" id="e-irmao-chk" ${temIrmao(p)?'checked':''}> 🐶🐕 São irmãos</label>
@@ -6189,7 +6342,10 @@ function abrirEditar(id){
       <div class="row2">
         <div class="campo obrig"><label for="e-pag">Dia do pagamento</label><input id="e-pag" type="number" min="1" max="31" value="${p.pagamentoDia||10}"></div>
       </div>
-      <div class="campo"><label for="e-niver">🎂 Aniversário (dia/mês)</label><input id="e-niver" placeholder="25/08" value="${p.aniversario?p.aniversario.split('-').reverse().join('/'):''}" inputmode="numeric"></div>
+      <div class="row2">
+        <div class="campo"><label for="e-niver">🎂 Aniversário (dia/mês)</label><input id="e-niver" placeholder="25/08" value="${p.aniversario?p.aniversario.split('-').reverse().join('/'):''}" inputmode="numeric"></div>
+        <div class="campo"><label for="e-idade">Idade</label><input id="e-idade" value="${(p.idade||'').replace(/"/g,'&quot;')}" placeholder="Ex.: 3 anos"></div>
+      </div>
       ${camposPlano(p)}
       <div class="campo"><label>Onde esse pet frequenta</label><div class="tipos-sel">${Object.entries(TIPOS_PET).map(([k,v])=>`<label class="${(tiposDe(p)).includes(k)?'on':''}"><input type="checkbox" data-tipo="${k}" ${(tiposDe(p)).includes(k)?'checked':''}> ${v[0]} ${v[1]}</label>`).join('')}</div></div>
       <div class="campo"><label for="e-end">Endereço (pro transporte)</label><input id="e-end" value="${(p.endereco||'').replace(/"/g,'&quot;')}" placeholder="Rua, número · bairro · cidade"></div>
@@ -6197,6 +6353,7 @@ function abrirEditar(id){
         <div class="campo"><label for="e-desc">🏷 Desconto fixo mensal</label><div style="display:flex;gap:6px"><select id="e-desc-tipo" style="flex:none;width:72px"><option value="R$" ${(p.descontoFixo||{}).tipo!=='%'?'selected':''}>R$</option><option value="%" ${(p.descontoFixo||{}).tipo==='%'?'selected':''}>%</option></select><input id="e-desc-valor" type="number" min="0" step="0.5" value="${(p.descontoFixo||{}).valor||''}" placeholder="0"></div></div>
         <div class="campo"><label for="e-desc-motivo">Motivo do desconto</label><input id="e-desc-motivo" list="motivos-desc" value="${((p.descontoFixo||{}).motivo||'').replace(/"/g,'&quot;')}" placeholder="Ex.: 2º pet da casa"><datalist id="motivos-desc">${MOTIVOS.map(m=>`<option value="${m}">`).join('')}</datalist></div>
       </div>
+      ${camposDocs('e',p)}
       <div class="campo"><label for="e-obs">Observações do aumigo</label><textarea id="e-obs" style="min-height:70px" placeholder="Alergias, remédios, temperamento, o que ele adora…">${p.obs||''}</textarea></div>
       <button class="btn primario" id="e-ok" style="margin-top:20px">${st('check')} Salvar perfil</button>
     </div>
@@ -6215,6 +6372,10 @@ function abrirEditar(id){
   const chkD2e=$('#e-dono2-chk');
   if(chkD2e)chkD2e.onchange=()=>{$('#e-dono2-box').classList.toggle('hidden',!chkD2e.checked);if(chkD2e.checked)$('#e-d2-nome').focus()};
   let novaFoto=p.foto||null, removeu=false;
+  const docsPend={};
+  ligarCpf('e-cpf');
+  ligarDoc('e-vac','e-vac-st','vacina',c=>docsPend.vacina=c);
+  ligarDoc('e-cont','e-cont-st','contrato',c=>docsPend.contrato=c);
   $('#ov').addEventListener('change',e=>{const c=e.target.closest('[data-tipo]');if(c)c.closest('label').classList.toggle('on',c.checked)});
   $('#e-file').onchange=e=>{lerFoto(e.target.files[0],320,d=>{
     novaFoto=d;removeu=false;$('#e-prev').innerHTML=`<img src="${d}" alt="">`;
@@ -6243,6 +6404,10 @@ function abrirEditar(id){
     }else delete p.dono2;
     p.estrela=$('#e-selo').value.trim()||undefined;lerPlano(p);
     p.tipos=[...document.querySelectorAll('[data-tipo]:checked')].map(c=>c.dataset.tipo);if(!p.tipos.length)p.tipos=['outro'];p.endereco=$('#e-end').value.trim();p.obs=$('#e-obs').value.trim();p.aniversario=lerNiver($('#e-niver').value);
+    const cpfEd=cpfSo(($('#e-cpf')||{value:''}).value);if(cpfEd)p.cpf=cpfEd;else delete p.cpf;
+    const idEd=($('#e-idade')||{value:''}).value.trim();if(idEd)p.idade=idEd;else delete p.idade;
+    if(docsPend.vacina)p.vacina=docsPend.vacina;
+    if(docsPend.contrato)p.contrato=docsPend.contrato;
     const dv=parseFloat($('#e-desc-valor').value)||0;const dAntes=JSON.stringify(p.descontoFixo||null);
     p.descontoFixo=dv?{tipo:$('#e-desc-tipo').value,valor:dv,motivo:$('#e-desc-motivo').value.trim()}:null;
     if(JSON.stringify(p.descontoFixo||null)!==dAntes){p.log=p.log||[];p.log.push({d:HOJE,h:horaAgora(),ico:'🏷',txt:p.descontoFixo?`Desconto fixo: ${descTxt(p.descontoFixo)}`:'Desconto fixo removido'})}
@@ -6264,7 +6429,7 @@ function reativar(id){const p=pets.find(x=>x.id===id);p.ativo=true;delete p.canc
 function excluir(id){
   const p=pets.find(x=>x.id===id);
   confirmar({titulo:`Excluir ${p.nome} da chamada?`,texto:'Remove o aumigo e a foto de vez. Se ele só parou de vir, prefira "Não vem mais".',
-    pet:p,botao:'Excluir de vez',perigo:true,onOk:()=>{pets=pets.filter(x=>x.id!==id);render();toast(p,`${p.nome} foi removido`,'Não aparece mais na chamada.')}});
+    pet:p,botao:'Excluir de vez',perigo:true,onOk:()=>{try{jogarNaLixeira(id)}catch(e){}pets=pets.filter(x=>x.id!==id);render();toast(p,`${p.nome} foi removido`,'Não aparece mais na chamada.')}});
 }
 function reiniciarChamada(){
   const n=ativos().filter(p=>p.status!=='pendente').length;
@@ -6294,7 +6459,7 @@ function calendarioHtml(p,ym){
   for(let d=1;d<=dias;d++){
     const iso=`${ym}-${pad(d)}`;const dow=new Date(y,m-1,d).getDay();
     const pres=p.presencas.includes(iso),falt=p.faltas.includes(iso),tr=p.transportes.includes(iso),hot=noHotel.has(iso);
-    const niver=p.aniversario&&iso.slice(5)===p.aniversario;
+    const niver=fazAniversario(p,iso.slice(5));
     const cls=['d',pres?'presente':'',falt?'faltou':'',hot?'hotel':'',iso===HOJE?'hoje':'',iso>HOJE?'futuro':'',dow===0?'fds':'',niver?'niver':''].join(' ');
     const tip=(hot?'No hotel'+(pres||falt?' · ':''):'')+(pres?`Presente${p.chegadas[iso]?' · chegou '+p.chegadas[iso]:''}${tr?' · usou transporte':''}`:falt?'Faltou':(hot?'':iso>HOJE?'':'Sem marcação · clique pra marcar'));
     h+=`<div class="${cls}" data-dia="${iso}" title="${tip}">${d}${pres?st('pata'):falt?'<span class="x">✕</span>':''}${hot?'<span class="h">🏡</span>':''}${tr?'<span class="t">🚐</span>':''}${niver?'<span class="bolo" title="Aniversário!">🎂</span>':''}</div>`;
@@ -8055,7 +8220,7 @@ function renderPainel(){
   const prox7=[];const eventos=[];
   for(let i=0;i<7;i++){const d=dAddS(HOJE,i);
     const ci=reservas.filter(r=>r.status==='reservado'&&r.checkin===d),co=reservas.filter(r=>(r.status==='hospedado'||r.status==='reservado')&&r.checkout===d);
-    const nv=pets.filter(p=>p.ativo!==false&&p.aniversario&&d.slice(5)===p.aniversario);
+    const nv=pets.filter(p=>p.ativo!==false&&fazAniversario(p,d.slice(5)));
     const venc=at.filter(p=>!p.pagamentos[MES]&&p.pagamentoDia===+d.slice(8)&&d.slice(0,7)===MES);
     const ren=at.filter(p=>{const rn=renovacao(p);return rn.data===d});
     const rt=rotaDe(d).stops.length;
@@ -8517,7 +8682,7 @@ function abrirAgendaDia(d){
   const at=ativos();
   const ci=reservas.filter(r=>r.status==='reservado'&&r.checkin===d),co=reservas.filter(r=>(r.status==='hospedado'||r.status==='reservado')&&r.checkout===d);
   const hosp=ocupacaoDia(d);
-  const nv=pets.filter(p=>p.ativo!==false&&p.aniversario&&d.slice(5)===p.aniversario);
+  const nv=pets.filter(p=>p.ativo!==false&&fazAniversario(p,d.slice(5)));
   const venc=at.filter(p=>!p.pagamentos[d.slice(0,7)]&&p.pagamentoDia===+d.slice(8));
   const ren=at.filter(p=>renovacao(p).data===d);
   const rt=rotaDe(d);const dow=new Date(d+'T12:00:00').getDay();
@@ -8572,6 +8737,7 @@ function iniciarSessao(u){
   const bu=$('#un-atual');
   if(bu&&UN){bu.textContent=(UNIDADES[UN]||{}).ico+' '+nomeUnidade();bu.classList.remove('hidden');
     bu.onclick=()=>confirmar({titulo:'Trocar de unidade?',texto:'Você volta pra tela de escolha entre Camboriú, Itajaí e Transporte. O que já foi salvo continua salvo.',botao:'Trocar',onOk:trocarUnidade})}
+  document.body.classList.toggle('sem-valor',!podeValor());
   $('#eu').textContent=(u.nome||'?').trim().charAt(0).toUpperCase();
   $('#eu').title=`${u.nome} · ${PERFIS[u.perfil].nome} (toque pra sair)`;
   const inicial=viewsPermitidas()[0];
@@ -9010,6 +9176,46 @@ function nuvemStatus(ok,txt){
   el.title=txt||(ok===false?'Sem conexão — os dados estão guardados no aparelho e sobem quando a internet voltar':pend?pend+' alteração(ões) aguardando envio':'Sincronizado com a nuvem');
   el.textContent=ok===false?'☁️✕':pend?'☁️…':'☁️✓';
 }
+/* ---------- juntar o meu com o que ja esta na nuvem ----------
+   Cada aparelho guarda a LISTA INTEIRA de pets. Se o computador estivesse
+   com a lista velha e salvasse qualquer coisa, ele mandava a lista velha
+   por cima e apagava quem tinha sido cadastrado no celular.
+   Agora, antes de mandar, o app le o que ja esta la e JUNTA as duas.
+   A lixeira serve pra saber a diferenca entre "nao tenho porque acabaram
+   de cadastrar la" e "nao tenho porque eu apaguei de proposito". */
+const LIXEIRA='petfarm.lixeira';
+function lixeira(){try{return JSON.parse(localStorage.getItem(LIXEIRA)||'[]')}catch(e){return []}}
+function jogarNaLixeira(id){
+  try{
+    const l=lixeira().filter(x=>x.id!==id);
+    l.push({id:id,em:Date.now()});
+    const corte=Date.now()-90*24*3600*1000;        // 90 dias e tempo de sobra
+    localStorage.setItem(LIXEIRA,JSON.stringify(l.filter(x=>x.em>corte)));
+  }catch(e){}
+}
+const foiApagado=id=>lixeira().some(x=>x.id===id);
+/* listas com id (pets, reservas): fica com os dois lados; no que e igual, o meu manda */
+function juntarPorId(meu,daNuvem){
+  if(!Array.isArray(meu)||!Array.isArray(daNuvem))return meu;
+  const tenho=new Set(meu.map(x=>x&&x.id));
+  const soLa=daNuvem.filter(x=>x&&x.id!=null&&!tenho.has(x.id)&&!foiApagado(x.id));
+  return soLa.length?meu.concat(soLa):meu;
+}
+/* rotas: um objeto por data. os dias que eu nao mexi continuam como estao */
+function juntarPorData(meu,daNuvem){
+  if(!meu||!daNuvem||typeof meu!=='object'||Array.isArray(meu)||Array.isArray(daNuvem))return meu;
+  const soLa={};let achou=0;
+  Object.keys(daNuvem).forEach(d=>{if(!(d in meu)){soLa[d]=daNuvem[d];achou++}});
+  return achou?Object.assign(soLa,meu):meu;
+}
+function juntarComNuvem(chave,meu,daNuvem){
+  const b=chaveBase(chave);
+  if(b==='petfarm.turma'||b==='petfarm.hotel')return juntarPorId(meu,daNuvem);
+  if(b==='petfarm.rotas')return juntarPorData(meu,daNuvem);
+  return meu;                                      // cfg e ops: quem salva por ultimo manda
+}
+const JUNTA=['petfarm.turma','petfarm.hotel','petfarm.rotas'];
+
 /* ---------- fila local (aguenta ficar sem internet) ---------- */
 function nuvemFilaSalvar(){try{localStorage.setItem('petfarm.fila',JSON.stringify(Object.keys(nuvemPend)))}catch(e){}}
 function nuvemFilaCarregar(){try{(JSON.parse(localStorage.getItem('petfarm.fila')||'[]')).forEach(ch=>{const v=localStorage.getItem(ch);if(v!=null)nuvemPend[ch]=v})}catch(e){}}
@@ -9022,8 +9228,23 @@ async function nuvemFlush(chave){
   const cli=nuvemCliente();if(!cli||!nuvemOk)return;
   const valor=nuvemPend[chave];if(valor==null)return;
   try{
+    let dados=JSON.parse(valor);
+    // le o que ja esta la e junta, pra nao apagar o que outro aparelho cadastrou
+    if(JUNTA.indexOf(chaveBase(chave))>=0){
+      try{
+        const r=await cli.from('estado').select('dados').eq('chave',chave).maybeSingle();
+        if(r&&r.data&&r.data.dados!=null){
+          const juntos=juntarComNuvem(chave,dados,r.data.dados);
+          if(juntos!==dados){                      // veio gente de fora: adota aqui tambem
+            dados=juntos;
+            try{localStorage.setItem(chave,JSON.stringify(dados))}catch(e){}
+            try{if(chaveMinha(chave))nuvemAplicar(chave,dados)}catch(e){}
+          }
+        }
+      }catch(e){}                                  // sem internet pra ler: manda o meu mesmo
+    }
     const {error}=await cli.from('estado').upsert({
-      chave,dados:JSON.parse(valor),
+      chave,dados,
       atualizado_em:new Date().toISOString(),
       atualizado_por:((typeof usuario!=='undefined'&&usuario&&usuario.nome)||'app')+'·'+DEVICE_ID
     });
@@ -9051,6 +9272,32 @@ async function nuvemCarregar(){
     nuvemStatus(true);
   }catch(e){nuvemStatus(false)}
 }
+/* ---------- puxar de novo ----------
+   O "tempo real" do Supabase so avisa quem esta conectado NA HORA e nao
+   guarda nada pra depois. Se o computador passou a tarde em segundo plano
+   ou o celular dormiu, tudo que aconteceu nesse meio tempo nunca mais
+   chegava naquele aparelho. Por isso agora ele puxa de novo ao acordar. */
+let _puxando=false;
+async function nuvemPuxar(motivo){
+  const cli=nuvemCliente();if(!cli||!nuvemOk||_puxando)return;
+  _puxando=true;
+  try{
+    const {data,error}=await cli.from('estado').select('chave,dados');
+    if(error)throw error;
+    let mudou=0;
+    (data||[]).forEach(x=>{
+      if(nuvemPend[x.chave]!=null)return;           // tenho alteracao minha na fila: ela vence
+      const novo=JSON.stringify(x.dados);
+      let atual=null;try{atual=localStorage.getItem(x.chave)}catch(e){}
+      if(atual===novo)return;                       // essa chave nao mudou
+      try{localStorage.setItem(x.chave,novo)}catch(e){}
+      if(chaveMinha(x.chave)){nuvemAplicar(x.chave,x.dados);mudou++}
+    });
+    nuvemStatus(true);
+    if(mudou)console.log('[nuvem] '+mudou+' coisa(s) chegaram de outro aparelho ('+motivo+')');
+  }catch(e){nuvemStatus(false)}
+  finally{_puxando=false}
+}
 /* ---------- tempo real: outro aparelho mudou algo ---------- */
 function nuvemAplicar(chaveCompleta,dados){
   try{
@@ -9072,15 +9319,28 @@ function nuvemRender(){
     if(v)trocarAba(v,true);   // repinta no lugar: quem estava lendo nao volta pro topo
   }catch(e){}
 }
+let _canal=null,_tentativas=0,_religar=null,_desligando=false;
 function nuvemAoVivo(){
   const cli=nuvemCliente();if(!cli)return;
+  if(_canal){_desligando=true;try{cli.removeChannel(_canal)}catch(e){}_canal=null;_desligando=false}
   try{
-    cli.channel('estado-ao-vivo').on('postgres_changes',{event:'*',schema:'public',table:'estado'},payload=>{
-      const r=payload.new;if(!r||!chaveMinha(r.chave))return;
-      if((r.atualizado_por||'').endsWith('·'+DEVICE_ID))return;               // fui eu mesmo
-      try{localStorage.setItem(r.chave,JSON.stringify(r.dados))}catch(e){}
-      nuvemAplicar(r.chave,r.dados);
-    }).subscribe();
+    _canal=cli.channel('estado-ao-vivo-'+DEVICE_ID)
+      .on('postgres_changes',{event:'*',schema:'public',table:'estado'},payload=>{
+        const r=payload.new;if(!r||!chaveMinha(r.chave))return;
+        if((r.atualizado_por||'').endsWith('·'+DEVICE_ID))return;             // fui eu mesmo
+        try{localStorage.setItem(r.chave,JSON.stringify(r.dados))}catch(e){}
+        nuvemAplicar(r.chave,r.dados);
+      })
+      .subscribe(estado=>{
+        // antes isso era mudo: se a conexao caisse, o aparelho ficava parado
+        // no tempo e ninguem percebia
+        if(estado==='SUBSCRIBED'){_tentativas=0;nuvemPuxar('reconectou');return}
+        if(_desligando)return;
+        if(estado==='CHANNEL_ERROR'||estado==='TIMED_OUT'||estado==='CLOSED'){
+          const espera=Math.min(30000,2000*Math.pow(2,_tentativas++));
+          clearTimeout(_religar);_religar=setTimeout(nuvemAoVivo,espera);
+        }
+      });
   }catch(e){}
 }
 /* ---------- login da nuvem (uma vez por aparelho) ---------- */
@@ -9129,7 +9389,14 @@ async function bootNuvemOk(){
   bootLocal();
   nuvemAoVivo();nuvemFlushTudo();
   setInterval(nuvemFlushTudo,15000);
-  window.addEventListener('online',nuvemFlushTudo);
+  // puxa de novo toda vez que o app volta pra frente: era aqui o buraco.
+  // o computador ficava aberto o dia inteiro mostrando o de horas atras.
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden){nuvemPuxar('voltou pro app');nuvemFlushTudo()}
+  });
+  window.addEventListener('focus',()=>nuvemPuxar('voltou pra janela'));
+  window.addEventListener('online',()=>{nuvemPuxar('a internet voltou');nuvemFlushTudo()});
+  setInterval(()=>{if(!document.hidden)nuvemPuxar('de minuto em minuto')},60000);
   nuvemStatus(true);
 }
 async function bootPetFarm(){
