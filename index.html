@@ -952,6 +952,20 @@ table.fat tr.hotel td{background:#FFFCF3}
    parecia desalinhada. margin-top:auto empurra o rodape do card pro pe. */
 .h-acoes{display:flex;gap:8px;margin-top:auto;padding-top:10px}
 .hsec .grid>.card{display:flex;flex-direction:column}
+/* A fileira de iconinhos do diario nasceu com margin-top:-4px pra colar no
+   bloco de cima no card da creche. No card do hotel ela vem depois das
+   datas e esse -4px fazia os circulos SUBIREM por cima da caixa de entrada
+   e saida. Aqui ela ganha respiro proprio. */
+.hsec .grid>.card .diario-chips{margin-top:10px}
+/* nome e etiqueta (VISITANTE/ALUNO) centrados um com o outro: a etiqueta
+   ficava 18px abaixo do topo do nome, parecendo solta */
+.hsec .grid>.card h3{display:flex;align-items:center;gap:8px;flex-wrap:wrap;line-height:1.15}
+.hsec .grid>.card h3>span{flex:none}
+@media (min-width:761px){
+  /* card um pouco mais largo: com 283px o resumo da diaria e o valor
+     ficavam espremidos um contra o outro */
+  .hsec .grid{grid-template-columns:repeat(auto-fill,minmax(292px,1fr))}
+}
 .hsec .grid>.card .h-total{margin-top:auto}
 .hsec .grid>.card .h-total+.h-acoes{margin-top:10px;padding-top:0}
 @media (min-width:761px){
@@ -2165,7 +2179,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.5.1</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.5.2</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
