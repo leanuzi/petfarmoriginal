@@ -2125,7 +2125,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.4.3</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.4.4</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -5421,10 +5421,14 @@ function pendencias(){
   return out.sort((a,b)=>a.n-b.n);
 }
 function renderInicio(){
-  const pe=ativos().filter(p=>p.status==='pendente').length,pr=ativos().filter(p=>p.status==='presente').length,fa=ativos().filter(p=>p.status==='faltou').length;
+  // contaCaes e nao .length: um cadastro de irmaos e uma linha na lista,
+  // mas sao 2 ou 3 cachorros dentro da creche
+  const pe=contaCaes(ativos().filter(p=>p.status==='pendente')),
+        pr=contaCaes(ativos().filter(p=>p.status==='presente')),
+        fa=contaCaes(ativos().filter(p=>p.status==='faltou'));
   $('#in-saud').textContent=`${saudacao()}, ${cfg.usuario||'equipe'}! 🐾`;
   $('#in-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
-  $('#in-k1').textContent=ativos().length;$('#in-k2').textContent=pr;$('#in-k3').textContent=fa;$('#in-k4').textContent=pe;
+  $('#in-k1').textContent=contaCaes(ativos());$('#in-k2').textContent=pr;$('#in-k3').textContent=fa;$('#in-k4').textContent=pe;
   pendLista=pendencias();
   const cont=(f)=>pendLista.filter(f).length;
   const resumo=[
@@ -6756,12 +6760,16 @@ function renderHotel(){
   const hosp=reservas.filter(r=>r.status==='hospedado');
   const res=reservas.filter(r=>r.status==='reservado').sort((a,b)=>a.checkin.localeCompare(b.checkin));
   const fin=reservas.filter(r=>r.status==='finalizado').sort((a,b)=>b.checkout.localeCompare(a.checkout));
-  $('#h-hosp').textContent=hosp.length;
-  $('#h-chega').textContent=res.filter(r=>r.checkin===HOJE).length;
-  $('#h-sai').textContent=hosp.filter(r=>r.checkout<=HOJE).length;
+  // esses tres contam CACHORRO: uma reserva de 3 irmaos sao 3 aumigos
+  // hospedados. Ja os numerinhos ao lado dos titulos (h-n1/n2/n3) contam
+  // RESERVA, porque e isso que a lista embaixo deles mostra: um card por reserva.
+  const caes=l=>l.reduce((n,r)=>n+petsDaReserva(r),0);
+  $('#h-hosp').textContent=caes(hosp);
+  $('#h-chega').textContent=caes(res.filter(r=>r.checkin===HOJE));
+  $('#h-sai').textContent=caes(hosp.filter(r=>r.checkout<=HOJE));
   $('#h-n1').textContent=hosp.length;$('#h-n2').textContent=res.length;$('#h-n3').textContent=fin.length;
   const aberto=fin.filter(r=>!r.pago).length;
-  $('#hotel-resumo').textContent=`${hosp.length} ${hosp.length===1?'aumigo hospedado':'aumigos hospedados'} · ${res.length} ${res.length===1?'reserva':'reservas'}`+(aberto?` · ${aberto} ${aberto===1?'check-out aguardando pagamento':'check-outs aguardando pagamento'}`:'')+'.';
+  $('#hotel-resumo').textContent=`${caes(hosp)} ${caes(hosp)===1?'aumigo hospedado':'aumigos hospedados'} · ${res.length} ${res.length===1?'reserva':'reservas'}`+(aberto?` · ${aberto} ${aberto===1?'check-out aguardando pagamento':'check-outs aguardando pagamento'}`:'')+'.';
 
   const card=r=>{
     const c=contaHotel(r);const h=c.h;
@@ -8546,9 +8554,9 @@ function abrirPrecos(){
     <div class="cfg-h">🎟 Avulso (por dia)</div>
     <div class="precos-grid"><label><span>Até 10 kg</span><input type="number" min="0" id="pr-a1" value="${AVULSO.ate10}"></label><label><span>Acima de 10 kg</span><input type="number" min="0" id="pr-a2" value="${AVULSO.acima10}"></label></div>
     <div class="cfg-h">🏡 Hotel (diária)</div>
-    <div class="precos-grid"><label><span>Porte pequeno (até 10 kg)</span><input type="number" min="0" id="pr-h1" value="${HOTEL.pequeno}"></label><label><span>Porte grande (acima de 10 kg)</span><input type="number" min="0" id="pr-h2" value="${HOTEL.grande}"></label><label><span>Aluno da creche</span><input type="number" min="0" id="pr-h3" value="${HOTEL.aluno}"></label><label><span>Sinal na reserva (%)</span><input type="number" min="0" max="100" id="pr-h4" value="${Math.round(HOTEL.sinal*100)}"></label></div>
+    <div class="precos-grid"><label><span>Visitante · até 10 kg</span><input type="number" min="0" id="pr-h1" value="${HOTEL.pequeno}"></label><label><span>Visitante · acima de 10 kg</span><input type="number" min="0" id="pr-h2" value="${HOTEL.grande}"></label><label><span>Aluno da creche</span><input type="number" min="0" id="pr-h3" value="${HOTEL.aluno}"></label><label><span>Sinal na reserva (%)</span><input type="number" min="0" max="100" id="pr-h4" value="${Math.round(HOTEL.sinal*100)}"></label></div>
     <div class="cfg-h">🎄 Hotel · véspera e feriado <span style="font-size:11px;font-weight:700;color:#A38560">vale em 24/12, 25/12, 31/12 e 01/01</span></div>
-    <div class="precos-grid"><label><span>Porte pequeno (feriado)</span><input type="number" min="0" id="pr-f1" value="${HOTEL.ferPequeno}"></label><label><span>Porte grande (feriado)</span><input type="number" min="0" id="pr-f2" value="${HOTEL.ferGrande}"></label><label><span>Aluno da creche (feriado)</span><input type="number" min="0" id="pr-f3" value="${HOTEL.ferAluno}"></label></div>
+    <div class="precos-grid"><label><span>Visitante · até 10 kg (feriado)</span><input type="number" min="0" id="pr-f1" value="${HOTEL.ferPequeno}"></label><label><span>Visitante · acima de 10 kg (feriado)</span><input type="number" min="0" id="pr-f2" value="${HOTEL.ferGrande}"></label><label><span>Aluno da creche (feriado)</span><input type="number" min="0" id="pr-f3" value="${HOTEL.ferAluno}"></label></div>
     <div class="cfg-h">🚐 Transporte · cidades (por dia) <button class="btn-mini" id="pr-addcidade" type="button">＋ Nova cidade</button></div>
     <div class="cfg-lista" id="pr-cidades">${Object.entries(TRANSPORTE).filter(([k])=>k!=='').map(([k,v])=>{
       const uso=usoDaCidade(k);
