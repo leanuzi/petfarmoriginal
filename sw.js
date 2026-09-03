@@ -2,8 +2,9 @@
    - deixa o app instalável no celular (ícone na tela inicial)
    - guarda a tela pra abrir mesmo sem internet
    - NUNCA guarda chamadas do Supabase: dados sempre frescos */
-const VERSAO = 'petfarm-v2';
-const ESSENCIAL = ['./', './index.html'];
+const VERSAO = 'petfarm-v3';
+const ESSENCIAL = ['./', './index.html', './manifest.webmanifest',
+                  './icon-192x192.png', './icon-512x512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSAO).then(c => c.addAll(ESSENCIAL)).catch(() => {}));
