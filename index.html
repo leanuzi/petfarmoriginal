@@ -849,6 +849,7 @@ body.travado{overflow:hidden}
 .versiculo{margin-top:18px;padding:14px 16px;background:var(--bege-claro);border:1px solid var(--bege);border-radius:16px}
 .versiculo p{font-family:var(--display);font-weight:600;font-size:15px;line-height:1.35;color:var(--marrom-escuro);margin:0}
 .versiculo small{display:block;margin-top:6px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#A38560}
+.versiculo .tema{display:inline-block;margin-bottom:8px;padding:3px 10px;border-radius:999px;background:var(--amarelo-suave);border:1px solid var(--amarelo);font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--marrom-escuro)}
 /* quem escolhe o usuario: cartoes mais leves e do mesmo tamanho */
 .login-users{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px}
 .login-users button{display:flex;flex-direction:column;align-items:center;gap:5px;padding:16px 10px;background:#fff;border:1px solid var(--bege);border-radius:18px;transition:transform .15s,border-color .15s,box-shadow .15s}
@@ -886,18 +887,32 @@ body.travado{overflow:hidden}
 .tabbar{display:none}
 @media (max-width:760px){
   .nav{display:none!important}
-  .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:64;background:rgba(255,249,239,.94);backdrop-filter:blur(14px) saturate(1.2);border-top:1px solid rgba(226,206,178,.7);padding:4px 6px calc(4px + env(safe-area-inset-bottom));justify-content:space-around;transition:transform .18s ease}
+  .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:64;background:rgba(255,249,239,.92);-webkit-backdrop-filter:blur(10px) saturate(1.2);backdrop-filter:blur(10px) saturate(1.2);border-top:1px solid rgba(226,206,178,.55);padding:5px 8px env(safe-area-inset-bottom);justify-content:space-between;gap:2px;transition:transform .2s cubic-bezier(.2,.8,.2,1)}
 /* teclado aberto: a barra descia pra cima do campo e atrapalhava tudo.
    O app poe .teclado no body quando a area visivel encolhe. */
 body.tecl-aberto .tabbar{transform:translateY(120%)}
-  .tabbar button{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 6px;border-radius:16px;font-size:10px;font-weight:800;color:#A89078;line-height:1;transition:color .15s}
-.tabbar button span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .tabbar button .ic{font-size:19px;line-height:1}
-  .tabbar button.on{color:var(--marrom-escuro);background:transparent}
-.tabbar button.on .ic{transform:translateY(-1px)}
-/* bolinha em vez de fundo colorido: mais discreto */
-.tabbar button.on::after{content:"";position:absolute;bottom:2px;width:16px;height:3px;border-radius:99px;background:var(--amarelo)}
-.tabbar button{position:relative}
+  .tabbar button{
+    flex:1 1 0;min-width:0;position:relative;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    padding:6px 2px 5px;border-radius:14px;
+    font-size:10.5px;font-weight:800;color:#A89078;letter-spacing:-.01em;
+    transition:color .16s ease;
+  }
+  /* Cada emoji tem uma altura propria: 🏠 e 🐾 nao ocupam o mesmo espaco.
+     Sem uma caixa de tamanho fixo os icones ficavam 1px fora de linha. */
+  .tabbar button .ic{
+    display:flex;align-items:center;justify-content:center;
+    width:44px;height:24px;font-size:20px;line-height:1;
+    border-radius:999px;transition:background .16s ease,transform .12s ease;
+  }
+  .tabbar button span:last-child{
+    display:block;max-width:100%;line-height:1.1;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .tabbar button.on{color:var(--marrom-escuro)}
+  /* pastilha atras do icone: marca onde voce esta sem pesar na tela */
+  .tabbar button.on .ic{background:var(--amarelo-suave)}
+  .tabbar button:active .ic{transform:scale(.92)}
   .tabbar.hidden{display:none}
   .wrap{padding-bottom:calc(96px + env(safe-area-inset-bottom))!important}
   .fab-menu{top:calc(68px + env(safe-area-inset-top))}
@@ -907,17 +922,25 @@ body.tecl-aberto .tabbar{transform:translateY(120%)}
 .fab-menu.baixo{
   top:auto;bottom:0;right:0;left:0;min-width:0;max-width:none;
   border-radius:24px 24px 0 0;border-left:0;border-right:0;border-bottom:0;
-  padding:6px 10px calc(10px + env(safe-area-inset-bottom));
-  max-height:min(72vh,560px);overflow:auto;
-  box-shadow:0 -18px 50px rgba(62,48,39,.28);
-  animation:sobe .22s cubic-bezier(.2,.8,.2,1);
+  padding:6px 12px calc(12px + env(safe-area-inset-bottom));
+  /* dvh e nao vh: no iPhone o vh conta a barra do Safari que some ao rolar,
+     e a folha ficava mais alta do que a tela tem de verdade */
+  max-height:72dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  box-shadow:0 -20px 60px rgba(62,48,39,.3);
+  animation:sobe .26s cubic-bezier(.16,1,.3,1);
 }
+@supports not (max-height:1dvh){.fab-menu.baixo{max-height:72vh}}
 @keyframes sobe{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
 /* pegador, so pra dizer que a folha e de baixo */
 .fab-menu.baixo::before{content:"";display:block;width:38px;height:4px;border-radius:99px;background:var(--bege);margin:4px auto 8px}
-.fab-menu.baixo button{padding:13px 12px;font-size:15px;border-radius:14px}
-.fab-menu.baixo button:active{background:var(--amarelo-suave)}
-.fab-menu.baixo .ic{width:30px;font-size:19px}
+/* min-height fixo: os itens vinham com 54 e 55px porque cada emoji tem uma
+   altura diferente, e a lista ficava com degrauzinho */
+.fab-menu.baixo button{min-height:56px;padding:0 14px;font-size:15.5px;border-radius:16px;gap:14px;transition:background .14s ease,transform .1s ease}
+.fab-menu.baixo button:active{background:var(--amarelo-suave);transform:scale(.99)}
+.fab-menu.baixo .ic{display:flex;align-items:center;justify-content:center;width:38px;height:38px;flex:none;font-size:19px;line-height:1;background:var(--bege-claro);border-radius:12px}
+.fab-menu.baixo .fechar-menu{min-height:50px;margin-top:6px;font-size:14px}
+.fab-menu.baixo .fechar-menu .ic{background:none;width:auto;height:auto}
 /* escurece o fundo pra folha ficar em primeiro plano */
 .folha-fundo{position:fixed;inset:0;z-index:63;background:rgba(62,48,39,.38);backdrop-filter:blur(2px);animation:fade .2s}
   #offline{bottom:calc(78px + env(safe-area-inset-bottom))}
@@ -2264,7 +2287,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.7.0</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.7.1</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -5791,22 +5814,38 @@ function renderAgenda(){
 }
 /* ====== versículo da tela de entrada ======
    Um por dia, igual pra equipe toda: o indice sai da data, nao de sorteio. */
+/* Só os seis temas pedidos: fé, gratidão, coragem, amor, paz e esperança.
+   Quatro de cada, na ordem [tema, texto, referência]. */
 const VERSICULOS=[
-  ['Tudo posso naquele que me fortalece.','Filipenses 4:13'],
-  ['O Senhor é o meu pastor, nada me faltará.','Salmos 23:1'],
-  ['Entrega o teu caminho ao Senhor, confia nele, e ele tudo fará.','Salmos 37:5'],
-  ['Sede fortes e corajosos. Não temais.','Deuteronômio 31:6'],
-  ['Tudo o que fizerem, façam de todo o coração, como para o Senhor.','Colossenses 3:23'],
-  ['O amor é paciente, o amor é bondoso.','1 Coríntios 13:4'],
-  ['Alegrem-se na esperança, sejam pacientes na tribulação.','Romanos 12:12'],
-  ['Lâmpada para os meus pés é a tua palavra.','Salmos 119:105'],
-  ['Não andeis ansiosos por coisa alguma.','Filipenses 4:6'],
-  ['O justo cuida bem dos seus animais.','Provérbios 12:10'],
-  ['Cada um exerça o dom que recebeu para servir aos outros.','1 Pedro 4:10'],
-  ['Melhor é serem dois do que um, porque têm melhor paga do seu trabalho.','Eclesiastes 4:9'],
-  ['Confia no Senhor de todo o teu coração.','Provérbios 3:5'],
-  ['A alegria do Senhor é a vossa força.','Neemias 8:10'],
-  ['Fazei tudo com amor.','1 Coríntios 16:14']
+  ['Fé','A fé é a certeza daquilo que esperamos e a prova das coisas que não vemos.','Hebreus 11:1'],
+  ['Fé','Confia no Senhor de todo o teu coração e não te apoies no teu próprio entendimento.','Provérbios 3:5'],
+  ['Fé','Tudo posso naquele que me fortalece.','Filipenses 4:13'],
+  ['Fé','Entrega o teu caminho ao Senhor, confia nele, e ele tudo fará.','Salmos 37:5'],
+
+  ['Gratidão','Deem graças em todas as circunstâncias.','1 Tessalonicenses 5:18'],
+  ['Gratidão','Rendam graças ao Senhor, porque ele é bom; o seu amor dura para sempre.','Salmos 107:1'],
+  ['Gratidão','Bendize, ó minha alma, ao Senhor, e não te esqueças de nenhum dos seus benefícios.','Salmos 103:2'],
+  ['Gratidão','Que a paz de Cristo seja o juiz em seus corações. E sejam agradecidos.','Colossenses 3:15'],
+
+  ['Coragem','Sejam fortes e corajosos. Não tenham medo, porque o Senhor vai com vocês.','Deuteronômio 31:6'],
+  ['Coragem','Não fui eu que lhe ordenei? Seja forte e corajoso!','Josué 1:9'],
+  ['Coragem','Deus não nos deu espírito de medo, mas de poder, amor e equilíbrio.','2 Timóteo 1:7'],
+  ['Coragem','Fiquem atentos, permaneçam firmes na fé, sejam corajosos, sejam fortes.','1 Coríntios 16:13'],
+
+  ['Amor','O amor é paciente, o amor é bondoso.','1 Coríntios 13:4'],
+  ['Amor','Façam tudo com amor.','1 Coríntios 16:14'],
+  ['Amor','Amem-se uns aos outros como eu os amei.','João 15:12'],
+  ['Amor','Acima de tudo, amem-se sinceramente uns aos outros.','1 Pedro 4:8'],
+
+  ['Paz','Deixo-lhes a paz; a minha paz lhes dou.','João 14:27'],
+  ['Paz','Não andem ansiosos por coisa alguma.','Filipenses 4:6'],
+  ['Paz','A paz de Deus, que excede todo o entendimento, guardará o coração de vocês.','Filipenses 4:7'],
+  ['Paz','O Senhor é o meu pastor, nada me faltará.','Salmos 23:1'],
+
+  ['Esperança','Alegrem-se na esperança, sejam pacientes na tribulação.','Romanos 12:12'],
+  ['Esperança','Os que esperam no Senhor renovam as suas forças.','Isaías 40:31'],
+  ['Esperança','Eu sei os planos que tenho para vocês: planos de paz, para lhes dar esperança e um futuro.','Jeremias 29:11'],
+  ['Esperança','Que o Deus da esperança os encha de toda alegria e paz.','Romanos 15:13']
 ];
 function versiculoDoDia(iso){
   const d=String(iso||HOJE);
@@ -9662,7 +9701,8 @@ function telaLogin(erro){
         <div class="pin-erro ${erro?'':'hidden'}" id="pin-erro">Senha incorreta, tente de novo.</div>
         <div class="teclado">${[1,2,3,4,5,6,7,8,9,'',0,'←'].map(k=>k===''?'<span></span>':`<button data-k="${k}">${k}</button>`).join('')}</div>
       </div>
-      <div class="versiculo">${(()=>{const v=versiculoDoDia();return '<p>“'+v[0]+'”</p><small>'+v[1]+'</small>'})()}</div>
+      <div class="versiculo">${(()=>{const v=versiculoDoDia();
+        return '<span class="tema">'+v[0]+'</span><p>“'+v[1]+'”</p><small>'+v[2]+'</small>'})()}</div>
       <div class="login-rod">Cada pessoa tem o seu acesso. Peça o PIN a quem cuida desta unidade.</div>
     </div>`;
   document.body.appendChild(el);
