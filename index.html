@@ -1036,7 +1036,6 @@ table.fat tr.hotel td{background:#FFFCF3}
 .hsec .grid>.card .pert-card{margin-top:10px;margin-bottom:0}
 /* respiro igual entre TODOS os blocos do card: era 10, 10, 22 e 0 */
 .hsec .grid>.card .diario-chips{margin-bottom:0}
-.hsec .grid>.card .foto-dia{margin-bottom:10px}
 /* nome e etiqueta (VISITANTE/ALUNO) centrados um com o outro: a etiqueta
    ficava 18px abaixo do topo do nome, parecendo solta */
 .hsec .grid>.card h3{display:flex;align-items:center;gap:8px;flex-wrap:wrap;line-height:1.15}
@@ -1136,18 +1135,25 @@ table.fat tr.hotel td{background:#FFFCF3}
    uma parede de caixinhas e ninguem sabia qual era de quem */
 .irm-cx{background:var(--bege-claro);border:1px solid var(--bege);border-radius:16px;padding:2px 12px 12px;margin-top:12px}
 .irm-cx .cfg-h{font-size:12px}
-/* cobranca diaria da foto no card do hotel */
-.foto-dia{display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 10px;border-radius:14px;border:1px solid var(--bege)}
-.foto-dia.falta{background:var(--vermelho-bg);border-color:#F1C9C9}
-.foto-dia.feita{background:var(--verde-bg);border-color:#CFE3CB}
-.foto-dia .ico{font-size:20px;width:38px;height:38px;flex:none;display:grid;place-items:center;background:#fff;border-radius:10px}
-.foto-dia img{width:38px;height:38px;flex:none;object-fit:cover;border-radius:10px;border:2px solid #fff}
-.foto-dia .txt{flex:1;min-width:0}
-.foto-dia .txt b{display:block;font-size:12.5px;font-weight:800;color:var(--marrom-escuro);line-height:1.2}
-.foto-dia .txt small{display:block;font-size:11px;font-weight:700;color:#8C7355}
-.foto-dia .txt small.atraso{color:var(--vermelho-txt);font-weight:800;margin-top:2px}
-.foto-dia .btn-mini{flex:none;font-size:12px;padding:7px 12px}
-.foto-dia input[type=file]{display:none}
+/* na chamada, um por um quando a casa tem irmaos */
+.irm-cham{display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 8px 52px}
+.irm-cham label{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--bege);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:800;color:var(--marrom);cursor:pointer}
+.irm-cham label.on{background:var(--verde-bg);border-color:#CFE3CB;color:var(--verde-txt)}
+.irm-cham input{width:15px;height:15px;accent-color:#4E8C43}
+@media (max-width:760px){.irm-cham{margin-left:0}}
+/* lista de cobrancas vencidas na tela inicial */
+.pend li.at{display:flex;align-items:flex-start;gap:10px;background:#fff;border:1px solid var(--bege);border-left:4px solid var(--vermelho);border-radius:14px;padding:10px 12px}
+.pend li.at.aguardando{border-left-color:var(--amarelo);background:var(--amarelo-suave);opacity:.9}
+.pend li.at .ico{font-size:17px;flex:none;line-height:1.2}
+.pend li.at .txt{flex:1;min-width:0}
+.pend li.at .txt b{display:block;font-size:14px;font-weight:800;color:var(--marrom-escuro);line-height:1.2}
+.pend li.at .txt small{display:block;font-size:11.5px;font-weight:700;color:#8C7355;margin-top:2px}
+.pend li.at .bts{display:flex;gap:6px;flex-wrap:wrap;flex:none}
+.pend li.at .btn-mini{font-size:11.5px;padding:6px 10px}
+@media (max-width:760px){
+  .pend li.at{flex-wrap:wrap}
+  .pend li.at .bts{width:100%;margin-top:8px}
+}
 /* agenda de tarefas do dia */
 .agenda-box{background:linear-gradient(135deg,#EFF6EC,var(--creme));border-color:#CFE3CB}
 .agenda li.tf{display:flex;align-items:flex-start;gap:10px;background:#fff;border:1px solid var(--bege);border-radius:14px;padding:9px 12px}
@@ -2134,7 +2140,7 @@ img,svg,video,canvas{max-width:100%}
         </div>
       </section>
       <section class="in-box" id="in-box-pend">
-        <h3>⚡ Precisa de atenção</h3>
+        <h3>💳 Cobranças vencidas <small id="in-pend-n" style="font-size:12px;font-weight:800;color:#A38560"></small></h3>
         <ul class="pend" id="in-pend"></ul>
       </section>
       <div>
@@ -2314,7 +2320,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.8.1</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.9.0</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -5933,6 +5939,47 @@ function ideiaDoDia(iso,pulo){
 }
 /* ====== INÍCIO: o que precisa ser feito agora ====== */
 let pendLista=[];
+/* ====== "Precisa de atenção" ======
+   So mostra quem venceu o plano hoje ou antes. Cada linha tem estado:
+   nada marcado, "aguardando retorno" (o tutor foi avisado e ainda nao
+   respondeu) ou "ja resolvi" (sai da lista). Guardado em ops, entao
+   sincroniza entre os aparelhos como o resto. */
+function atencaoMapa(){
+  if(!ops.atencao||typeof ops.atencao!=='object')ops.atencao={};
+  return ops.atencao;
+}
+const chaveAtencao=(petId,ym)=>petId+':'+ym;
+function estadoAtencao(petId,ym){
+  const a=atencaoMapa()[chaveAtencao(petId,ym)];
+  return a&&a.estado||'';
+}
+function marcarAtencao(petId,ym,estado){
+  const m=atencaoMapa(), k=chaveAtencao(petId,ym);
+  if(!estado)delete m[k];
+  else m[k]={estado:estado,quem:(usuario&&usuario.nome)||'',quando:HOJE,hora:horaAgora()};
+  salvarSeguro('petfarm.ops',JSON.stringify(ops));
+}
+/* quem venceu hoje ou antes e ainda nao pagou */
+function cobrancasVencidas(){
+  const ym=mesACobrar();
+  if(!mesCobravel(ym))return [];
+  return ativos()
+    .filter(p=>!p.pagamentos[ym]&&jaVenceuOuHoje(p,ym)&&resumoMes(p,ym).total>0)
+    .map(p=>({p,ym,estado:estadoAtencao(p.id,ym),
+              venc:diaVencimento(p,ym),
+              valor:resumoMes(p,ym).total,
+              dias:diasDesde(diaVencimento(p,ym))}))
+    .filter(x=>x.estado!=='resolvido')
+    .sort((a,b)=>{
+      if((a.estado==='aguardando')!==(b.estado==='aguardando'))return a.estado==='aguardando'?1:-1;
+      return b.dias-a.dias;   // o mais antigo primeiro
+    });
+}
+const jaVenceuOuHoje=(p,ym)=>HOJE>=diaVencimento(p,ym);
+function diasDesde(iso){
+  const a=new Date(iso+'T12:00:00'), b=new Date(HOJE+'T12:00:00');
+  return Math.round((b-a)/86400000);
+}
 function pendencias(){
   const out=[];const hojeDia=new Date().getDate();const $fin=pode('financeiro');
   ativos().forEach(p=>{
@@ -5959,7 +6006,7 @@ function renderInicio(){
   // contaCaes e nao .length: um cadastro de irmaos e uma linha na lista,
   // mas sao 2 ou 3 cachorros dentro da creche
   const pe=contaCaes(ativos().filter(p=>p.status==='pendente')),
-        pr=contaCaes(ativos().filter(p=>p.status==='presente')),
+        pr=contaCaesVieram(ativos().filter(p=>p.status==='presente')),
         fa=contaCaes(ativos().filter(p=>p.status==='faltou'));
   $('#in-saud').textContent=`${saudacao()}, ${cfg.usuario||'equipe'}! 🐾`;
   $('#in-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
@@ -6003,7 +6050,26 @@ function renderInicio(){
   ];
   $('#in-resumo').innerHTML=resumo.filter(x=>x[0]>0).map(x=>`<span>${x[1]} <b>${x[0]}</b> ${x[2]}</span>`).join('')||'<span>✅ Nada pendente por agora</span>';
   const cores={1:'r',2:'l',3:'a',4:'z'};
-  $('#in-pend').innerHTML=pendLista.length?pendLista.slice(0,14).map((x,i)=>`<li class="p${cores[x.n]}"><span class="ico">${x.ico}</span><span class="txt">${x.txt}</span><button class="btn-mini" data-pend="${i}">Resolver →</button></li>`).join('')+(pendLista.length>14?`<li class="mais">+ ${pendLista.length-14} outras pendências</li>`:''):'<li class="mais">Tudo em dia! Nenhuma pendência. 💛</li>';
+  const venc=cobrancasVencidas();
+  const cxN=document.getElementById('in-pend-n');
+  if(cxN)cxN.textContent=venc.length?venc.length+(venc.length===1?' cobrança':' cobranças'):'';
+  $('#in-pend').innerHTML = venc.length
+    ? venc.map(x=>{
+        const aguard=x.estado==='aguardando';
+        const quando=x.dias===0?'vence hoje':(x.dias===1?'venceu ontem':'venceu há '+x.dias+' dias');
+        return '<li class="at'+(aguard?' aguardando':'')+'">'+
+          '<span class="ico">'+(aguard?'⏳':'💳')+'</span>'+
+          '<span class="txt"><b>'+nomeCompleto(x.p)+'</b>'+
+            '<small>'+quando+' · '+brl(x.valor)+(aguard?' · aguardando retorno':'')+'</small></span>'+
+          '<span class="bts">'+
+            '<button class="btn-mini" data-cobrar="'+x.p.id+'" data-ym="'+x.ym+'">💬 Cobrar</button>'+
+            (aguard
+              ? '<button class="btn-mini cinza" data-aten="'+x.p.id+'" data-atenym="'+x.ym+'" data-atene="">voltar</button>'
+              : '<button class="btn-mini cinza" data-aten="'+x.p.id+'" data-atenym="'+x.ym+'" data-atene="aguardando">⏳ Aguardando</button>')+
+            '<button class="btn-mini cinza" data-aten="'+x.p.id+'" data-atenym="'+x.ym+'" data-atene="resolvido">✓ Já resolvi</button>'+
+          '</span></li>';
+      }).join('')
+    : '<li class="mais">Nenhuma cobrança vencida. Tudo em dia! 💛';
   // aniversários próximos (30 dias)
   // uma linha por CACHORRO, nao por cadastro: numa casa com 3 irmaos
   // cada um aparece no dia dele, com o nome dele
@@ -6093,6 +6159,7 @@ document.addEventListener('click',e=>{
   if(b=g('renov')){avisarRenovacao(+b.dataset.renov);return}
   if(b=g('pend')){const x=pendLista[+b.dataset.pend];if(x)x.acao();return}
   if(b=g('crm')){acaoCrm(+b.dataset.crm,b.dataset.etapa);return}
+  if(b=g('aten')){marcarAtencao(+b.dataset.aten,b.dataset.atenym,b.dataset.atene);renderInicio();return}
   if(b=g('recado')){abrirRecado(+b.dataset.recado);return}
   if(b=g('parabens')){enviarParabens(+b.dataset.parabens);return}
   if(b=g('recuperar')){const p=pets.find(x=>x.id===+b.dataset.recuperar);p.crm=p.crm||{contatos:[]};p.crm.ultimo=HOJE;p.crm.contatos.push({d:HOJE,tipo:'recuperacao'});abrirZap(p.telefone,msgRecuperar(p),{tipo:'recuperacao',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});salvar();return}
@@ -6422,6 +6489,25 @@ function pintarDiaChamada(){
 /* Um cadastro de irmaos e UMA linha na tela, mas SAO 2 ou 3 cachorros
    dentro da creche. Vaga, presenca e falta contam cachorro. */
 const contaCaes=lista=>(lista||[]).reduce((n,p)=>n+qtdPets(p),0);
+/* ====== chamada por cachorro ======
+   Numa casa de irmaos as vezes um vem e o outro nao. O dia guarda quais
+   caes daquele cadastro vieram. Cadastro sem irmaos nao muda nada: sem
+   registro por cao, vale a familia inteira. */
+function caesQueVieram(p,d){
+  const reg=((ops[d||diaChamada()]||{}).caes||{})[p.id];
+  if(Array.isArray(reg))return reg.filter(n=>caesDoCadastro(p).indexOf(n)>=0);
+  return caesDoCadastro(p);
+}
+function marcarCaesDoDia(petId,nomes,d){
+  const dia=d||diaChamada();
+  ops[dia]=ops[dia]||{};
+  ops[dia].caes=ops[dia].caes||{};
+  if(!nomes||!nomes.length)delete ops[dia].caes[petId];
+  else ops[dia].caes[petId]=nomes.slice();
+  salvarSeguro('petfarm.ops',JSON.stringify(ops));
+}
+/* soma os caes que realmente vieram, e nao a familia inteira */
+const contaCaesVieram=(lista,d)=>(lista||[]).reduce((n,p)=>n+caesQueVieram(p,d).length,0);
 /* ---- montar a chamada do dia: escolher quem está na creche ---- */
 function naChamada(){
   const t=(ops[diaChamada()]||{}).turma;
@@ -6458,12 +6544,33 @@ function abrirMontarChamada(){
   // comeca vazia: quem chegou voce marca. Antes vinha todo mundo marcado
   // e era preciso ir TIRANDO quem faltou, o que dava presenca errada.
   let sel=new Set(Array.isArray(o.turma)?o.turma:[]);
+  // por cadastro de irmaos: quais caes vieram. Comeca com o que ja estiver
+  // gravado no dia, ou todos quando ainda nao tem nada.
+  const selCaes={};
+  todos.forEach(p=>{if(caesDoCadastro(p).length>1)selCaes[p.id]=caesQueVieram(p,D).slice()});
   const nomeDia=D===HOJE?'de hoje':D===dAddS(HOJE,-1)?'de ontem':'de '+fmtData(D);
   const pinta=()=>{
-    $('#mc-lista').innerHTML=todos.map(p=>`<button type="button" class="add-pet ${sel.has(p.id)?'on':''}" data-mc="${p.id}">
-      <span class="mais">${sel.has(p.id)?'✓':'＋'}</span><span class="mini">${avatar(p)}</span>
-      <span class="info-p"><b>${nomeCompleto(p)}</b><span>${nomePlano(p)}</span></span></button>`).join('');
-    $('#mc-cont').textContent=`· ${sel.size} de ${todos.length} na creche`;
+    $('#mc-lista').innerHTML=todos.map(p=>{
+      const caes=caesDoCadastro(p);
+      const linha=`<button type="button" class="add-pet ${sel.has(p.id)?'on':''}" data-mc="${p.id}">
+        <span class="mais">${sel.has(p.id)?'✓':'＋'}</span><span class="mini">${avatar(p)}</span>
+        <span class="info-p"><b>${nomeCompleto(p)}</b><span>${nomePlano(p)}</span></span></button>`;
+      if(caes.length<2)return linha;
+      // casa de irmaos: um por um, porque as vezes um deles nao vem
+      const escolhidos=selCaes[p.id]||caes;
+      return linha+'<div class="irm-cham'+(sel.has(p.id)?'':' hidden')+'">'+
+        caes.map(n=>{
+          const on=escolhidos.indexOf(n)>=0;
+          const seguro=String(n).split('"').join('&quot;');
+          return '<label class="'+(on?'on':'')+'"><input type="checkbox" data-mccao="'+p.id+'" data-cao="'+seguro+'" '+(on?'checked':'')+'> '+n+' veio</label>';
+        }).join('')+'</div>';
+    }).join('');
+    const nCaes=todos.filter(p=>sel.has(p.id)).reduce((n,p)=>{
+      const c=caesDoCadastro(p);
+      return n+(c.length>1?(selCaes[p.id]||c).length:1);
+    },0);
+    const totCaes=todos.reduce((n,p)=>n+Math.max(1,caesDoCadastro(p).length),0);
+    $('#mc-cont').textContent=`· ${nCaes} de ${totCaes} aumigo(s) na creche`;
     $('#mc-ok').disabled=sel.size===0;
   };
   $('#modais').innerHTML=`
@@ -6481,10 +6588,29 @@ function abrirMontarChamada(){
     </div>
   </div></div>`;
   lock();pinta();
+  $('#mc-lista').addEventListener('change',e=>{
+    const c=e.target.closest('[data-mccao]');if(!c)return;
+    const id=+c.dataset.mccao, nome=c.dataset.cao;
+    const atual=selCaes[id]||[];
+    selCaes[id]=c.checked?atual.concat([nome]).filter((v,i,a)=>a.indexOf(v)===i)
+                         :atual.filter(x=>x!==nome);
+    // ninguem da casa veio: a casa sai da chamada
+    if(!selCaes[id].length)sel.delete(id); else sel.add(id);
+    pinta();
+  });
   $('#mc-lista').addEventListener('click',e=>{
+    if(e.target.closest('[data-mccao]'))return;      // o cachorro tem clique proprio
     const b=e.target.closest('[data-mc]');if(!b)return;
     const id=+b.dataset.mc;
-    if(sel.has(id))sel.delete(id);else sel.add(id);
+    if(sel.has(id)){sel.delete(id);}
+    else{
+      sel.add(id);
+      // remarcou a casa: volta com todos os irmaos. Sem isso, se voce
+      // tirasse um por um ate a casa sair, ela voltava sem ninguem.
+      const p=todos.find(x=>x.id===id);
+      const c=p?caesDoCadastro(p):[];
+      if(c.length>1)selCaes[id]=c.slice();
+    }
     pinta();
   });
   $('#mc-todos').onclick=()=>{sel=new Set(todos.map(p=>p.id));pinta()};
@@ -6494,9 +6620,12 @@ function abrirMontarChamada(){
       p.faltas=(p.faltas||[]).filter(x=>x!==D);      // falta não existe mais na chamada
       if(sel.has(p.id)){
         if(!p.presencas.includes(D)){p.presencas.push(D);p.chegadas[D]=D===HOJE?horaAgora():''}
+        // casa de irmaos: guarda quais vieram
+        if(caesDoCadastro(p).length>1)marcarCaesDoDia(p.id,selCaes[p.id]||caesDoCadastro(p),D);
       }else{
         p.presencas=p.presencas.filter(x=>x!==D);    // não veio: fica sem marcação nenhuma
         delete p.chegadas[D];
+        marcarCaesDoDia(p.id,null,D);
       }
       try{sincronizarHoje(p)}catch(e){}
     });
@@ -6534,7 +6663,8 @@ function render(){
   const bt=$('#btn-turma');
   if(bt){bt.classList.remove('hidden');const t=(ops[D]||{}).turma;bt.textContent='👥 Quem está hoje'+(Array.isArray(t)?' ('+contaCaes(pets.filter(p=>t.indexOf(p.id)>=0))+')':'')}
   const pe=contaCaes(naChamada().filter(p=>p.status==='pendente'));
-  const pr=contaCaes(naChamada().filter(p=>p.status==='presente'));
+  // presentes conta so quem veio: numa casa de 3 pode ter vindo so 1
+  const pr=contaCaesVieram(naChamada().filter(p=>p.status==='presente'),D);
   const fa=contaCaes(naChamada().filter(p=>p.status==='faltou'));
   $('#n-ag').textContent=pe;$('#n-pr').textContent=pr;$('#n-fa').textContent=fa;
   $('#saudacao').textContent = pe===0 ? 'Uhuu! Chamada concluída! 🐶💛' : `${saudacao()}! Vamos fazer a chamada dos aumigos? 🐾`;
@@ -6556,7 +6686,12 @@ function render(){
   lista.forEach(p=>{
     const r=RACAS[p.raca];const m=resumoMes(p);
 
-    const pill={pendente:'Sem marcar',presente:`Presente · ${p.chegou}`,faltou:'Faltou hoje'}[p.status];
+    const veio=caesQueVieram(p,diaChamada());
+    const todosCaes=caesDoCadastro(p);
+    const parcial=p.status==='presente'&&todosCaes.length>1&&veio.length<todosCaes.length;
+    const pill={pendente:'Sem marcar',
+                presente:parcial?`Só ${veio.join(' e ')} · ${p.chegou}`:`Presente · ${p.chegou}`,
+                faltou:'Faltou hoje'}[p.status];
     const nv=niverInfo(p);
     const selo=nv&&nv.hoje?'<span class="selo-mini">🎂 hoje</span>':nv&&nv.dias<=7?`<span class="selo-mini">🎂 ${nv.dias}d</span>`:'';
     const chips=[
@@ -6883,7 +7018,7 @@ function abrirRecepcao(){
   const pend=pendentes();
   const falt=ativos().filter(p=>p.status==='faltou');
   // um cadastro de irmaos e UMA linha na lista, mas sao 2 ou 3 caes na creche
-  const nPres=contaCaes(pres), nPend=contaCaes(pend), nFalt=contaCaes(falt);
+  const nPres=contaCaesVieram(pres), nPend=contaCaes(pend), nFalt=contaCaes(falt);
   const li=(p,extra)=>`<li><span class="mini">${avatar(p)}</span><div><b>${nomeCompleto(p)}</b><span>${racasDoPet(p)} · ${PLANOS[p.plano].curto} · ${resumoMes(p).vindas}x em ${nomeMes}</span></div><span class="n">${extra}</span></li>`;
   $('#modais').innerHTML=`
   <div class="recepcao" id="rec">
@@ -7422,7 +7557,6 @@ function renderHotel(){
 
   const card=r=>{
     const c=contaHotel(r);const h=c.h;
-    const fdia=faixaFotoDia(r);
     const pill=r.status==='hospedado'?(r.checkout<=HOJE?'Check-out hoje!':`${Math.max(1,diarias({checkin:r.checkin,checkout:HOJE}))}ª diária`):(r.checkin===HOJE?'Chega hoje!':`Chega ${fmtData(r.checkin)}`);
     const acao=r.status==='hospedado'
       ?`<button class="btn primario" data-checkout="${r.id}">🏁 Check-out</button>`
@@ -7444,7 +7578,6 @@ function renderHotel(){
       </div>
       ${it.length?`<div class="pert-card">${it.slice(0,4).map(i=>`<span class="th" title="${i.nome}">${i.foto?`<img src="${i.foto}" alt="">`:'🎒'}</span>`).join('')}<small>${it.length} ${it.length===1?'item':'itens'}</small></div>`:''}
       ${r.status==='hospedado'?diarioChips(r):''}
-      ${fdia}
       ${pode('financeiro')?`<div class="h-total"><span>${c.resumoDiarias}${c.transp?` + transporte ${r.transporteVezes}x`:''}${r.sinalPago?' · sinal pago':''}${r.naFatura?' · 🧾 na fatura':''}</span><b>${brl(c.restante)}</b></div>`:''}
       ${r.aguardandoPgto&&r.status==='hospedado'?`<div class="msg-ok" style="background:var(--vermelho-bg);color:var(--vermelho-txt);margin:8px 0 0">💳 Aguardando pagamento</div>`:''}
       <div class="h-acoes">${acao}${r.status==='hospedado'?`<button class="ico-btn" data-diario="${r.id}" title="Diário do dia">📋</button>`:''}<button class="ico-btn" data-pdfpert="${r.id}" title="Relatório de pertences (PDF)" style="background:#fff;color:var(--marrom-escuro);border:2px solid var(--marrom-escuro);box-shadow:0 3px 0 var(--marrom-escuro)">📄</button></div>
@@ -7593,17 +7726,7 @@ function abrirReserva(id,diaSugerido){
     const rm=e.target.closest('[data-prm]');if(rm){pert=pert.filter(x=>x.id!==+rm.dataset.prm);renderPert()}
   });
   $('#r-pert').addEventListener('input',e=>{const i=e.target.closest('[data-pnome]');if(i){const it=pert.find(x=>x.id===+i.dataset.pnome);if(it)it.nome=i.value}});
-  /* foto do dia do hotel: escolheu o arquivo, reduz, sobe pra nuvem e marca */
-document.addEventListener('change',function(e){
-  const f=e.target.closest&&e.target.closest('[data-fotodia]');
-  if(!f||!f.files||!f.files[0])return;
-  const id=+f.dataset.fotodia;
-  lerFoto(f.files[0],700,function(d){
-    guardarFoto(d,function(url){salvarFotoDoDia(id,url)});
-  });
-  f.value='';
-});
-$('#r-pert').addEventListener('change',e=>{
+  $('#r-pert').addEventListener('change',e=>{
     const f=e.target.closest('[data-pfoto]');if(!f||!f.files[0])return;
     const it=pert.find(x=>x.id===+f.dataset.pfoto);lerFoto(f.files[0],400,d=>{it.foto=d;renderPert();guardarFoto(d,url=>{it.foto=url;renderPert()})});f.value='';
   });
@@ -7906,51 +8029,6 @@ const DIARIO_TIPOS={alimentacao:['🍖','Alimentação'],medicacao:['💊','Medi
 function checklistHtml(itens,marcados,prefixo){return `<div class="checklist">${itens.map(([k,l])=>`<label class="${marcados[k]?'on':''}"><input type="checkbox" data-ck="${prefixo}:${k}" ${marcados[k]?'checked':''}> ${l}</label>`).join('')}</div>`}
 function lerChecklist(prefixo){const o={};document.querySelectorAll(`[data-ck^="${prefixo}:"]`).forEach(c=>{o[c.dataset.ck.split(':')[1]]=c.checked});return o}
 function diarioHoje(r){return (r.diario||[]).filter(x=>x.d===HOJE)}
-/* ====== foto do dia ======
-   Todo dia de hospedagem precisa de UMA foto enviada ao tutor. Nao da pra
-   so marcar uma caixinha: tem que anexar a foto que foi mandada. Fica
-   gravada com hora e com quem fez, entao da pra conferir depois. */
-function fotosDoDia(r){return (r.fotosDia||[])}
-function fotoDoDia(r,dia){return fotosDoDia(r).find(x=>x.d===(dia||HOJE))||null}
-/* dias da estadia que ja passaram e ainda estao sem foto */
-function diasSemFoto(r){
-  if(!r||!r.checkin)return [];
-  const fim=(r.checkout&&r.checkout<HOJE)?r.checkout:HOJE;
-  const out=[];let d=r.checkin;
-  let guarda=0;
-  while(d<=fim&&guarda++<400){ if(!fotoDoDia(r,d))out.push(d); d=dAddS(d,1) }
-  return out;
-}
-function salvarFotoDoDia(id,url){
-  const r=reservas.find(x=>x.id===id);if(!r)return;
-  r.fotosDia=(r.fotosDia||[]).filter(x=>x.d!==HOJE);
-  r.fotosDia.push({d:HOJE,url:url,hora:horaAgora(),quem:(usuario&&usuario.nome)||''});
-  // o diario tambem marca, pra aparecer no relatorio
-  r.diario=r.diario||[];
-  if(!r.diario.some(x=>x.d===HOJE&&x.tipo==='foto'))
-    r.diario.push({d:HOJE,tipo:'foto',hora:horaAgora(),txt:'Foto enviada ao tutor'});
-  salvarHotel();renderHotel();
-  const h=hospede(r);
-  toast(h.p||{raca:h.raca||'golden'},'Foto do dia registrada 📸',h.nome+' · '+horaAgora(),true);
-}
-/* A faixa que cobra a foto do dia, so pra quem esta hospedado agora.
-   Sem foto anexada nao da pra marcar: e isso que impede de burlar. */
-function faixaFotoDia(r){
-  if(!r||r.status!=='hospedado')return '';
-  const f=fotoDoDia(r);
-  const atrasados=diasSemFoto(r).filter(d=>d!==HOJE);
-  const pend=atrasados.length?'<small class="atraso">'+atrasados.length+' dia(s) atrás sem foto</small>':'';
-  if(f)return '<div class="foto-dia feita">'+
-    '<img src="'+f.url+'" alt="Foto enviada hoje">'+
-    '<div class="txt"><b>Foto do dia enviada</b><small>'+f.hora+(f.quem?' · '+f.quem:'')+'</small></div>'+
-    '<label class="btn-mini cinza">trocar<input type="file" accept="image/*" data-fotodia="'+r.id+'"></label>'+
-    '</div>';
-  return '<div class="foto-dia falta">'+
-    '<span class="ico">📸</span>'+
-    '<div class="txt"><b>Falta a foto de hoje</b><small>anexe a foto que você mandou pro tutor</small>'+pend+'</div>'+
-    '<label class="btn-mini">Anexar<input type="file" accept="image/*" data-fotodia="'+r.id+'"></label>'+
-    '</div>';
-}
 function diarioChips(r){const h=diarioHoje(r).map(x=>x.tipo);return `<div class="diario-chips">${Object.entries(DIARIO_TIPOS).filter(([k])=>k!=='obs').map(([k,[i,l]])=>`<span class="${h.includes(k)?'on':''}" title="${l}">${i}</span>`).join('')}<small>${h.length?h.length+' registros hoje':'nada registrado hoje'}</small></div>`}
 function abrirDiario(id){
   const r=reservas.find(x=>x.id===id);const h=hospede(r);r.diario=r.diario||[];
