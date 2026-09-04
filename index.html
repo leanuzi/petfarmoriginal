@@ -1030,6 +1030,13 @@ table.fat tr.hotel td{background:#FFFCF3}
    datas e esse -4px fazia os circulos SUBIREM por cima da caixa de entrada
    e saida. Aqui ela ganha respiro proprio. */
 .hsec .grid>.card .diario-chips{margin-top:10px}
+/* Mesma historia da fileira de pertences: ela tambem nasceu com
+   margin-top:-4px pra colar no bloco de cima em outro contexto, e no card
+   do hotel subia por cima da caixa de entrada e saida. */
+.hsec .grid>.card .pert-card{margin-top:10px;margin-bottom:0}
+/* respiro igual entre TODOS os blocos do card: era 10, 10, 22 e 0 */
+.hsec .grid>.card .diario-chips{margin-bottom:0}
+.hsec .grid>.card .foto-dia{margin-bottom:10px}
 /* nome e etiqueta (VISITANTE/ALUNO) centrados um com o outro: a etiqueta
    ficava 18px abaixo do topo do nome, parecendo solta */
 .hsec .grid>.card h3{display:flex;align-items:center;gap:8px;flex-wrap:wrap;line-height:1.15}
@@ -2307,7 +2314,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.8.0</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.8.1</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
