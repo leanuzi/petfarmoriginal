@@ -227,7 +227,11 @@ input,select{font-family:inherit;color:inherit}
 .foto-edit .foto{margin:0;flex:none;width:104px;height:104px}
 .foto-edit .foto .st{width:84px;height:84px}
 .foto-edit .acoes{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
-.btn-mini{padding:8px 14px;border-radius:999px;font-weight:800;font-size:13px;background:var(--amarelo);color:var(--marrom-escuro);display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.btn-mini{padding:9px 16px;border-radius:999px;font-weight:800;font-size:13px;background:var(--amarelo);color:var(--marrom-escuro);display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;line-height:1.2}
+/* Dentro de uma grade o botao esticava pra ocupar a celula inteira e virava
+   um bloco amarelo enorme, principalmente no celular, onde a grade tem uma
+   coluna so. justify-self:start faz ele ficar do tamanho do texto. */
+.row2>.btn-mini,.row3>.btn-mini,.row2>label.btn-mini,.row3>label.btn-mini{justify-self:start}
 .btn-mini.perigo{background:#C7553A;color:#fff}
 .zona-perigo{border:1px solid #E8B4A0;background:#FDF2EE;border-radius:14px;padding:12px 14px;margin-top:4px}
 .zona-perigo p{font-size:13px;font-weight:700;color:#8C5A44;margin-bottom:10px}
@@ -451,6 +455,9 @@ body.lock{overflow:hidden}
 .lista-fin span.det{font-size:12px;font-weight:700;color:#A38560}
 .lista-fin .valor{margin-left:auto;font-family:var(--display);font-weight:600;font-size:20px;color:var(--marrom-escuro)}
 .lista-fin .st-pag{font-size:11px;font-weight:800;border-radius:999px;padding:4px 10px}
+/* "em aberto" quebrava em duas linhas e a pastilha ficava deformada.
+   Vale pras tres variantes de uma vez. */
+.st-pag{white-space:nowrap;display:inline-block;text-align:center}
 .lista-fin .st-pag.pago{background:var(--verde-bg);color:var(--verde-txt)}
 .lista-fin .st-pag.aberto{background:var(--vermelho-bg);color:var(--vermelho-txt)}
 
@@ -478,7 +485,8 @@ body.lock{overflow:hidden}
 .cfg-lista .row.zap{grid-template-columns:1.2fr 1fr auto}
 .cfg-lista .row input,.cfg-lista .row select{min-width:0;background:#fff;border:1px solid var(--bege);border-radius:10px;padding:8px 10px;font-weight:700;font-size:13px}
 .cfg-lista .row .rm{width:28px;height:28px;border-radius:50%;background:#fff;border:1px solid var(--bege);color:var(--vermelho-txt);font-weight:900}
-.cfg-h{font-family:var(--display);font-weight:600;font-size:18px;color:var(--marrom-escuro);margin-top:18px;display:flex;align-items:center;justify-content:space-between}
+.cfg-h{font-family:var(--display);font-weight:600;font-size:18px;color:var(--marrom-escuro);margin-top:24px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.cfg-h:first-child{margin-top:6px}
 .cfg-h .btn-mini{font-size:12px}
 .pix-box{margin-top:12px;background:#fff;border:1px solid var(--bege);border-radius:16px;padding:12px 14px;display:flex;gap:14px;align-items:center}
 .pix-box img{width:96px;height:96px;border-radius:8px;border:1px solid var(--bege)}
@@ -1121,6 +1129,18 @@ table.fat tr.hotel td{background:#FFFCF3}
    uma parede de caixinhas e ninguem sabia qual era de quem */
 .irm-cx{background:var(--bege-claro);border:1px solid var(--bege);border-radius:16px;padding:2px 12px 12px;margin-top:12px}
 .irm-cx .cfg-h{font-size:12px}
+/* cobranca diaria da foto no card do hotel */
+.foto-dia{display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 10px;border-radius:14px;border:1px solid var(--bege)}
+.foto-dia.falta{background:var(--vermelho-bg);border-color:#F1C9C9}
+.foto-dia.feita{background:var(--verde-bg);border-color:#CFE3CB}
+.foto-dia .ico{font-size:20px;width:38px;height:38px;flex:none;display:grid;place-items:center;background:#fff;border-radius:10px}
+.foto-dia img{width:38px;height:38px;flex:none;object-fit:cover;border-radius:10px;border:2px solid #fff}
+.foto-dia .txt{flex:1;min-width:0}
+.foto-dia .txt b{display:block;font-size:12.5px;font-weight:800;color:var(--marrom-escuro);line-height:1.2}
+.foto-dia .txt small{display:block;font-size:11px;font-weight:700;color:#8C7355}
+.foto-dia .txt small.atraso{color:var(--vermelho-txt);font-weight:800;margin-top:2px}
+.foto-dia .btn-mini{flex:none;font-size:12px;padding:7px 12px}
+.foto-dia input[type=file]{display:none}
 /* agenda de tarefas do dia */
 .agenda-box{background:linear-gradient(135deg,#EFF6EC,var(--creme));border-color:#CFE3CB}
 .agenda li.tf{display:flex;align-items:flex-start;gap:10px;background:#fff;border:1px solid var(--bege);border-radius:14px;padding:9px 12px}
@@ -2287,7 +2307,7 @@ img,svg,video,canvas{max-width:100%}
     <span>Pet Farm · Chamada dos Aumigos</span>
     <span>·</span>
     <span>Feito com 💛 para quem cuida</span>
-    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.7.1</span>
+    <span>&middot;</span> <span id="rodape-versao">vers&atilde;o 1.8.0</span>
     <div class="fila" aria-hidden="true">
       <svg class="st"><use href="#dog-golden"/></svg><svg class="st"><use href="#dog-poodle"/></svg><svg class="st"><use href="#dog-dachshund"/></svg><svg class="st"><use href="#dog-bulldog"/></svg><svg class="st"><use href="#dog-labrador"/></svg><svg class="st"><use href="#dog-shihtzu"/></svg><svg class="st"><use href="#dog-beagle"/></svg><svg class="st"><use href="#dog-collie"/></svg>
     </div>
@@ -6066,6 +6086,7 @@ document.addEventListener('click',e=>{
   if(b=g('renov')){avisarRenovacao(+b.dataset.renov);return}
   if(b=g('pend')){const x=pendLista[+b.dataset.pend];if(x)x.acao();return}
   if(b=g('crm')){acaoCrm(+b.dataset.crm,b.dataset.etapa);return}
+  if(b=g('recado')){abrirRecado(+b.dataset.recado);return}
   if(b=g('parabens')){enviarParabens(+b.dataset.parabens);return}
   if(b=g('recuperar')){const p=pets.find(x=>x.id===+b.dataset.recuperar);p.crm=p.crm||{contatos:[]};p.crm.ultimo=HOJE;p.crm.contatos.push({d:HOJE,tipo:'recuperacao'});abrirZap(p.telefone,msgRecuperar(p),{tipo:'recuperacao',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});salvar();return}
   if(b=g('tplsave')){const k=b.dataset.tplsave;cfg.templates=cfg.templates||{};cfg.templates[k]=document.querySelector(`[data-tpl="${k}"]`).value;salvarCfg();renderMensagens();toast(pets[0]||{raca:'golden'},'Mensagem salva ✏️','Já vale nos próximos envios.',true);return}
@@ -7236,7 +7257,8 @@ function abrirPerfil(id,ym){
       </div>
       ${timelineHtml(p)}
       <div class="acoes-p">
-        <button class="btn primario" data-cobrar="${p.id}" data-ym="${ym}">💳 ${p.pagamentos[ym]?'Ver fatura de':'Cobrar'} ${NOMES_MES[+ym.split('-')[1]-1]}</button>
+        ${pode('financeiro')?`<button class="btn primario" data-cobrar="${p.id}" data-ym="${ym}">💳 ${p.pagamentos[ym]?'Ver fatura de':'Cobrar'} ${NOMES_MES[+ym.split('-')[1]-1]}</button>`:''}
+        <button class="btn ${pode('financeiro')?'secund':'primario'}" data-recado="${p.id}">💬 Mandar mensagem</button>
         <button class="btn secund" data-editar="${p.id}">✏️ Editar perfil</button>
         <button class="btn secund" data-boletimir="${p.id}">📚 Boletim</button>
       </div>
@@ -7293,7 +7315,9 @@ function hospede(r){ // dados do pet (da creche ou visitante)
   const p=r.petId?pets.find(x=>x.id===r.petId):null;
   const aluno=!!(p&&p.ativo!==false);
   const quem=caesDaReserva(r);
-  return {p,aluno,nome:(p?(quem.join(' + ')||nomeCompleto(p)):r.nome),caes:quem,raca:p?p.raca:r.raca,peso:p?p.peso:r.peso,tutor:p?p.tutor:r.tutor,telefone:p?p.telefone:r.telefone,avatar:p?avatar(p):st((RACAS[r.raca]||RACAS.golden).st)};
+  const nomeVis=r.nome+((Array.isArray(r.irmaos)&&r.irmaos.length)
+    ?' + '+r.irmaos.filter(x=>x&&x.nome).map(x=>x.nome).join(' + '):'');
+  return {p,aluno,nome:(p?(quem.join(' + ')||nomeCompleto(p)):nomeVis),caes:quem,raca:p?p.raca:r.raca,peso:p?p.peso:r.peso,tutor:p?p.tutor:r.tutor,telefone:p?p.telefone:r.telefone,avatar:p?avatar(p):st((RACAS[r.raca]||RACAS.golden).st)};
 }
 function diarias(r){const a=new Date(r.checkin),b=new Date(r.checkout);return Math.max(1,Math.round((b-a)/86400000))}
 function diariaValor(h){return h.aluno?HOTEL.aluno:(h.peso<=10?HOTEL.pequeno:HOTEL.grande)}
@@ -7321,7 +7345,10 @@ function caesDoCadastro(p){
 function caesDaReserva(r){
   if(!r)return [];
   const p=r.petId?pets.find(x=>x.id===r.petId):null;
-  const todos=p?caesDoCadastro(p):(r.nome?[r.nome]:[]);
+  // visitante ainda sem cadastro: os irmaos digitados no formulario ja
+  // contam, senao a previa mostrava a diaria de um so antes de confirmar
+  const todos=p?caesDoCadastro(p)
+    :(r.nome?[r.nome].concat((r.irmaos||[]).filter(x=>x&&x.nome).map(x=>x.nome)):[]);
   if(!Array.isArray(r.caes)||!r.caes.length)return todos;
   const sel=todos.filter(n=>r.caes.indexOf(n)>=0);
   return sel.length?sel:todos;
@@ -7329,7 +7356,10 @@ function caesDaReserva(r){
 /* quantos cachorros essa reserva hospeda */
 const petsDaReserva=r=>{
   const n=caesDaReserva(r).length;
-  return n||Math.max(1,+r.qtdPets||1);
+  if(n)return n;
+  // visitante novo ainda sem cadastro: conta pelos irmaos digitados
+  if(r&&Array.isArray(r.irmaos))return 1+r.irmaos.filter(x=>x&&x.nome).length;
+  return Math.max(1,+r.qtdPets||1);
 };
 /* quanto custa a diária dessa reserva, já com todos os cachorros.
    Se você digitou um valor combinado, é ele que vale. */
@@ -7385,6 +7415,7 @@ function renderHotel(){
 
   const card=r=>{
     const c=contaHotel(r);const h=c.h;
+    const fdia=faixaFotoDia(r);
     const pill=r.status==='hospedado'?(r.checkout<=HOJE?'Check-out hoje!':`${Math.max(1,diarias({checkin:r.checkin,checkout:HOJE}))}ª diária`):(r.checkin===HOJE?'Chega hoje!':`Chega ${fmtData(r.checkin)}`);
     const acao=r.status==='hospedado'
       ?`<button class="btn primario" data-checkout="${r.id}">🏁 Check-out</button>`
@@ -7406,6 +7437,7 @@ function renderHotel(){
       </div>
       ${it.length?`<div class="pert-card">${it.slice(0,4).map(i=>`<span class="th" title="${i.nome}">${i.foto?`<img src="${i.foto}" alt="">`:'🎒'}</span>`).join('')}<small>${it.length} ${it.length===1?'item':'itens'}</small></div>`:''}
       ${r.status==='hospedado'?diarioChips(r):''}
+      ${fdia}
       ${pode('financeiro')?`<div class="h-total"><span>${c.resumoDiarias}${c.transp?` + transporte ${r.transporteVezes}x`:''}${r.sinalPago?' · sinal pago':''}${r.naFatura?' · 🧾 na fatura':''}</span><b>${brl(c.restante)}</b></div>`:''}
       ${r.aguardandoPgto&&r.status==='hospedado'?`<div class="msg-ok" style="background:var(--vermelho-bg);color:var(--vermelho-txt);margin:8px 0 0">💳 Aguardando pagamento</div>`:''}
       <div class="h-acoes">${acao}${r.status==='hospedado'?`<button class="ico-btn" data-diario="${r.id}" title="Diário do dia">📋</button>`:''}<button class="ico-btn" data-pdfpert="${r.id}" title="Relatório de pertences (PDF)" style="background:#fff;color:var(--marrom-escuro);border:2px solid var(--marrom-escuro);box-shadow:0 3px 0 var(--marrom-escuro)">📄</button></div>
@@ -7451,6 +7483,7 @@ function virarCadastro(o){
   if(o.aniversario)p.aniversario=o.aniversario;
   if(o.nascimento)p.nascimento=o.nascimento;
   if(o.endereco)p.endereco=o.endereco;
+  if(o.irmaos&&o.irmaos.length)p.irmaos=o.irmaos;else delete p.irmaos;
   if(o.vacina)p.vacina=o.vacina;
   if(o.contrato)p.contrato=o.contrato;
   p.tipos=['visitante']; p.ativo=false;
@@ -7481,13 +7514,21 @@ function abrirReserva(id,diaSugerido){
       <div class="campo"><label>Quem vai se hospedar?</label>
         <div class="chips" style="display:inline-flex;flex-wrap:wrap"><button class="chip ${r.petId&&!ehVisitante(r)?'on':''}" id="r-tipo-aluno">🎓 Aluno da creche</button><button class="chip ${r.petId&&ehVisitante(r)?'on':''}" id="r-tipo-vishot">🧳 Visitante de hotel</button><button class="chip ${r.petId?'':'on'}" id="r-tipo-vis">＋ Novo visitante</button></div></div>
       <div id="r-aluno" class="${r.petId?'':'hidden'}">
-        <div class="campo"><label for="r-pet" id="r-pet-rot">Aluno</label><select id="r-pet">${alunos||'<option value="">Nenhum aluno ativo</option>'}</select></div>
+        <div class="campo"><label for="r-pet" id="r-pet-rot">Aluno</label>
+          <input id="r-pet-busca" placeholder="🔎 Digite o nome ou o tutor pra achar" autocomplete="off" style="margin-bottom:8px">
+          <select id="r-pet" size="1">${alunos||'<option value="">Nenhum aluno ativo</option>'}</select>
+          <small id="r-pet-n" style="display:block;margin-top:4px;font-weight:700;color:#A38560"></small>
+        </div>
         <div class="campo hidden" id="r-caes-box"><label>Quais aumigos vão ficar?</label>
           <div class="tipos-sel" id="r-caes"></div>
           <small style="display:block;margin-top:6px;font-weight:700;color:#A38560">A diária é multiplicada por quantos ficarem.</small>
         </div>
       </div>
       <div id="r-vis" class="${r.petId?'hidden':''}">
+        <div class="tipos-cad">
+          <label class="check"><input type="checkbox" id="r-irmao-chk" ${(r.irmaos&&r.irmaos.length)?'checked':''}> 🐶🐕 São irmãos</label>
+          <label class="campo-qtd ${(r.irmaos&&r.irmaos.length)?'':'hidden'}" id="r-qtd-box"><span>Quantos aumigos?</span><select id="r-irmao-qtd">${[2,3,4,5,6].map(n=>`<option value="${n}" ${(1+((r.irmaos||[]).length))===n?'selected':''}>${n}</option>`).join('')}</select></label>
+        </div>
         <div class="row2">
           <div class="campo obrig"><label for="r-nome">Nome do aumigo</label><input id="r-nome" value="${r.nome||''}" placeholder="Ex.: Bolt"></div>
           <div class="campo"><label for="r-raca">Raça</label><select id="r-raca">${opsR}</select></div>
@@ -7506,6 +7547,7 @@ function abrirReserva(id,diaSugerido){
           <div class="campo"><label for="r-niver">🎂 Aniversário</label><input id="r-niver" type="date" value="${r.nascimento||''}"></div>
           <div class="campo"><label for="r-end">Endereço</label><input id="r-end" value="${(r.endereco||'').split('"').join('&quot;')}" placeholder="Rua, número · bairro · cidade"></div>
         </div>
+        <div class="${(r.irmaos&&r.irmaos.length)?'':'hidden'}" id="r-irmao-box"></div>
         ${camposDocs('r',r)}
         <p style="font-size:12px;font-weight:700;color:#A38560;margin:8px 0 0">🧳 Ao confirmar, o visitante entra na lista de Pets com a etiqueta <b>Visitante de hotel</b>. Ele não entra na chamada da creche.</p>
       </div>
@@ -7544,7 +7586,17 @@ function abrirReserva(id,diaSugerido){
     const rm=e.target.closest('[data-prm]');if(rm){pert=pert.filter(x=>x.id!==+rm.dataset.prm);renderPert()}
   });
   $('#r-pert').addEventListener('input',e=>{const i=e.target.closest('[data-pnome]');if(i){const it=pert.find(x=>x.id===+i.dataset.pnome);if(it)it.nome=i.value}});
-  $('#r-pert').addEventListener('change',e=>{
+  /* foto do dia do hotel: escolheu o arquivo, reduz, sobe pra nuvem e marca */
+document.addEventListener('change',function(e){
+  const f=e.target.closest&&e.target.closest('[data-fotodia]');
+  if(!f||!f.files||!f.files[0])return;
+  const id=+f.dataset.fotodia;
+  lerFoto(f.files[0],700,function(d){
+    guardarFoto(d,function(url){salvarFotoDoDia(id,url)});
+  });
+  f.value='';
+});
+$('#r-pert').addEventListener('change',e=>{
     const f=e.target.closest('[data-pfoto]');if(!f||!f.files[0])return;
     const it=pert.find(x=>x.id===+f.dataset.pfoto);lerFoto(f.files[0],400,d=>{it.foto=d;renderPert();guardarFoto(d,url=>{it.foto=url;renderPert()})});f.value='';
   });
@@ -7588,6 +7640,9 @@ function abrirReserva(id,diaSugerido){
       o.cpf=cpfSo(($('#r-cpf')||{value:''}).value);
       guardarNascimento(o,($('#r-niver')||{value:''}).value);
       o.endereco=($('#r-end')||{value:''}).value.trim();
+      // irmaos do visitante: mesmo motor do cadastro de pet
+      if(($('#r-irmao-chk')||{}).checked){const li=lerIrmaos('r');if(li.length)o.irmaos=li;else delete o.irmaos}
+      else delete o.irmaos;
       if(docsVis.vacina)o.vacina=docsVis.vacina;
       if(docsVis.contrato)o.contrato=docsVis.contrato;
       if(validar){for(const [k,id2] of [['nome','r-nome'],['peso','r-peso'],['tutor','r-tutor']]){if(!o[k]){$('#'+id2).focus();$('#'+id2).style.borderColor='var(--vermelho)';return null}}
@@ -7598,6 +7653,40 @@ function abrirReserva(id,diaSugerido){
     if(($('#r-valor-chk')||{}).checked){const vv=parseFloat(($('#r-valor')||{value:''}).value);o.valorDiaria=isNaN(vv)?null:Math.max(0,vv)}else o.valorDiaria=null;o.pertences=pert.filter(x=>x.nome.trim()).map(x=>({...x,nome:x.nome.trim()}));
     return o;
   };
+  /* busca do aluno: filtra as opcoes conforme voce digita, por nome do
+     aumigo, dos irmaos ou do tutor. Guarda a lista inteira pra poder
+     devolver quando apagar a busca. */
+  const selPet0=$('#r-pet');
+  const todasOpcoes=selPet0?[...selPet0.options].map(o=>({v:o.value,t:o.textContent})):[];
+  const contaPet=$('#r-pet-n');
+  const filtrarPets=()=>{
+    const sel=$('#r-pet'), cx=$('#r-pet-busca');
+    if(!sel||!cx)return;
+    const q=(cx.value||'').trim().toLowerCase();
+    const guardado=sel.value;
+    const vale=todasOpcoes.filter(o=>!q||o.t.toLowerCase().indexOf(q)>=0);
+    sel.innerHTML=(vale.length?vale:[{v:'',t:'Nenhum aumigo com esse nome'}])
+      .map(o=>'<option value="'+o.v+'">'+o.t+'</option>').join('');
+    if(vale.some(o=>o.v===guardado))sel.value=guardado;
+    if(contaPet)contaPet.textContent=q?(vale.length+' de '+todasOpcoes.length+' aumigo(s)'):'';
+    if(typeof pintarCaes==='function')pintarCaes();
+  };
+  const cxBusca=$('#r-pet-busca');
+  if(cxBusca)cxBusca.addEventListener('input',filtrarPets);
+
+  /* irmaos do visitante */
+  const chkIrmR=$('#r-irmao-chk'), qtdIrmR=$('#r-irmao-qtd');
+  const repintaIrmR=()=>{
+    const on=chkIrmR.checked;
+    $('#r-irmao-box').classList.toggle('hidden',!on);
+    $('#r-qtd-box').classList.toggle('hidden',!on);
+    if(on){pintarIrmaos('r',qtdIrmR.value,lerIrmaos('r'));
+      const p1=$('#r-irmao-box').querySelector('input');if(p1)p1.focus()}
+    if(typeof prev==='function')prev();
+  };
+  if(chkIrmR)chkIrmR.onchange=repintaIrmR;
+  if(qtdIrmR)qtdIrmR.onchange=repintaIrmR;
+  if(chkIrmR&&chkIrmR.checked)pintarIrmaos('r',qtdIrmR.value,(r.irmaos||[]));
   ligarCpf('r-cpf');
   ligarDoc('r-vac','r-vac-st','vacina',c=>docsVis.vacina=c);
   ligarDoc('r-cont','r-cont-st','contrato',c=>docsVis.contrato=c);
@@ -7810,6 +7899,51 @@ const DIARIO_TIPOS={alimentacao:['🍖','Alimentação'],medicacao:['💊','Medi
 function checklistHtml(itens,marcados,prefixo){return `<div class="checklist">${itens.map(([k,l])=>`<label class="${marcados[k]?'on':''}"><input type="checkbox" data-ck="${prefixo}:${k}" ${marcados[k]?'checked':''}> ${l}</label>`).join('')}</div>`}
 function lerChecklist(prefixo){const o={};document.querySelectorAll(`[data-ck^="${prefixo}:"]`).forEach(c=>{o[c.dataset.ck.split(':')[1]]=c.checked});return o}
 function diarioHoje(r){return (r.diario||[]).filter(x=>x.d===HOJE)}
+/* ====== foto do dia ======
+   Todo dia de hospedagem precisa de UMA foto enviada ao tutor. Nao da pra
+   so marcar uma caixinha: tem que anexar a foto que foi mandada. Fica
+   gravada com hora e com quem fez, entao da pra conferir depois. */
+function fotosDoDia(r){return (r.fotosDia||[])}
+function fotoDoDia(r,dia){return fotosDoDia(r).find(x=>x.d===(dia||HOJE))||null}
+/* dias da estadia que ja passaram e ainda estao sem foto */
+function diasSemFoto(r){
+  if(!r||!r.checkin)return [];
+  const fim=(r.checkout&&r.checkout<HOJE)?r.checkout:HOJE;
+  const out=[];let d=r.checkin;
+  let guarda=0;
+  while(d<=fim&&guarda++<400){ if(!fotoDoDia(r,d))out.push(d); d=dAddS(d,1) }
+  return out;
+}
+function salvarFotoDoDia(id,url){
+  const r=reservas.find(x=>x.id===id);if(!r)return;
+  r.fotosDia=(r.fotosDia||[]).filter(x=>x.d!==HOJE);
+  r.fotosDia.push({d:HOJE,url:url,hora:horaAgora(),quem:(usuario&&usuario.nome)||''});
+  // o diario tambem marca, pra aparecer no relatorio
+  r.diario=r.diario||[];
+  if(!r.diario.some(x=>x.d===HOJE&&x.tipo==='foto'))
+    r.diario.push({d:HOJE,tipo:'foto',hora:horaAgora(),txt:'Foto enviada ao tutor'});
+  salvarHotel();renderHotel();
+  const h=hospede(r);
+  toast(h.p||{raca:h.raca||'golden'},'Foto do dia registrada 📸',h.nome+' · '+horaAgora(),true);
+}
+/* A faixa que cobra a foto do dia, so pra quem esta hospedado agora.
+   Sem foto anexada nao da pra marcar: e isso que impede de burlar. */
+function faixaFotoDia(r){
+  if(!r||r.status!=='hospedado')return '';
+  const f=fotoDoDia(r);
+  const atrasados=diasSemFoto(r).filter(d=>d!==HOJE);
+  const pend=atrasados.length?'<small class="atraso">'+atrasados.length+' dia(s) atrás sem foto</small>':'';
+  if(f)return '<div class="foto-dia feita">'+
+    '<img src="'+f.url+'" alt="Foto enviada hoje">'+
+    '<div class="txt"><b>Foto do dia enviada</b><small>'+f.hora+(f.quem?' · '+f.quem:'')+'</small></div>'+
+    '<label class="btn-mini cinza">trocar<input type="file" accept="image/*" data-fotodia="'+r.id+'"></label>'+
+    '</div>';
+  return '<div class="foto-dia falta">'+
+    '<span class="ico">📸</span>'+
+    '<div class="txt"><b>Falta a foto de hoje</b><small>anexe a foto que você mandou pro tutor</small>'+pend+'</div>'+
+    '<label class="btn-mini">Anexar<input type="file" accept="image/*" data-fotodia="'+r.id+'"></label>'+
+    '</div>';
+}
 function diarioChips(r){const h=diarioHoje(r).map(x=>x.tipo);return `<div class="diario-chips">${Object.entries(DIARIO_TIPOS).filter(([k])=>k!=='obs').map(([k,[i,l]])=>`<span class="${h.includes(k)?'on':''}" title="${l}">${i}</span>`).join('')}<small>${h.length?h.length+' registros hoje':'nada registrado hoje'}</small></div>`}
 function abrirDiario(id){
   const r=reservas.find(x=>x.id===id);const h=hospede(r);r.diario=r.diario||[];
@@ -8654,6 +8788,55 @@ function acaoCrm(id,etapa){
   p.crm.ultimo=HOJE;p.crm.contatos.push({d:HOJE,tipo:k});
   abrirZapPet(p,tpl(k,varsPet(p)),{tipo:k,pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});
   salvar();renderInicio();
+}
+/* Mensagens que NAO envolvem dinheiro: a recepcao usa todas. Quem cuida de
+   cobranca continua com o botao de cobrar, que fica noutro lugar. */
+function abrirRecado(id){
+  const p=pets.find(x=>x.id===id);
+  if(!p)return;
+  if(!p.telefone){toast(p,'Sem WhatsApp no cadastro','Coloque o número do tutor pra poder mandar mensagem.');return}
+  const nome=nomeCompleto(p);
+  const prontas=[
+    ['🎉 Feliz aniversário','aniversario'],
+    ['📸 Foto do dia','Oi! 🐾 Olha só o '+nome+' hoje na Pet Farm 💛'],
+    ['🐾 Como foi o dia','Oi! O '+nome+' teve um dia ótimo aqui na Pet Farm hoje 🐶 Brincou bastante e está tudo certinho!'],
+    ['🏡 Sobre a hospedagem','Oi! Passando pra dizer que o '+nome+' está bem e bem cuidado aqui na Pet Farm 🏡💛'],
+    ['💬 Escrever do zero','']
+  ];
+  $('#modais').innerHTML=`
+  <div class="overlay" id="ov"><div class="modal form" role="dialog" aria-labelledby="rc-t">
+    <button class="fechar" data-fechar aria-label="Fechar">✕</button>
+    <h2 id="rc-t">${st('dog-golden')} Mensagem para ${p.tutor}</h2>
+    <p style="font-size:13px;font-weight:700;color:#8C7355;margin-top:6px">Sobre ${nome} · ${telFmt(p.telefone)}</p>
+    <div class="campo"><label>Modelo</label>
+      <div class="tipos-sel" id="rc-modelos">${prontas.map((x,i)=>
+        `<label class="${i===0?'on':''}"><input type="radio" name="rcm" value="${i}" ${i===0?'checked':''}> ${x[0]}</label>`).join('')}</div>
+    </div>
+    <div class="campo"><label for="rc-txt">Mensagem</label>
+      <textarea id="rc-txt" style="min-height:120px"></textarea></div>
+    <button class="btn primario" id="rc-ok" style="margin-top:16px">${st('check')} Abrir no WhatsApp</button>
+  </div></div>`;
+  lock();
+  const cx=$('#rc-txt');
+  const pinta=()=>{
+    const i=+((document.querySelector('[name=rcm]:checked')||{}).value||0);
+    const v=prontas[i][1];
+    cx.value = v==='aniversario' ? tpl('aniversario',varsPet(p)) : v;
+    if(!cx.value)cx.focus();
+  };
+  $('#rc-modelos').addEventListener('change',e=>{
+    document.querySelectorAll('#rc-modelos label').forEach(l=>l.classList.toggle('on',l.contains(e.target)));
+    pinta();
+  });
+  pinta();
+  $('#rc-ok').onclick=()=>{
+    const t=(cx.value||'').trim();
+    if(!t){cx.focus();return}
+    fecharModal();
+    abrirZapPet(p,t,{tipo:'recado',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});
+  };
+  $('#ov').onclick=e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()};
+  document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
 }
 function enviarParabens(id){const p=pets.find(x=>x.id===id);abrirZapPet(p,tpl('aniversario',varsPet(p)),{tipo:'aniversario',pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone})}
 function renderMensagens(){
