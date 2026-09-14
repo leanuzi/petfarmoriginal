@@ -5179,6 +5179,46 @@ Com carinho, equipe {creche}.`},
   vanACaminho:{nome:'Van a caminho',uso:'rota do transporte · sai ao tocar em "Estou a caminho"',texto:`Oi {tutor}, bom dia! ☀️🐾 Aqui é a van da {creche}. Já estou a caminho pra buscar o(a) {pet} e devo chegar aí por volta das {hora}. 🚐💛 Pode deixar ele(a) pronto(a) com a guia que eu chego em instantes. Qualquer coisa, me chama por aqui! Até já! 🐶`},
   boletim:{nome:'Boletim do mês',uso:'aba Boletim',texto:`Oi {tutor}! 🐾 O boletim de {mes} do(a) {pet} ficou pronto! 📚💛 Presença de {presenca} e média {media} nas matérias. Estou te mandando o PDF com tudo certinho: brincadeiras, socialização, comportamento e um recado especial da equipe. Ele(a) é um amor com a gente! 🐶`},
   fimDeAno:{nome:'Prospecção de fim de ano',uso:'aba Pets · 🎄',texto:`Oi {tutor}, tudo bem? 🎄🐾 Aqui é da {creche}! Estamos abrindo a agenda de fim de ano e lembramos com carinho do(a) {pet}. As vagas de dezembro e janeiro costumam lotar rápido, então quer que eu já separe os dias dele(a)? Me manda as datas que eu reservo com prioridade. 💛🐶`},
+  /* ===== as três mensagens de cobrança =====
+     Antes elas eram escritas na mão dentro do código e não apareciam na aba
+     Mensagens, então não tinha como mudar o jeito de falar sem mexer no
+     sistema. Agora ficam aqui junto com as outras. */
+  cobrancaCreche:{nome:'Cobrança da creche (fatura do mês)',uso:'aba Cobrança · botão "cobrar"',
+    vars:'{tutor} {pet} {creche} {mes} {dias} {hotel} {itens} {total} {vencimento} {pixChave} {pixTipo} {pixNome}',
+    texto:`Oi {tutor}, tudo bem? 🐾 Passando pra fechar {mes} do(a) {pet}: foram {dias} dias de creche{hotel}, e ele(a) arrasou! 💛
+
+{itens}
+Total: *{total}* (vencimento dia {vencimento})
+
+Pra facilitar, segue o PIX:
+Chave ({pixTipo}): {pixChave}
+Favorecido: {pixNome}
+Valor: {total}
+
+Assim que cair, me avisa por aqui? Qualquer dúvida é só chamar. Obrigada! 😊`},
+  cobrancaHotel:{nome:'Cobrança do hotel (check-out)',uso:'check-out · passo 1',
+    vars:'{tutor} {pet} {creche} {entrada} {saida} {diarias} {desconto} {sinal} {total} {pixChave} {pixTipo} {pixNome}',
+    texto:`Oi {tutor}, tudo bem? 🐾 A estadia do(a) {pet} aqui na {creche} chegou ao fim (de {entrada} a {saida}) e ele(a) foi um amor com a gente! 💛
+
+Fechamos com {diarias}{desconto}, e o valor ficou em *{total}*{sinal}.
+
+Pra facilitar, segue o PIX:
+Chave ({pixTipo}): {pixChave}
+Favorecido: {pixNome}
+Valor: {total}
+
+Assim que cair, me avisa por aqui? Qualquer dúvida é só chamar. Obrigada! 😊`},
+  cobrancaAtraso:{nome:'Segunda cobrança (lembrete de atraso)',uso:'aba Cobrança · botão 🔔 nos vencidos',
+    vars:'{tutor} {pet} {creche} {mes} {total} {vencimento} {dias} {pixChave} {pixTipo} {pixNome}',
+    texto:`Oi {tutor}, tudo bem? 🐾 Passando só pra lembrar que a mensalidade do(a) {pet} de {mes} venceu no dia {vencimento} e ainda está em aberto aqui com a gente ({dias}).
+
+Total: *{total}*
+
+PIX:
+Chave ({pixTipo}): {pixChave}
+Favorecido: {pixNome}
+
+Se você já pagou, me manda o comprovante que eu dou baixa na hora. E se precisar combinar outra data, é só falar que a gente ajeita junto. 💛`},
 };
 /* Dados de demonstração (aparecem só no primeiro uso, antes de você cadastrar) */
 const DEMO_PETS=[]; // sem pets de exemplo: o sistema comeca vazio
@@ -6227,6 +6267,7 @@ document.addEventListener('click',e=>{
   if(b=g('reativar')){reativar(+b.dataset.reativar);return}
   if(b=g('perfil')){fecharMenu();abrirPerfil(+b.dataset.perfil);return}
   if(b=g('cobrar')){fecharMenu();abrirCobrancaCreche(+b.dataset.cobrar,b.dataset.ym);return}
+  if(b=g('lembrar')){fecharMenu();lembrarAtraso(+b.dataset.lembrar,b.dataset.ym);return}
   if(b=g('rdia')){rotaDia=dAdd(rotaDia,+b.dataset.rdia);renderTransporte();return}
   if(b=g('rsel')){rotaDia=b.dataset.rsel;renderTransporte();return}
   if(b=g('rrm')){delete rotas[rotaDia];salvarRotas();renderTransporte();return}
@@ -6285,7 +6326,6 @@ document.addEventListener('click',e=>{
   if(b=g('fatura')){fecharMenu();abrirFatura(+b.dataset.fatura,false,'cobranca');return}
   if(b=g('checkin')){abrirCheckin(+b.dataset.checkin);return}
   if(b=g('pdfpert')){fecharMenu();pdfPertences(reservas.find(x=>x.id===+b.dataset.pdfpert));return}
-  if(b=g('pdfcob')){pdfCobranca(reservas.find(x=>x.id===+b.dataset.pdfcob));return}
   if(b=g('remsg')){fecharMenu();const r=reservas.find(x=>x.id===+b.dataset.remsg);enviarMsg(r,'checkin',zapDe(cfg.zapHotel),MSG_CHECKIN());renderHotel();return}
   if(b=g('tmais')){const r=reservas.find(x=>x.id===+b.dataset.tmais);r.transporteVezes=(r.transporteVezes||0)+1;renderHotel();return}
   if(b=g('tmenos')){const r=reservas.find(x=>x.id===+b.dataset.tmenos);r.transporteVezes=Math.max(0,(r.transporteVezes||0)-1);renderHotel();return}
@@ -7683,7 +7723,7 @@ function renderHotel(){
       <div style="cursor:pointer" data-hperfil="${r.id}"><b class="nome">${h.nome}</b><span class="det">${fmtData(r.checkin)} → ${fmtData(r.checkout)} · ${c.resumoDiarias}${c.transp?` · transporte ${r.transporteVezes}x`:''} · ${h.aluno?'aluno':'visitante'} · tutor ${h.tutor}</span></div>
       <span class="valor">${brl(c.total)}</span>
       <span class="st-pag ${r.pago?'pago':r.naFatura?'junto':'aberto'}">${r.pago?'✓ pago':r.naFatura?'🧾 na fatura do mês':'aguardando pagamento'}</span>
-      <button class="btn-mini" data-fatura="${r.id}">📄 Fatura</button><button class="btn-mini cinza" data-pdfcob="${r.id}">⬇ PDF</button>
+      <button class="btn-mini" data-fatura="${r.id}">📄 Fatura</button>
     </li>`}).join(''):'<li class="nada" style="display:block">Nenhum check-out finalizado ainda.</li>';
 }
 function abrirHMenu(id,btn){
@@ -7726,8 +7766,30 @@ function virarCadastro(o){
   }
   return p;
 }
-/* visitante de hotel ja cadastrado (entrou pela reserva, nao e da creche) */
-const visitantesHotel=()=>pets.filter(p=>p.ativo===false&&tiposDe(p).includes('visitante'));
+/* visitante de hotel ja cadastrado (entrou pela reserva, nao e da creche)
+   Cuidado: existem DOIS jeitos de um hospede virar cadastro, e cada um
+   marcava de um jeito — virarCadastro() poe tipos:['visitante'] e
+   importarVisitantes() poe tipos:['hotel'] com visitante:true. A lista so
+   olhava o primeiro, entao quem entrou pelo outro caminho nunca aparecia e
+   tinha que ser cadastrado de novo a cada hospedagem. Agora vale os dois,
+   e tambem quem ja tem hospedagem no historico.
+   Vem ordenado pela ultima estadia: quem esteve aqui ha pouco fica no topo. */
+function visitantesHotel(){
+  const temHospedagem=id=>{try{return reservas.some(r=>r.petId===id&&r.status!=='cancelado')}catch(e){return false}};
+  return pets
+    .filter(p=>p.ativo===false&&(tiposDe(p).includes('visitante')||tiposDe(p).includes('hotel')||p.visitante===true||temHospedagem(p.id)))
+    .sort((a,b)=>String(ultimaVez(b)||'').localeCompare(String(ultimaVez(a)||''))||a.nome.localeCompare(b.nome));
+}
+/* mesmo cao ja cadastrado? confere nome e, se tiver, telefone do tutor */
+function visitanteParecido(nome,telefone){
+  const n=String(nome||'').trim().toLowerCase();
+  if(n.length<2)return null;
+  const t=String(telefone||'').replace(/\D/g,'');
+  const cand=visitantesHotel().filter(p=>String(p.nome||'').trim().toLowerCase()===n);
+  if(!cand.length)return null;
+  if(t){const exato=cand.find(p=>String(p.telefone||'').replace(/\D/g,'')===t);if(exato)return exato}
+  return cand[0];
+}
 function ehVisitante(r){
   if(!r||!r.petId)return false;
   const p=pets.find(x=>x.id===r.petId);
@@ -7758,6 +7820,8 @@ function abrirReserva(id,diaSugerido){
         </div>
       </div>
       <div id="r-vis" class="${r.petId?'hidden':''}">
+        <!-- avisa quando esse aumigo já ficou aqui, pra não cadastrar de novo -->
+        <div id="r-jatem" class="junta-aviso hidden" style="margin:0 0 12px"></div>
         <div class="tipos-cad">
           <label class="check"><input type="checkbox" id="r-irmao-chk" ${(r.irmaos&&r.irmaos.length)?'checked':''}> 🐶🐕 São irmãos</label>
           <label class="campo-qtd ${(r.irmaos&&r.irmaos.length)?'':'hidden'}" id="r-qtd-box"><span>Quantos aumigos?</span><select id="r-irmao-qtd">${[2,3,4,5,6].map(n=>`<option value="${n}" ${(1+((r.irmaos||[]).length))===n?'selected':''}>${n}</option>`).join('')}</select></label>
@@ -7938,6 +8002,26 @@ function abrirReserva(id,diaSugerido){
   $('#r-tipo-aluno').onclick=()=>escolherTipo('aluno');
   $('#r-tipo-vishot').onclick=()=>escolherTipo('visitante');
   $('#r-tipo-vis').onclick=()=>escolherTipo('novo');
+  /* digitou o nome de um aumigo que já ficou aqui? oferece o cadastro dele
+     em vez de deixar preencher tudo de novo */
+  const usarExistente=p=>{
+    escolherTipo('visitante');
+    const sel=$('#r-pet');if(sel)sel.value=p.id;
+    pintarCaes();prev();
+    toast(p,`Cadastro do(a) ${p.nome} carregado 🧳`,'Tutor, raça, peso e contato vieram junto. Confira as datas.',true);
+  };
+  const conferirRepetido=()=>{
+    const cx=$('#r-jatem');if(!cx)return;
+    const achado=visitanteParecido(($('#r-nome')||{}).value,($('#r-tel')||{}).value);
+    if(!achado){cx.classList.add('hidden');cx.innerHTML='';return}
+    const quando=ultimaVez(achado);
+    cx.innerHTML=`🧳 <b>${achado.nome}</b> já tem cadastro aqui (tutor ${achado.tutor}${quando?` · última vez ${fmtData(quando)}`:''}). `+
+      `<button class="btn-mini" type="button" id="r-usar-esse">Usar o cadastro dele</button>`;
+    cx.classList.remove('hidden');
+    $('#r-usar-esse').onclick=()=>usarExistente(achado);
+  };
+  ['r-nome','r-tel'].forEach(k=>{const el=$('#'+k);if(el)el.addEventListener('input',conferirRepetido)});
+  conferirRepetido();
   ['r-pet','r-peso','r-in','r-out','r-transp'].forEach(x=>$('#'+x).addEventListener('input',prev));
   const selPet=$('#r-pet');
   if(selPet)selPet.addEventListener('change',()=>{pintarCaes();prev()});
@@ -8002,23 +8086,19 @@ function abrirCheckin(id){
 }
 function msgCobrancaNatural(r){
   const c=contaHotel(r);const h=c.h;const px=pixDe(r.pixId||cfg.pixPadrao);
-  const tipo=({email:'e-mail',cpf:'CPF',cnpj:'CNPJ',celular:'celular',aleatoria:'aleatória'})[px.tipo]||px.tipo;
   /* transporte fica de fora: a van é cobrada à parte */
-  const partes=[`${c.n} ${c.n===1?'diária':'diárias'}`];
-  return `Oi ${primeiroNome(h.tutor)}, tudo bem? 🐾 A estadia do(a) ${h.nome} aqui na ${cfg.nome} chegou ao fim (de ${fmtData(r.checkin)} a ${fmtData(r.checkout)}) e ele(a) foi um amor com a gente! 💛
-
-Fechamos com ${partes.join(' + ')}${c.abatimento?`, com desconto de ${brl(c.abatimento)}${r.desconto.motivo?' ('+r.desconto.motivo+')':''}`:''}, e o valor ${r.sinalPago?`ficou em *${brl(c.restante)}* (já descontando o sinal de ${brl(c.sinal)} pago na reserva)`:`total ficou em *${brl(c.restante)}*`}. Estou te mandando junto o PDF com o resumo certinho.
-
-Pra facilitar, segue o PIX:
-Chave (${tipo}): ${px.chave}
-Favorecido: ${px.nome}${px.banco?` · ${px.banco}`:''}
-Valor: ${brl(c.restante)}
-
-Assim que cair, me avisa por aqui? Qualquer dúvida é só chamar. Obrigada! 😊`;
+  return tpl('cobrancaHotel',Object.assign({
+    tutor:primeiroNome(h.tutor), pet:h.nome,
+    entrada:fmtData(r.checkin), saida:fmtData(r.checkout),
+    diarias:`${c.n} ${c.n===1?'diária':'diárias'}`,
+    desconto:c.abatimento?`, com desconto de ${brl(c.abatimento)}${r.desconto.motivo?' ('+r.desconto.motivo+')':''}`:'',
+    sinal:r.sinalPago?` (já descontando o sinal de ${brl(c.sinal)} pago na reserva)`:'',
+    total:brl(c.restante)
+  },varsPix(px)));
 }
 function msgCobranca(r){
   const c=contaHotel(r);const px=pixDe(r.pixId||cfg.pixPadrao);
-  return `💳 *Cobrança da hospedagem de ${c.h.nome}* (${fmtData(r.checkin)} a ${fmtData(r.checkout)})\n${r.sinalPago?'Restante a pagar':'Total'}: *${brl(c.restante)}*\n\nPIX (${px.nome}${px.banco?' · '+px.banco:''}):\n${px.chave}\n\nO PDF da cobrança segue em anexo. Obrigado! 🐾💛`;
+  return `💳 *Cobrança da hospedagem de ${c.h.nome}* (${fmtData(r.checkin)} a ${fmtData(r.checkout)})\n${r.sinalPago?'Restante a pagar':'Total'}: *${brl(c.restante)}*\n\nPIX (${px.nome}${px.banco?' · '+px.banco:''}):\n${px.chave}\n\nObrigado! 🐾💛`;
 }
 function msgFatura(r){
   const c=contaHotel(r);const h=c.h;
@@ -8057,7 +8137,6 @@ function abrirFatura(id,checkoutAgora,etapa){
       <div class="campo" style="margin-top:12px"><label for="ft-msg">Mensagem de cobrança (já vai com o PIX)</label><textarea id="ft-msg" style="min-height:150px">${msgCobrancaNatural(r)}</textarea></div>
       ${r.naFatura?`<div class="junta-aviso">🧾 Esta hospedagem (${brl(c.restante)}) entra na fatura de ${NOMES_MES[+MES.split('-')[1]-1]} do(a) ${h.nome}, junto com a creche. A cobrança sai lá no fim do mês, em Financeiro.${h.p?` <button class="btn-mini" data-cobrar="${h.p.id}" data-ym="${MES}">Ver a fatura do mês</button>`:''}</div>`
       :`<div class="etapas">
-        <button class="btn pdf" id="ft-pdf">📄 Baixar PDF da cobrança</button>
         ${h.telefone?`<button class="btn zap" id="ft-cobrar">${ICO_ZAP} Enviar cobrança no WhatsApp ${feitoCob?'✓':''}</button>`:`<div class="nota" style="color:var(--vermelho-txt)">Tutor sem WhatsApp cadastrado — edite a reserva pra enviar.</div>`}
       </div>`}
       ${r.status==='finalizado'
@@ -8093,7 +8172,6 @@ function abrirFatura(id,checkoutAgora,etapa){
     $('#ft-zap').onchange=()=>{r.zapCobranca=+$('#ft-zap').value};
     const jt=$('#ft-junta');if(jt)jt.onchange=()=>{r.naFatura=jt.checked;r.faturaYm=MES;if(r.naFatura)r.pago=false;salvarHotel();render();abrirFatura(id,checkoutAgora,'cobranca')};
     if(pode('descontos'))ligarDesconto('ft-desc',c.bruto,d=>{r.desconto=d;salvarHotel();abrirFatura(id,checkoutAgora,'cobranca')});
-    const bpdf2=$('#ft-pdf');if(bpdf2)bpdf2.onclick=()=>{r.pixId=+$('#ft-pix').value;pdfCobranca(r,r.pixId)};
     const bc=$('#ft-cobrar');if(bc)bc.onclick=()=>{r.pixId=+$('#ft-pix').value;r.zapCobranca=+$('#ft-zap').value;marcar('cobranca',zapDe(r.zapCobranca));r.cobrancaEnviada=HOJE;salvarHotel();abrirZap(h.telefone,$('#ft-msg').value,{tipo:'cobranca',pet:h.nome,petId:r.petId,via:zapDe(r.zapCobranca).nome,tel:h.telefone});bc.innerHTML=`${ICO_ZAP} Enviar cobrança no WhatsApp ✓`;toast(h.p||{raca:h.raca},'Cobrança aberta no WhatsApp 💬','A mensagem também foi copiada — se precisar, é só colar.',true)};
     const bs2=$('#ft-sim2');if(bs2)bs2.onclick=()=>{r.etapaCheckout='checkout';salvarHotel();abrirFatura(id,true,'checkout')};
     const bs=$('#ft-sim');if(bs)bs.onclick=()=>{r.pixId=+$('#ft-pix').value;r.zapCobranca=+$('#ft-zap').value;r.pago=true;r.pagoEm=HOJE;r.etapaCheckout='checkout';salvarHotel();abrirFatura(id,true,'checkout')};
@@ -8766,21 +8844,52 @@ function itensCreche(p,ym){
   if(m.abatimento)it.push({desc:true,d:`Desconto${m.desconto.motivo?' · '+m.desconto.motivo:''}${m.desconto.tipo==='%'?` (${m.desconto.valor}%)`:''}`,q:1,v:-m.abatimento,t:-m.abatimento});
   return {it,total:m.total,m};
 }
+/* nome da chave PIX do jeito que o tutor entende */
+const pixTipoTxt=px=>({email:'e-mail',cpf:'CPF',cnpj:'CNPJ',celular:'celular',aleatoria:'aleatória'})[px.tipo]||px.tipo;
+const varsPix=px=>({pixTipo:pixTipoTxt(px),pixChave:px.chave,pixNome:px.nome+(px.banco?` · ${px.banco}`:''),pixBanco:px.banco||''});
 function msgCobrancaCreche(p,ym){
   const _h=hospedagensNaFatura(p,ym).length;
   const {it,total,m}=itensCreche(p,ym);const px=pixDe((p.cobrancas[ym]||{}).pixId||cfg.pixPadrao);
-  const tipo=({email:'e-mail',cpf:'CPF',cnpj:'CNPJ',celular:'celular',aleatoria:'aleatória'})[px.tipo]||px.tipo;
-  return `Oi ${primeiroNome(p.tutor)}, tudo bem? 🐾 Passando pra fechar ${_h?'o mês':'a creche'} do(a) ${p.nome} em ${NOMES_MES[+ym.split('-')[1]-1]}: foram ${m.vindas} ${m.vindas===1?'dia':'dias'} de creche${_h?` e ${_h} ${_h===1?'hospedagem no hotel':'hospedagens no hotel'}`:''}, e ele(a) arrasou! 💛
-
-${it.map(x=>x.hotel?`• ${x.d}: ${brl(x.t)}`:x.desc?`• ${x.d}: − ${brl(-x.t)}`:`• ${x.d}: ${x.q>1||p.plano==='avulso'?`${x.q} × ${brl(x.v)} = `:''}${brl(x.t)}`).join('\n')}
-Total: *${brl(total)}* (vencimento dia ${p.pagamentoDia})
-
-Estou te mandando junto o PDF com o resumo e, pra facilitar, segue o PIX:
-Chave (${tipo}): ${px.chave}
-Favorecido: ${px.nome}${px.banco?` · ${px.banco}`:''}
-Valor: ${brl(total)}
-
-Assim que cair, me avisa por aqui? Qualquer dúvida é só chamar. Obrigada! 😊`;
+  return tpl('cobrancaCreche',Object.assign({
+    tutor:primeiroNome(p.tutor), pet:nomeCompleto(p),
+    mes:NOMES_MES[+ym.split('-')[1]-1],
+    dias:m.vindas,
+    hotel:_h?` e ${_h} ${_h===1?'hospedagem no hotel':'hospedagens no hotel'}`:'',
+    itens:it.map(x=>x.hotel?`• ${x.d}: ${brl(x.t)}`:x.desc?`• ${x.d}: − ${brl(-x.t)}`:`• ${x.d}: ${x.q>1||p.plano==='avulso'?`${x.q} × ${brl(x.v)} = `:''}${brl(x.t)}`).join('\n'),
+    total:brl(total), vencimento:p.pagamentoDia
+  },varsPix(px)));
+}
+/* quando saiu o último lembrete de atraso deste mês (pra não mandar duas
+   vezes no mesmo dia sem perceber) */
+function lembreteEnviado(p,ym){return ((p.cobrancas||{})[ym||MES]||{}).lembrete||null}
+/* segunda cobrança: abre o WhatsApp com o lembrete e anota no histórico */
+function lembrarAtraso(id,ym){
+  const p=pets.find(x=>x.id===id);if(!p)return;
+  ym=ym||mesACobrar();
+  if(!p.telefone){toast(p,'Sem WhatsApp','Cadastre o telefone do tutor pra mandar o lembrete.');abrirEditar(id);return}
+  const ja=lembreteEnviado(p,ym);
+  const manda=()=>{
+    p.cobrancas[ym]=Object.assign(p.cobrancas[ym]||{},{lembrete:HOJE});
+    p.log=p.log||[];p.log.push({d:HOJE,h:horaAgora(),ico:'🔔',txt:`Lembrete de atraso de ${ymNome(ym)} enviado`});
+    marcarAtencao(p.id,ym,'aguardando');
+    salvar();
+    enviarEscolhendo(p,msgCobrancaAtraso(p,ym),{tipo:'cobrancaAtraso',pet:p.nome,petId:p.id,via:zapDe(cfg.zapCobranca).nome,tel:p.telefone},'cobranca');
+    render();
+    toast(p,'Lembrete aberto no WhatsApp 🔔','A mensagem também foi copiada — se precisar, é só colar.',true);
+  };
+  if(ja===HOJE){confirmar({titulo:'Já mandou hoje',texto:`O lembrete de atraso do(a) ${p.nome} já saiu hoje. Mandar de novo?`,botao:'Mandar de novo',onOk:manda});return}
+  manda();
+}
+function msgCobrancaAtraso(p,ym){
+  ym=ym||mesACobrar();
+  const total=resumoMes(p,ym).total;const px=pixDe((p.cobrancas[ym]||{}).pixId||cfg.pixPadrao);
+  const d=diasDesde(diaVencimento(p,ym));
+  return tpl('cobrancaAtraso',Object.assign({
+    tutor:primeiroNome(p.tutor), pet:nomeCompleto(p),
+    mes:NOMES_MES[+ym.split('-')[1]-1],
+    total:brl(total), vencimento:p.pagamentoDia,
+    dias:d<=0?'vence hoje':d===1?'há 1 dia':`há ${d} dias`
+  },varsPix(px)));
 }
 function pdfCobrancaCreche(p,ym,pixId){
   if(!temPdf())return;
@@ -8829,8 +8938,8 @@ function abrirCobrancaCreche(id,ym){
       ${pode('descontos')?campoDesconto('cc-desc',(p.cobrancas[ym]||{}).desconto||p.descontoFixo,resumoMes(p,ym).bruto):''}
       <div class="campo" style="margin-top:12px"><label for="cc-msg">Mensagem de cobrança (já vai com o PIX)</label><textarea id="cc-msg" style="min-height:150px">${msgCobrancaCreche(p,ym)}</textarea></div>
       <div class="etapas">
-        <button class="btn pdf" id="cc-pdf">📄 Baixar PDF da cobrança</button>
         ${p.telefone?`<button class="btn zap" id="cc-zapbtn">${ICO_ZAP} Enviar cobrança no WhatsApp ${cob.enviada?'✓':''}</button>`:`<div class="nota" style="color:var(--vermelho-txt)">Tutor sem WhatsApp cadastrado.</div>`}
+        ${(!pago&&p.telefone&&mesCobravel(ym)&&jaVenceu(p,ym))?`<button class="btn cinza" id="cc-lembrar">🔔 Segunda cobrança · lembrar do atraso${cob.lembrete?` (último: ${fmtData(cob.lembrete)})`:''}</button>`:''}
       </div>
       <div class="pago-q"><b>${pago?`Pago ✓${p.pagamentos[ym+'_em']?' em '+fmtData(p.pagamentos[ym+'_em']):''}`:'Já foi pago?'}</b><div class="duplo">${pago?`<button class="btn cinza" id="cc-desf">Desmarcar pagamento</button>`:`<button class="btn verde" id="cc-sim">✓ Sim, recebido</button><button class="btn cinza" id="cc-nao">Ainda não</button>`}</div></div>
     </div>
@@ -8839,7 +8948,7 @@ function abrirCobrancaCreche(id,ym){
   const salvarCob=()=>{p.cobrancas[ym]=Object.assign(p.cobrancas[ym]||{},{pixId:+$('#cc-pix').value,zapId:+$('#cc-zap').value})};
   if(pode('descontos'))ligarDesconto('cc-desc',resumoMes(p,ym).bruto,d=>{p.cobrancas[ym]=Object.assign(p.cobrancas[ym]||{},{desconto:d});salvar();const nt=itensCreche(p,ym);$('#cc-msg').value=msgCobrancaCreche(p,ym);const tot=$('.modal.fatura tr.tot td.r');if(tot)tot.textContent=brl(nt.total)});
   $('#cc-pix').onchange=()=>{salvarCob();$('#cc-msg').value=msgCobrancaCreche(p,ym)};
-  $('#cc-pdf').onclick=()=>{salvarCob();pdfCobrancaCreche(p,ym,+$('#cc-pix').value)};
+  const bl=$('#cc-lembrar');if(bl)bl.onclick=()=>{salvarCob();fecharModal();lembrarAtraso(p.id,ym)};
   const bz=$('#cc-zapbtn');if(bz)bz.onclick=()=>{salvarCob();p.cobrancas[ym].enviada=HOJE;render();enviarEscolhendo(p,$('#cc-msg').value,{tipo:'cobranca',pet:p.nome,petId:p.id,via:zapDe(+$('#cc-zap').value).nome,tel:p.telefone},'cobranca');bz.innerHTML=`${ICO_ZAP} Enviar cobrança no WhatsApp ✓`;toast(p,'Cobrança aberta no WhatsApp 💬','A mensagem também foi copiada — se precisar, é só colar.',true)};
   const bs=$('#cc-sim');if(bs)bs.onclick=()=>{salvarCob();p.pagamentos[ym]=true;p.pagamentos[ym+'_em']=HOJE;
     const rc=cicloDe(p);p.pagamentos[rc.chave]=true;p.pagamentos[rc.chave+'_em']=HOJE;   // renova o pacote
@@ -8899,12 +9008,16 @@ function renderCobranca(){
     <div class="stat ag"><b>${brl(soma(aVencer))}</b><span>A vencer</span></div>
     <div class="stat fa"><b>${brl(soma(vencidos))}</b><span>Vencidos</span></div>
     <div class="stat pr"><b>${brl(soma(pagos))}</b><span>Recebido</span></div>`;
-  const linha=(x,tipo)=>`<li class="cob ${tipo}">
+  /* nos vencidos entra o 🔔: a segunda cobrança, lembrando do atraso */
+  const linha=(x,tipo)=>{
+    const d=diasDesde(diaVencimento(x.p,ym));
+    return `<li class="cob ${tipo}">
       <span class="mini">${avatar(x.p)}</span>
-      <div class="cob-i"><b>${nomeCompleto(x.p)}</b><span>${x.p.tutor}${temDois(x.p)?' e '+(x.p.dono2.nome||'2º dono'):''}${x.p.telefone?' · '+telFmt(x.p.telefone):''} · vence dia ${x.p.pagamentoDia}</span></div>
+      <div class="cob-i"><b>${nomeCompleto(x.p)}</b><span>${x.p.tutor}${temDois(x.p)?' e '+(x.p.dono2.nome||'2º dono'):''}${x.p.telefone?' · '+telFmt(x.p.telefone):''} · vence dia ${x.p.pagamentoDia}${tipo==='atrasado'?` · <b style="color:var(--vermelho-txt)">${d===1?'1 dia de atraso':d+' dias de atraso'}</b>`:''}${lembreteEnviado(x.p,ym)?` · 🔔 lembrado ${fmtData(lembreteEnviado(x.p,ym))}`:''}</span></div>
       <b class="cob-v">${brl(x.m.total)}</b>
+      ${tipo==='atrasado'&&!x.pago&&x.p.telefone?`<button class="btn-mini" data-lembrar="${x.p.id}" data-ym="${ym}" title="Segunda cobrança: lembrete de atraso">🔔 lembrar</button>`:''}
       <button class="btn-mini" data-cobrar="${x.p.id}" data-ym="${ym}">${x.pago?'ver':'cobrar'}</button>
-    </li>`;
+    </li>`};
   const põe=(id,lista,tipo,vazio)=>{
     $(id).innerHTML=lista.length?lista.sort((a,b)=>a.p.pagamentoDia-b.p.pagamentoDia).map(x=>linha(x,tipo)).join('')
       :`<li class="cob-vazio">${vazio}</li>`;
@@ -9030,11 +9143,14 @@ function enviarParabens(id){const p=pets.find(x=>x.id===id);abrirZapPet(p,tpl('a
 function renderMensagens(){
   const chaves=Object.keys(TEMPLATES_PADRAO);
   $('#ms-templates').innerHTML=chaves.map(k=>{const t=TEMPLATES_PADRAO[k];const atual=(cfg.templates&&cfg.templates[k])||t.texto;const mudou=cfg.templates&&cfg.templates[k]&&cfg.templates[k]!==t.texto;
-    return `<div class="tpl"><div class="tpl-h"><b>${t.nome}</b><small>${t.uso}</small>${mudou?'<span class="edit-tag">editado</span>':''}</div><textarea data-tpl="${k}">${atual}</textarea><div class="tpl-a"><button class="btn-mini" data-tplsave="${k}">Salvar</button><button class="btn-mini cinza" data-tplreset="${k}">Restaurar padrão</button></div></div>`}).join('');
+    return `<div class="tpl"><div class="tpl-h"><b>${t.nome}</b><small>${t.uso}</small>${mudou?'<span class="edit-tag">editado</span>':''}</div><textarea data-tpl="${k}">${atual}</textarea>${t.vars?`<small style="display:block;margin:6px 0 0;font-size:11px;font-weight:700;color:#A38560">O sistema troca sozinho: ${t.vars}</small>`:''}<div class="tpl-a"><button class="btn-mini" data-tplsave="${k}">Salvar</button><button class="btn-mini cinza" data-tplreset="${k}">Restaurar padrão</button></div></div>`}).join('');
   const ativosL=ativos();
-  $('#ms-envio').innerHTML=`<div class="campo"><label>Enviar agora pra um tutor</label><div class="row3"><select id="ms-pet">${ativosL.map(p=>`<option value="${p.id}">${p.nome} · ${p.tutor}${p.telefone?'':' (sem WhatsApp)'}</option>`).join('')}</select><select id="ms-tpl">${chaves.filter(k=>!['checkin','checkout'].includes(k)).map(k=>`<option value="${k}">${TEMPLATES_PADRAO[k].nome}</option>`).join('')}</select><button class="btn zap" id="ms-go" style="margin:0;padding:10px;font-size:14px">${ICO_ZAP} Abrir no WhatsApp</button></div></div>`;
+  /* as de cobrança não entram no envio avulso: elas precisam do mês, dos
+     itens e do total, que só existem quando você abre a fatura */
+  const soltas=chaves.filter(k=>!['checkin','checkout','cobrancaCreche','cobrancaHotel','cobrancaAtraso'].includes(k));
+  $('#ms-envio').innerHTML=`<div class="campo"><label>Enviar agora pra um tutor</label><div class="row3"><select id="ms-pet">${ativosL.map(p=>`<option value="${p.id}">${p.nome} · ${p.tutor}${p.telefone?'':' (sem WhatsApp)'}</option>`).join('')}</select><select id="ms-tpl">${soltas.map(k=>`<option value="${k}">${TEMPLATES_PADRAO[k].nome}</option>`).join('')}</select><button class="btn zap" id="ms-go" style="margin:0;padding:10px;font-size:14px">${ICO_ZAP} Abrir no WhatsApp</button></div><small style="display:block;margin-top:6px;font-size:12px;font-weight:700;color:#A38560">💳 As mensagens de cobrança saem pela aba Cobrança e pelo check-out — é lá que elas têm os valores.</small></div>`;
   $('#ms-go').onclick=()=>{const p=pets.find(x=>x.id===+$('#ms-pet').value);const k=$('#ms-tpl').value;if(!p.telefone){toast(p,'Sem WhatsApp','Cadastre o telefone do tutor.');return}abrirZapPet(p,tpl(k,varsPet(p)),{tipo:k,pet:p.nome,petId:p.id,via:zapDe(cfg.zapHotel).nome,tel:p.telefone});renderMensagens()};
-  const nomes={checkin:'Check-in',checkout:'Check-out',cobranca:'Cobrança',pix:'PIX',foto:'Foto do dia',aniversario:'Aniversário',ausencia:'Saudade',oferta:'Oferta',recuperacao:'Recuperação',vanACaminho:'Van a caminho',midia:'Foto do dia',inativo:'Inativo',renovacao:'Renovação do plano',frequencia:'Queda de frequência',ocorrencia:'Ocorrência',boletim:'Boletim',fimDeAno:'Fim de ano'};
+  const nomes={checkin:'Check-in',checkout:'Check-out',cobranca:'Cobrança',cobrancaAtraso:'🔔 Lembrete de atraso',pix:'PIX',foto:'Foto do dia',aniversario:'Aniversário',ausencia:'Saudade',oferta:'Oferta',recuperacao:'Recuperação',vanACaminho:'Van a caminho',midia:'Foto do dia',inativo:'Inativo',renovacao:'Renovação do plano',frequencia:'Queda de frequência',ocorrencia:'Ocorrência',boletim:'Boletim',fimDeAno:'Fim de ano'};
   $('#ms-hist').innerHTML=msgLog.length?`<tr><th>Quando</th><th>Pet</th><th>Mensagem</th><th>Saiu pelo</th></tr>`+msgLog.slice(0,60).map(m=>`<tr><td>${fmtData(m.quando)} ${m.hora||''}</td><td>${m.pet||'—'}</td><td>${nomes[m.tipo]||m.tipo}</td><td>${m.via||'—'}</td></tr>`).join(''):'<tr><td style="text-align:center;color:#A38560">Nenhuma mensagem registrada ainda.</td></tr>';
   const ult=pets.map(p=>{const m=msgLog.find(x=>x.petId===p.id||x.pet===p.nome);const d=m?Math.round((new Date(HOJE+'T12:00:00')-new Date(m.quando+'T12:00:00'))/86400000):null;return {p,m,d}}).sort((a,b)=>(a.d===null?999:a.d)-(b.d===null?999:b.d)).reverse();
   $('#ms-ult').innerHTML=`<tr><th>Pet</th><th>Tutor</th><th>Último contato</th><th></th></tr>`+ult.map(({p,m,d})=>`<tr><td>${p.nome}${p.ativo===false?' <small>(cancelou)</small>':''}</td><td>${p.tutor}${p.telefone?'':' ⚠'}</td><td>${m?`${fmtData(m.quando)} · ${nomes[m.tipo]||m.tipo} (${d===0?'hoje':d+' dias'})`:'<span style="color:var(--vermelho-txt)">nunca</span>'}</td><td>${p.telefone?`<a class="tel-zap" style="padding:5px 10px;font-size:12px" href="${wa(p.telefone,`Oi ${primeiroNome(p.tutor)}! Aqui é da ${cfg.nome} 🐾`)}" target="_blank" rel="noopener">${ICO_ZAP} Abrir</a>`:''}</td></tr>`).join('');
@@ -10351,7 +10467,18 @@ function registrarSW(){
     reg.addEventListener('updatefound',()=>{const nv=reg.installing;if(!nv)return;
       nv.addEventListener('statechange',()=>{if(nv.state==='installed'&&navigator.serviceWorker.controller)avisarAtualizacao(reg)})});
   }).catch(()=>{});
-  let recarregou=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(recarregou)return;recarregou=true;location.reload()});
+  /* Só recarrega quando um service worker NOVO substitui um que já estava
+     mandando na página — ou seja, quando saiu atualização de verdade.
+     Na primeira visita o worker nasce e assume o controle na hora, e isso
+     também dispara o controllerchange: a página recarregava sozinha no meio
+     do login, voltava pra tela de conectar e parecia que o app tinha
+     travado. No celular era pior, porque o worker demora mais pra assumir. */
+  const jaTinhaWorker=!!navigator.serviceWorker.controller;
+  let recarregou=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(!jaTinhaWorker)return;                 // primeira instalação: não mexe na página
+    if(recarregou)return;recarregou=true;location.reload();
+  });
 }
 function avisarAtualizacao(reg){
   const el=document.createElement('div');el.className='toast';
@@ -10660,7 +10787,13 @@ function telaNuvem(erro){
   };
   document.getElementById('nv-entrar').onclick=entrar;
   el.addEventListener('keydown',e=>{if(e.key==='Enter')entrar()});
-  document.getElementById('nv-offline').onclick=()=>{el.remove();document.body.classList.remove('travado');bootLocal()};
+  /* a escolha de trabalhar sem nuvem vale enquanto esta aba estiver aberta:
+     se a página recarregar (atualização, o navegador enxugando memória), ela
+     não volta pra tela de conectar. Fechou e abriu de novo, pergunta outra vez. */
+  document.getElementById('nv-offline').onclick=()=>{
+    try{sessionStorage.setItem('petfarm.semNuvem','1')}catch(e){}
+    el.remove();document.body.classList.remove('travado');bootLocal();
+  };
 }
 /* ---------- inicialização ---------- */
 function bootLocal(){migrarParaUnidades();iniciar();iniciarPwa();iniciarAuth();try{vigiarTeclado()}catch(e){}}
@@ -10685,7 +10818,10 @@ async function bootPetFarm(){
   const cli=nuvemCliente();
   if(!cli){bootLocal();return}                       // sem internet no primeiro carregamento: segue local
   let sess=null;try{sess=(await cli.auth.getSession()).data.session}catch(e){}
-  if(sess)await bootNuvemOk();else telaNuvem();
+  if(sess){await bootNuvemOk();return}
+  let semNuvem=false;try{semNuvem=sessionStorage.getItem('petfarm.semNuvem')==='1'}catch(e){}
+  if(semNuvem){bootLocal();return}                   // já tinha escolhido trabalhar sem nuvem nesta aba
+  telaNuvem();
 }
 /* ---------- ganchos no app ---------- */
 window.addEventListener('load',()=>{
