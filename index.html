@@ -3,6 +3,84 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+/* ===== Pet Farm · caça-erro =====
+   Antes, qualquer erro de JavaScript deixava a tela BRANCA e ninguém tinha
+   como saber o que aconteceu — principalmente no celular, onde não dá pra
+   abrir o console. Agora o erro aparece na tela, com o aparelho e o
+   navegador, e tem um botão que copia tudo pra mandar no WhatsApp.
+   Precisa ficar aqui no topo do arquivo pra pegar erro de qualquer script. */
+(function(){
+  var vistos={}, lista=[];
+  function dados(){
+    return ['Pet Farm · erro','Quando: '+new Date().toLocaleString('pt-BR'),
+            'Aparelho: '+navigator.userAgent,
+            'Tela: '+screen.width+'x'+screen.height+' · janela '+innerWidth+'x'+innerHeight,
+            'Endereço: '+location.href,''].concat(lista).join('\n');
+  }
+  function painel(){
+    var el=document.getElementById('erro-fatal');
+    if(el)return el;
+    if(!document.body)return null;
+    el=document.createElement('div');
+    el.id='erro-fatal';
+    el.setAttribute('style','position:fixed;inset:0;z-index:2147483647;background:#FFF9EF;color:#3B2B17;'+
+      'font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:20px 16px;overflow:auto;-webkit-overflow-scrolling:touch');
+    el.innerHTML='<div style="max-width:560px;margin:0 auto">'+
+      '<div style="font-size:40px;text-align:center">🐕‍🦺</div>'+
+      '<h1 style="font-size:20px;margin:8px 0 4px;text-align:center">O Pet Farm travou aqui</h1>'+
+      '<p style="text-align:center;margin:0 0 16px;color:#8A6F4A">Nada foi perdido. Manda esta tela pra gente que a gente conserta.</p>'+
+      '<pre id="erro-fatal-txt" style="white-space:pre-wrap;word-break:break-word;background:#F6EBDD;border:1px solid #E8D5B5;'+
+      'border-radius:10px;padding:12px;font-size:12px;margin:0 0 14px"></pre>'+
+      '<button id="erro-fatal-copiar" style="width:100%;padding:14px;border:0;border-radius:12px;background:#F6C445;'+
+      'color:#3B2B17;font-weight:800;font-size:15px;margin-bottom:8px">📋 Copiar pra mandar no WhatsApp</button>'+
+      '<button id="erro-fatal-recarregar" style="width:100%;padding:14px;border:0;border-radius:12px;background:#3B2B17;'+
+      'color:#fff;font-weight:800;font-size:15px;margin-bottom:8px">🔄 Tentar de novo</button>'+
+      '<button id="erro-fatal-ignorar" style="width:100%;padding:12px;border:1px solid #E8D5B5;border-radius:12px;'+
+      'background:transparent;color:#8A6F4A;font-weight:700;font-size:14px">Continuar assim mesmo</button></div>';
+    document.body.appendChild(el);
+    el.querySelector('#erro-fatal-copiar').onclick=function(){
+      var t=dados(), b=this;
+      function ok(){b.textContent='✓ Copiado! Agora é só colar no WhatsApp'}
+      try{
+        if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,antigo)}
+        else antigo();
+      }catch(e){antigo()}
+      function antigo(){
+        try{var a=document.createElement('textarea');a.value=t;a.setAttribute('style','position:fixed;opacity:0');
+          document.body.appendChild(a);a.select();document.execCommand('copy');a.remove();ok()}
+        catch(e2){b.textContent='Não deu pra copiar — tira um print da tela'}
+      }
+    };
+    el.querySelector('#erro-fatal-recarregar').onclick=function(){location.reload()};
+    el.querySelector('#erro-fatal-ignorar').onclick=function(){el.remove()};
+    return el;
+  }
+  function anotar(txt){
+    if(!txt)return;
+    if(vistos[txt])return; vistos[txt]=1;          // o mesmo erro não repete na lista
+    lista.push(txt);
+    var mostra=function(){
+      var el=painel(); if(!el)return;
+      var pre=el.querySelector('#erro-fatal-txt'); if(pre)pre.textContent=dados();
+    };
+    if(document.body)mostra();
+    else document.addEventListener('DOMContentLoaded',mostra);
+  }
+  window.PETFARM_ERRO=anotar;                      // pra usar em try/catch do app
+  window.addEventListener('error',function(e){
+    if(e.target&&e.target!==window&&e.target.tagName){ // arquivo que não carregou (script, imagem)
+      anotar('Não carregou: '+(e.target.src||e.target.href||e.target.tagName));return;
+    }
+    anotar((e.message||'Erro')+'\n'+(e.filename||'')+(e.lineno?' linha '+e.lineno:'')+
+           ((e.error&&e.error.stack)?'\n'+String(e.error.stack).split('\n').slice(0,4).join('\n'):''));
+  },true);
+  window.addEventListener('unhandledrejection',function(e){
+    var r=e.reason;
+    anotar('Promessa não tratada: '+((r&&(r.stack||r.message))||String(r)));
+  });
+})();
+</script>
 <title>Pet Farm · Creche e Hotel</title>
 <meta name="description" content="Chamada, hotel, transporte, financeiro e mensagens da Pet Farm.">
 <link rel="manifest" href="./manifest.webmanifest">
@@ -5191,22 +5269,23 @@ const doMes=(arr,ym=MES)=>arr.filter(d=>d.startsWith(ym));
 /* a Pet Farm começou a usar o sistema em setembro/2026: cobrança de mês
    anterior não pode aparecer como vencida. Dá pra mudar em cfg.inicioCobranca. */
 /* ====== quando vence a cobranca de um mes ======
-   A Pet Farm cobra o mes FECHADO: o que o aumigo usou em agosto e cobrado
-   no dia de pagamento de SETEMBRO. Antes o sistema tratava o mes corrente
-   como o mes a cobrar, entao agosto ja nascia vencido no dia 1o de setembro. */
+   A Pet Farm cobra PRA USAR, nao depois de usar: a mensalidade de setembro
+   vence no dia de pagamento de SETEMBRO mesmo, antes do aumigo usar o mes.
+   Antes o sistema cobrava o mes fechado (setembro so vencia em outubro),
+   que e o contrario do combinado com o cliente. */
 const mesSeguinte=ym=>ymAdd(ym,1);
 function diaVencimento(p,ym){
-  const prox=mesSeguinte(ym);
-  const [y,m]=prox.split('-').map(Number);
+  ym=ym||MES;
+  const [y,m]=ym.split('-').map(Number);
   const ultimo=new Date(y,m,0).getDate();          // 28, 29, 30 ou 31
-  return prox+'-'+pad(Math.min(p&&p.pagamentoDia||10,ultimo));
+  return ym+'-'+pad(Math.min(p&&p.pagamentoDia||10,ultimo));
 }
 /* ja passou do dia de pagar? */
 const jaVenceu=(p,ym)=>HOJE>diaVencimento(p,ym);
 const venceHojeMesmo=(p,ym)=>HOJE===diaVencimento(p,ym);
-/* qual mes esta sendo cobrado agora: o passado */
-const mesACobrar=()=>ymAdd(MES,-1);
-const INICIO_COBRANCA='2026-08';                   // agosto e o 1o mes cobrado (vence em setembro)
+/* qual mes esta sendo cobrado agora: o proprio mes corrente, adiantado */
+const mesACobrar=()=>MES;
+const INICIO_COBRANCA='2026-09';                   // setembro e o 1o mes cobrado (e vence em setembro)
 const inicioCobranca=()=>((typeof cfg!=='undefined'&&cfg.inicioCobranca)||INICIO_COBRANCA).slice(0,7);
 const mesCobravel=ym=>(ym||MES)>=inicioCobranca();
 function cicloDe(p,ref){
@@ -5255,7 +5334,10 @@ function resumoMes(p,ym=MES){
   const transpVezes=doMes(p.transportes,ym).length;
   const hosp=hospedagensNaFatura(p,ym);
   const valorHotel=hosp.reduce((a,r)=>a+contaHotel(r).restante,0);
-  const bruto=valorPlano+transpVezes*transp+valorHotel;const desconto=descontoDe(p,ym);const abat=calcDesc(desconto,bruto);
+  /* o transporte NAO entra na cobranca: a van e cobrada a parte e o controle
+     dela fica em Financeiro do Transporte. transpVezes/valorTransp continuam
+     calculados porque aquela tela, o boletim e os relatorios usam. */
+  const bruto=valorPlano+valorHotel;const desconto=descontoDe(p,ym);const abat=calcDesc(desconto,bruto);
   return {vindas,faltas,meta:combinado?0:meta,diaria,extras:combinado?0:extras,combinado,transp,transpVezes,valorPlano,valorTransp:transpVezes*transp,hosp,valorHotel,bruto,desconto,abatimento:abat,total:Math.max(0,bruto-abat)};
 }
 let filtro='todos', busca='', porte='', planoF='';
@@ -5604,10 +5686,20 @@ function lerFoto(file,tam,cb){
     img.src=src;};
   const fr=new FileReader();fr.onload=()=>done(fr.result);fr.onerror=()=>toast(pets[0]||{raca:'golden'},'Erro ao ler a foto','Tente novamente.');fr.readAsDataURL(file);
 }
+/* navegador de dentro de outro aplicativo (o link aberto no WhatsApp, no
+   Instagram, no Gmail). No Android isso é uma WebView: não instala na tela
+   inicial, muitas vezes não salva nada e não consegue abrir o WhatsApp de
+   volta — é o caso mais comum de "no meu celular não abre". */
+function navegadorDeApp(){
+  const ua=navigator.userAgent||'';
+  return /; wv\)|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger|GSA\//.test(ua)
+      || (/Android/.test(ua)&&/Version\/[\d.]+ Chrome/.test(ua));   // WebView antiga
+}
 function checarAmbiente(){
   const avisos=[];
   let ls=true;try{localStorage.setItem('petcall.t','1');localStorage.removeItem('petcall.t')}catch(e){ls=false}
   if(window.self!==window.top)avisos.push('Pré-visualização: fotos, PDFs e WhatsApp ficam bloqueados aqui. Abra o Pet Farm no Chrome ou Safari (ou instale na tela inicial) pra usar tudo.');
+  else if(navegadorDeApp())avisos.push('Você abriu o Pet Farm por dentro de outro aplicativo. Toque nos três pontinhos ⋮ e escolha "Abrir no Chrome" — aqui dentro as fotos, os PDFs e o WhatsApp não funcionam, e às vezes nada fica salvo.');
   else if(!ls)avisos.push('Este navegador não está salvando dados (modo anônimo ou restrito). Fotos e marcações somem ao fechar a página.');
   if(avisos.length){$('#aviso-txt').textContent=avisos[0];$('#aviso-ambiente').classList.remove('hidden')}
 }
@@ -6342,7 +6434,6 @@ function pdfCobranca(r,pixId){
   y+=8;doc.setFont('helvetica','normal');doc.setFontSize(10);
   const row=(a,b,cc,d,bold)=>{doc.setFont('helvetica',bold?'bold':'normal');doc.text(a,col[0]+2,y+6);doc.text(String(b),col[1],y+6,{align:'right'});doc.text(cc,col[2]+12,y+6,{align:'right'});doc.text(d,196,y+6,{align:'right'});doc.setDrawColor(232,213,181);doc.line(14,y+9,196,y+9);y+=9};
   row(`Diaria ${h.aluno?'aluno da creche':(h.peso<=10?'porte pequeno (ate 10 kg)':'porte grande (acima de 10 kg)')}`,c.n,brl(c.v),brl(c.subtotal));
-  if(r.transporteCidade)row(`Transporte ${TRANSPORTE[r.transporteCidade].nome}`,r.transporteVezes||0,brl(c.tp),brl(c.transp));
   if(c.abatimento)row(('Desconto'+(r.desconto.motivo?' - '+r.desconto.motivo:'')).normalize('NFD').replace(/[\u0300-\u036f]/g,''),'','','- '+brl(c.abatimento));
   if(r.sinalPago)row('Sinal 30% pago na reserva','','','- '+brl(c.sinal));
   doc.setFillColor(255,244,204);doc.rect(14,y,w,11,'F');doc.setFont('helvetica','bold');doc.setFontSize(13);
@@ -6792,7 +6883,7 @@ function blocoMes(p){
       <span>${m.faltas?`${m.faltas} ${m.faltas===1?'falta':'faltas'}`:'sem faltas'}${m.extras?` · <span class="extra">+${m.extras} extra</span>`:''}${m.abatimento?` · <span class="descto">🏷 −${brl(m.abatimento)}</span>`:''}${m.hosp.length?` · <span class="hotelx">🏡 ${m.hosp.length} hosp. ${brl(m.valorHotel)}</span>`:''}</span>
     </div>
     ${(()=>{const rn=renovacao(p);return rn.meta?`<div class="renov ${rn.acabando?'acabando':''}"><span>🗓 ${rn.restam===0?'Plano completo':`faltam ${rn.restam} ${rn.restam===1?'dia':'dias'} do plano`} · renova ${fmtData(rn.data)} (${rn.emDias}d)</span>${rn.acabando&&p.telefone?`<button data-renov="${p.id}">avisar tutor</button>`:''}</div>`:''})()}
-    <div class="rod" style="margin-top:4px"><span>🚐 Transporte: ${m.transpVezes?`${m.transpVezes}x · ${brl(m.valorTransp)}`:'não usou'}${p.transporte?` (${TRANSPORTE[p.transporte].nome})`:''}</span><span><b>Total ${brl(m.total)}</b></span>
+    <div class="rod" style="margin-top:4px"><span>🚐 Transporte: ${m.transpVezes?`${m.transpVezes}x · ${brl(m.valorTransp)} <small>(à parte)</small>`:'não usou'}${p.transporte?` (${TRANSPORTE[p.transporte].nome})`:''}</span><span><b>Total ${brl(m.total)}</b></span>
     </div>
   </div>`;
 }
@@ -7388,7 +7479,7 @@ function abrirPerfil(id,ym){
         <div class="kv">
           <div><span>Plano</span><b>${PLANOS[p.plano].nome}${m.meta?` · ${m.vindas}/${m.meta} dias`:''}</b></div>
           ${m.extras?`<div><span>Dias extras</span><b>+${m.extras}</b></div>`:''}
-          <div><span>🚐 Transporte</span><b>${m.transpVezes?`${m.transpVezes}x${pode('financeiro')?' · '+brl(m.valorTransp):''}${p.transporte?' ('+TRANSPORTE[p.transporte].nome+')':''}`:'não usou'}</b></div>
+          <div><span>🚐 Transporte</span><b>${m.transpVezes?`${m.transpVezes}x${pode('financeiro')?' · '+brl(m.valorTransp)+' (cobrado à parte)':''}${p.transporte?' ('+TRANSPORTE[p.transporte].nome+')':''}`:'não usou'}</b></div>
           ${m.hosp.length?`<div><span>🏡 Hotel no mês</span><b>${m.hosp.length} ${m.hosp.length===1?'hospedagem':'hospedagens'}${pode('financeiro')?' · '+brl(m.valorHotel):''}</b></div>`:''}
           ${m.abatimento&&pode('financeiro')?`<div><span>🏷 Desconto</span><b style="color:var(--verde-txt)">− ${brl(m.abatimento)} (${descTxt(m.desconto)})</b></div>`:''}
           ${pode('financeiro')?`<div><span>Total do mês</span><b>${brl(m.total)}</b></div>`:''}
@@ -7528,7 +7619,9 @@ function contaHotel(r){
   const dias=diariasDetalhe(r,h);
   const nFer=dias.filter(x=>x.feriado).length, nNorm=n-nFer;
   const vFer=diariaDaReserva(r,h,true);
-  const subtotal=dias.reduce((a,x)=>a+x.valor,0), transp=(r.transporteVezes||0)*tp, bruto=subtotal+transp;
+  /* transporte fora da conta do hotel tambem: a van e cobrada a parte.
+     transp continua calculado pro Financeiro do Transporte. */
+  const subtotal=dias.reduce((a,x)=>a+x.valor,0), transp=(r.transporteVezes||0)*tp, bruto=subtotal;
   const porQtd=(qtd>1&&!manual)?' ('+qtd+' aumigos)':(manual?' (valor combinado)':'');
   const resumoDiarias=(nFer
     ? (nNorm?nNorm+' '+(nNorm===1?'diária':'diárias')+' × '+brl(v)+' + ':'')+nFer+' de feriado × '+brl(vFer)
@@ -7578,7 +7671,7 @@ function renderHotel(){
       </div>
       ${it.length?`<div class="pert-card">${it.slice(0,4).map(i=>`<span class="th" title="${i.nome}">${i.foto?`<img src="${i.foto}" alt="">`:'🎒'}</span>`).join('')}<small>${it.length} ${it.length===1?'item':'itens'}</small></div>`:''}
       ${r.status==='hospedado'?diarioChips(r):''}
-      ${pode('financeiro')?`<div class="h-total"><span>${c.resumoDiarias}${c.transp?` + transporte ${r.transporteVezes}x`:''}${r.sinalPago?' · sinal pago':''}${r.naFatura?' · 🧾 na fatura':''}</span><b>${brl(c.restante)}</b></div>`:''}
+      ${pode('financeiro')?`<div class="h-total"><span>${c.resumoDiarias}${c.transp?` · transporte ${r.transporteVezes}x à parte`:''}${r.sinalPago?' · sinal pago':''}${r.naFatura?' · 🧾 na fatura':''}</span><b>${brl(c.restante)}</b></div>`:''}
       ${r.aguardandoPgto&&r.status==='hospedado'?`<div class="msg-ok" style="background:var(--vermelho-bg);color:var(--vermelho-txt);margin:8px 0 0">💳 Aguardando pagamento</div>`:''}
       <div class="h-acoes">${acao}${r.status==='hospedado'?`<button class="ico-btn" data-diario="${r.id}" title="Diário do dia">📋</button>`:''}<button class="ico-btn" data-pdfpert="${r.id}" title="Relatório de pertences (PDF)" style="background:#fff;color:var(--marrom-escuro);border:2px solid var(--marrom-escuro);box-shadow:0 3px 0 var(--marrom-escuro)">📄</button></div>
     </article>`;
@@ -7910,7 +8003,8 @@ function abrirCheckin(id){
 function msgCobrancaNatural(r){
   const c=contaHotel(r);const h=c.h;const px=pixDe(r.pixId||cfg.pixPadrao);
   const tipo=({email:'e-mail',cpf:'CPF',cnpj:'CNPJ',celular:'celular',aleatoria:'aleatória'})[px.tipo]||px.tipo;
-  const partes=[`${c.n} ${c.n===1?'diária':'diárias'}`];if(c.transp)partes.push(`transporte ${r.transporteVezes}x`);
+  /* transporte fica de fora: a van é cobrada à parte */
+  const partes=[`${c.n} ${c.n===1?'diária':'diárias'}`];
   return `Oi ${primeiroNome(h.tutor)}, tudo bem? 🐾 A estadia do(a) ${h.nome} aqui na ${cfg.nome} chegou ao fim (de ${fmtData(r.checkin)} a ${fmtData(r.checkout)}) e ele(a) foi um amor com a gente! 💛
 
 Fechamos com ${partes.join(' + ')}${c.abatimento?`, com desconto de ${brl(c.abatimento)}${r.desconto.motivo?' ('+r.desconto.motivo+')':''}`:''}, e o valor ${r.sinalPago?`ficou em *${brl(c.restante)}* (já descontando o sinal de ${brl(c.sinal)} pago na reserva)`:`total ficou em *${brl(c.restante)}*`}. Estou te mandando junto o PDF com o resumo certinho.
@@ -7929,7 +8023,6 @@ function msgCobranca(r){
 function msgFatura(r){
   const c=contaHotel(r);const h=c.h;
   const L=[`🏡 *${CRECHE_NOME} · Hospedagem do(a) ${h.nome}*`,`Período: ${fmtData(r.checkin)} a ${fmtData(r.checkout)}`,'',`• ${c.resumoDiarias}${h.aluno?' (aluno da creche)':''} = ${brl(c.subtotal)}`];
-  if(c.transp)L.push(`• Transporte ${r.transporteVezes}x × ${brl(c.tp)} = ${brl(c.transp)}`);
   L.push('',`Total: *${brl(c.total)}*`);
   if(r.sinalPago)L.push(`Sinal pago: − ${brl(c.sinal)}`,`*Restante a pagar: ${brl(c.restante)}*`);
   L.push('',`Obrigado por confiar o(a) ${h.nome} pra gente! 🐶💛`);
@@ -7942,10 +8035,12 @@ function abrirFatura(id,checkoutAgora,etapa){
   const opsZap=(sel)=>cfg.zaps.map(z=>`<option value="${z.id}" ${z.id===sel?'selected':''}>${z.nome}${z.numero?' · '+telFmt(z.numero):''}</option>`).join('');
   const feitoCob=(r.msgs||[]).some(m=>m.tipo==='cobranca');const feitoPix=(r.msgs||[]).some(m=>m.tipo==='pix');const feitoOut=(r.msgs||[]).some(m=>m.tipo==='checkout');
   const passos=`<div class="passos"><span class="${etapa==='cobranca'?'on':''} ${feitoCob&&feitoPix?'ok':''}">1 · Cobrança ${feitoCob&&feitoPix?'✓':''}</span><span class="${etapa==='checkout'?'on':''} ${feitoOut?'ok':''}">2 · Mensagem de check-out ${feitoOut?'✓':''}</span></div>`;
+  /* aluno da creche não pode ficar preso no check-out esperando o PIX cair:
+     o "Ainda não" joga a hospedagem na fatura do mês e libera a saída. */
+  const podeJogarNaFatura=h.aluno&&cfg.faturaUnica!==false;
   const tabela=`<table class="fat">
         <tr><th>Item</th><th class="r">Qtd</th><th class="r">Valor</th><th class="r">Total</th></tr>
         <tr><td>Diária ${h.aluno?'aluno da creche':(h.peso<=10?'porte pequeno (até 10 kg)':'porte grande (acima de 10 kg)')}</td><td class="r">${c.n}</td><td class="r">${brl(c.v)}</td><td class="r">${brl(c.subtotal)}</td></tr>
-        <tr><td>Transporte ${r.transporteCidade?TRANSPORTE[r.transporteCidade].nome:''}</td><td class="r">${r.transporteVezes||0}</td><td class="r">${r.transporteCidade?brl(c.tp):'—'}</td><td class="r">${brl(c.transp)}</td></tr>
         ${c.abatimento?`<tr class="descto"><td>🏷 Desconto${r.desconto.motivo?' · '+r.desconto.motivo:''}${r.desconto.tipo==='%'?` (${r.desconto.valor}%)`:''}</td><td class="r"></td><td class="r"></td><td class="r">− ${brl(c.abatimento)}</td></tr>`:''}
         <tr class="desc"><td>Sinal 30% ${r.sinalPago?'(pago na reserva)':'(não pago)'}</td><td class="r"></td><td class="r"></td><td class="r">${r.sinalPago?'− '+brl(c.sinal):'—'}</td></tr>
         <tr class="tot"><td>${r.sinalPago?'Restante a pagar':'Total a pagar'}</td><td></td><td></td><td class="r">${brl(c.restante)}</td></tr>
@@ -7968,7 +8063,7 @@ function abrirFatura(id,checkoutAgora,etapa){
       ${r.status==='finalizado'
         ?`<div class="etapas"><button class="btn ${r.pago?'cinza':'primario'}" id="ft-pago">${r.pago?'Desmarcar pago':'✓ Marcar como pago'}</button></div>`
         :r.naFatura?`<div class="pago-q"><b>Tudo certo?</b><div class="duplo"><button class="btn verde" id="ft-sim2">✓ Ir pro check-out</button></div></div>`
-        :`<div class="pago-q"><b>Já foi pago?</b><div class="duplo"><button class="btn verde" id="ft-sim">✓ Sim, ir pro check-out</button><button class="btn cinza" id="ft-nao">Ainda não</button></div></div>`}`;
+        :`<div class="pago-q"><b>Já foi pago?</b><div class="duplo"><button class="btn verde" id="ft-sim">✓ Sim, ir pro check-out</button><button class="btn cinza" id="ft-nao">${podeJogarNaFatura?'Ainda não · jogar na fatura do mês':'Ainda não'}</button></div>${podeJogarNaFatura?`<div class="nota" style="font-size:12px">Aluno da creche: o check-out sai do mesmo jeito e os ${brl(c.restante)} entram na fatura de ${NOMES_MES[+MES.split('-')[1]-1]}.</div>`:''}</div>`}`;
   } else {
     const ckOut=Object.assign({cobranca:feitoCob,pagamento:!!r.pago,mensagem:feitoOut},(r.checklist||{}).checkout||{});
     corpo=`<div class="campo" style="margin-top:14px"><label>✅ Checklist de saída</label>${checklistHtml(CHECK_OUT,ckOut,'co')}</div>
@@ -7979,7 +8074,7 @@ function abrirFatura(id,checkoutAgora,etapa){
         ${h.telefone?`<button class="btn zap" id="ft-msgout">${ICO_ZAP} Enviar mensagem de check-out ${feitoOut?'✓':''}</button>`:''}
         <button class="btn primario" id="ft-fechar">🏁 Confirmar check-out</button>
       </div>
-      <div class="nota">Pagamento marcado como recebido ✓ · a cobrança saiu pelo ${zapDe(r.zapCobranca||cfg.zapCobranca).nome}; esta mensagem sai pelo ${zapDe(r.zapHotel||cfg.zapHotel).nome}.</div>`;
+      <div class="nota">${r.naFatura?`🧾 Vai na fatura de ${NOMES_MES[+((r.faturaYm||MES).split('-')[1])-1]} do(a) ${h.nome}, junto com a creche`:'Pagamento marcado como recebido ✓'} · a cobrança saiu pelo ${zapDe(r.zapCobranca||cfg.zapCobranca).nome}; esta mensagem sai pelo ${zapDe(r.zapHotel||cfg.zapHotel).nome}.</div>`;
   }
   $('#modais').innerHTML=`
   <div class="overlay" id="ov">
@@ -8002,7 +8097,15 @@ function abrirFatura(id,checkoutAgora,etapa){
     const bc=$('#ft-cobrar');if(bc)bc.onclick=()=>{r.pixId=+$('#ft-pix').value;r.zapCobranca=+$('#ft-zap').value;marcar('cobranca',zapDe(r.zapCobranca));r.cobrancaEnviada=HOJE;salvarHotel();abrirZap(h.telefone,$('#ft-msg').value,{tipo:'cobranca',pet:h.nome,petId:r.petId,via:zapDe(r.zapCobranca).nome,tel:h.telefone});bc.innerHTML=`${ICO_ZAP} Enviar cobrança no WhatsApp ✓`;toast(h.p||{raca:h.raca},'Cobrança aberta no WhatsApp 💬','A mensagem também foi copiada — se precisar, é só colar.',true)};
     const bs2=$('#ft-sim2');if(bs2)bs2.onclick=()=>{r.etapaCheckout='checkout';salvarHotel();abrirFatura(id,true,'checkout')};
     const bs=$('#ft-sim');if(bs)bs.onclick=()=>{r.pixId=+$('#ft-pix').value;r.zapCobranca=+$('#ft-zap').value;r.pago=true;r.pagoEm=HOJE;r.etapaCheckout='checkout';salvarHotel();abrirFatura(id,true,'checkout')};
-    const bnn=$('#ft-nao');if(bnn)bnn.onclick=()=>{r.pixId=+$('#ft-pix').value;r.zapCobranca=+$('#ft-zap').value;r.aguardandoPgto=true;salvarHotel();fecharModal();renderHotel();toast(h.p||{raca:h.raca},`${h.nome} aguardando pagamento`,'Quando cair, abra o check-out de novo e marque "Sim".')};
+    const bnn=$('#ft-nao');if(bnn)bnn.onclick=()=>{
+      r.pixId=+$('#ft-pix').value;r.zapCobranca=+$('#ft-zap').value;
+      if(podeJogarNaFatura){                       // aluno da creche: segue pro check-out e cobra no fim do mês
+        r.naFatura=true;r.faturaYm=r.faturaYm||MES;r.pago=false;delete r.aguardandoPgto;
+        r.etapaCheckout='checkout';salvarHotel();
+        toast(h.p||{raca:h.raca},`${brl(contaHotel(r).restante)} na fatura de ${NOMES_MES[+MES.split('-')[1]-1]} 🧾`,`Sai junto com a creche do(a) ${h.nome}. Pode fechar o check-out.`,true);
+        abrirFatura(id,true,'checkout');return;
+      }
+      r.aguardandoPgto=true;salvarHotel();fecharModal();renderHotel();toast(h.p||{raca:h.raca},`${h.nome} aguardando pagamento`,'Quando cair, abra o check-out de novo e marque "Sim".')};
     const bpg=$('#ft-pago');if(bpg)bpg.onclick=()=>{r.pago=!r.pago;fecharModal();renderHotel();toast(h.p||{raca:h.raca},r.pago?`Diárias de ${h.nome} pagas ✅`:'Pagamento desmarcado',r.pago?'Estadia quitada.':'Voltou pra aguardando.',r.pago)};
   } else {
     $('#ft-zap2').onchange=()=>{r.zapHotel=+$('#ft-zap2').value};
@@ -8658,7 +8761,7 @@ function itensCreche(p,ym){
   const m=resumoMes(p,ym);const pl=PLANOS[p.plano];const diaria=p.peso<=10?AVULSO.ate10:AVULSO.acima10;const it=[];
   if(p.plano==='avulso')it.push({d:`Diária avulsa (${p.peso<=10?'até 10 kg':'acima de 10 kg'})`,q:m.vindas,v:diaria,t:m.vindas*diaria});
   else{it.push({d:`Plano ${pl.nome} (${m.vindas} de ${m.meta} dias)`,q:1,v:pl.preco,t:pl.preco});if(m.extras)it.push({d:'Dias extras além do plano',q:m.extras,v:diaria,t:m.extras*diaria})}
-  if(m.transpVezes)it.push({d:`Transporte ${p.transporte?TRANSPORTE[p.transporte].nome:''}`,q:m.transpVezes,v:m.transp,t:m.valorTransp});
+  /* transporte nao entra na fatura — fica em Financeiro do Transporte */
   m.hosp.forEach(r=>{const c=contaHotel(r);it.push({hotel:true,d:`Hotel · ${fmtData(r.checkin)} a ${fmtData(r.checkout)} (${c.n} ${c.n===1?'diária':'diárias'}${r.sinalPago?', sinal já pago':''})`,q:c.n,v:c.v,t:c.restante})});
   if(m.abatimento)it.push({desc:true,d:`Desconto${m.desconto.motivo?' · '+m.desconto.motivo:''}${m.desconto.tipo==='%'?` (${m.desconto.valor}%)`:''}`,q:1,v:-m.abatimento,t:-m.abatimento});
   return {it,total:m.total,m};
@@ -8774,7 +8877,7 @@ function financeiroResumo(ym){
 /* ---- Cobrança: a vencer, vencidos e pagos, separado do Financeiro ---- */
 let cobMes=null;
 function renderCobranca(){
-  const ym=cobMes||mesACobrar();      // abre no mes fechado, que e o que se cobra agora
+  const ym=cobMes||mesACobrar();      // abre no mes corrente: e ele que se cobra adiantado
   const sel=$('#cb-mes');
   if(sel&&!sel.dataset.pronto){
     const meses=[];for(let i=0;i<6;i++)meses.push(ymAdd(MES,-i));
@@ -8824,7 +8927,7 @@ function renderFinanceiro(){
   const inad=f.atrasoL.length;const clientes=f.creche.filter(x=>x.m.total>0).length;
   $('#fi-kpis').innerHTML=[
     ['A receber',brl(f.aReceber+f.hotelAberto),'ag'],['Recebido',brl(f.recebido+f.hotelRecebido),'pr'],['Em atraso',brl(f.atraso),'fa'],
-    ['Previsão do mês',brl(f.total-f.transporte),'sem transporte'],['Hotel',brl(f.hotel),''],
+    ['Previsão do mês',brl(f.total),'sem transporte'],['Hotel',brl(f.hotel),''],
     ['Inadimplência',clientes?`${Math.round(inad/clientes*100)}% · ${inad} ${inad===1?'cliente':'clientes'}`:'—','fa'],
   ].map(([k,v,c])=>`<div class="stat ${c==='sem transporte'?'':c}"><b style="font-size:22px">${v}</b><span>${k}${c==='sem transporte'?' <small>(sem van)</small>':''}</span></div>`).join('')+`<div class="nota" style="flex:100%;font-size:12px;font-weight:700;color:#A38560">🚐 O transporte fica em <button class="alterar" style="margin:0" data-view="fintransp">Financeiro do Transporte</button>, separado.</div>`;
   const porCliente=f.creche.map(x=>({nome:nomeCompleto(x.p),tutor:x.p.tutor+(temDois(x.p)?' e '+(x.p.dono2.nome||'2º dono'):''),creche:x.m.total-x.m.valorHotel+(x.m.abatimento?0:0),hotel:f.hotelL.filter(h=>h.r.petId===x.p.id).reduce((a,h)=>a+(h.r.naFatura?h.c.restante:h.c.total),0),junto:x.m.hosp.length>0,pago:x.pago,venc:x.p.pagamentoDia,id:x.p.id}));
@@ -9739,10 +9842,10 @@ async function pdfCobranca(r,pixId){
   const doc=await novoDoc('Cobranca de hospedagem',`${h.nome} · ${dataBR(r.checkin)} a ${dataBR(r.checkout)} · emitido em ${dataBR(HOJE)}`);
   pfTitulo(doc,'Hospede');
   pfLinhaInfo(doc,[['Pet',`${h.nome} (${RACAS[h.raca].nome}, ${h.peso} kg)`],['Tutor',h.tutor+(h.telefone?' · '+telFmt(h.telefone):'')],['Tipo',h.aluno?'Aluno da creche':'Visitante'],['Periodo',`${dataBR(r.checkin)} ${r.checkinFeito?r.checkinFeito.slice(11):(r.horaIn||'09:00')} → ${dataBR(r.checkout)} ${r.checkoutFeito?r.checkoutFeito.slice(11):(r.horaOut||'17:00')}`]]);
-  pfKpis(doc,[{valor:String(c.n),rotulo:c.n===1?'diaria':'diarias'},{valor:brl(c.v),rotulo:'valor da diaria',sub:h.aluno?'aluno da creche':(h.peso<=10?'ate 10 kg':'acima de 10 kg')},{valor:String(r.transporteVezes||0),rotulo:'transporte',sub:r.transporteCidade?TRANSPORTE[r.transporteCidade].nome:'nao usou'}]);
+  pfKpis(doc,[{valor:String(c.n),rotulo:c.n===1?'diaria':'diarias'},{valor:brl(c.v),rotulo:'valor da diaria',sub:h.aluno?'aluno da creche':(h.peso<=10?'ate 10 kg':'acima de 10 kg')},{valor:String(r.transporteVezes||0),rotulo:'transporte',sub:r.transporteCidade?TRANSPORTE[r.transporteCidade].nome+' (a parte)':'nao usou'}]);
   pfTitulo(doc,'Resumo da conta');
   const linhas=[{c:[`Diaria ${h.aluno?'aluno da creche':(h.peso<=10?'porte pequeno':'porte grande')}`,c.n,brl(c.v),brl(c.subtotal)]}];
-  if(r.transporteCidade)linhas.push({c:[`Transporte ${TRANSPORTE[r.transporteCidade].nome}`,r.transporteVezes||0,brl(c.tp),brl(c.transp)]});
+  /* transporte nao entra na conta: a van e cobrada a parte */
   if(c.abatimento)linhas.push({tipo:'desc',c:[`Desconto${r.desconto.motivo?' · '+r.desconto.motivo:''}`,'','','- '+brl(c.abatimento)]});
   if(r.sinalPago)linhas.push({tipo:'desc',c:['Sinal 30% pago na reserva','','','- '+brl(c.sinal)]});
   pfTabela(doc,[{t:'Item',w:104},{t:'Qtd',w:20,al:'right'},{t:'Valor',w:28,al:'right'},{t:'Total',w:30,al:'right'}],linhas);
@@ -9757,7 +9860,7 @@ async function pdfCobrancaCreche(p,ym,pixId){
   const doc=await novoDoc(m.hosp.length?'Fatura do mes · creche + hotel':'Cobranca da creche',`${p.nome} · ${ymNome(ym)} · emitido em ${dataBR(HOJE)}`);
   pfTitulo(doc,'Aluno');
   pfLinhaInfo(doc,[['Pet',`${p.nome} (${RACAS[p.raca].nome}, ${p.peso} kg)`],['Tutor',p.tutor+(p.telefone?' · '+telFmt(p.telefone):'')],['Plano',PLANOS[p.plano].nome],['Vencimento',`dia ${p.pagamentoDia}`]]);
-  pfKpis(doc,[{valor:String(m.vindas),rotulo:'presencas',cor:PDF_COR.verdeTxt},{valor:String(m.faltas),rotulo:'faltas',cor:m.faltas?PDF_COR.vermelhoTxt:PDF_COR.escuro},{valor:String(m.transpVezes),rotulo:'van',sub:m.transpVezes?brl(m.valorTransp):''},{valor:String(m.hosp.length),rotulo:'hospedagens',sub:m.hosp.length?brl(m.valorHotel):''}]);
+  pfKpis(doc,[{valor:String(m.vindas),rotulo:'presencas',cor:PDF_COR.verdeTxt},{valor:String(m.faltas),rotulo:'faltas',cor:m.faltas?PDF_COR.vermelhoTxt:PDF_COR.escuro},{valor:String(m.transpVezes),rotulo:'van',sub:m.transpVezes?brl(m.valorTransp)+' (a parte)':''},{valor:String(m.hosp.length),rotulo:'hospedagens',sub:m.hosp.length?brl(m.valorHotel):''}]);
   pfTitulo(doc,'Resumo da fatura');
   const linhas=it.map(x=>({tipo:x.hotel?'hotel':x.desc?'desc':'normal',c:[x.d,x.desc?'':x.q,x.desc?'':brl(x.v),x.desc?'- '+brl(-x.t):brl(x.t)]}));
   pfTabela(doc,[{t:'Item',w:104},{t:'Qtd',w:20,al:'right'},{t:'Valor',w:28,al:'right'},{t:'Total',w:30,al:'right'}],linhas);
@@ -10630,6 +10733,28 @@ window.addEventListener('load',()=>{
 });
 </script>
 
-<script>bootPetFarm();</script>
+<script>
+/* se qualquer coisa der errado na partida (nuvem fora do ar, login travado,
+   navegador antigo), o app abre no modo local em vez de ficar em branco */
+(function(){
+  var abriu=false;
+  function socorro(e){
+    if(abriu)return; abriu=true;
+    if(e&&window.PETFARM_ERRO)PETFARM_ERRO('Partida: '+((e&&(e.stack||e.message))||String(e)));
+    try{bootLocal()}catch(e2){if(window.PETFARM_ERRO)PETFARM_ERRO('Modo local também falhou: '+((e2&&(e2.stack||e2.message))||String(e2)))}
+  }
+  try{
+    var r=bootPetFarm();
+    if(r&&r.then)r.then(function(){abriu=true},socorro);
+    else abriu=true;
+  }catch(e){socorro(e)}
+  /* travou na partida e não desenhou nada? abre local depois de 12s */
+  setTimeout(function(){
+    if(abriu)return;
+    if(document.body&&document.body.children.length>2)return;
+    socorro(null);
+  },12000);
+})();
+</script>
 </body>
 </html>
