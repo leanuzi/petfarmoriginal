@@ -6516,9 +6516,12 @@ function pdfPertences(r){
   y+=10;doc.setDrawColor(62,48,39);doc.line(14,y,90,y);doc.line(120,y,196,y);doc.setFontSize(9);doc.text('Conferido por (equipe)',14,y+5);doc.text('Tutor',120,y+5);
   entregarPdf(doc,`pertences-${h.nome.toLowerCase().replace(/\s+/g,'-')}-${r.checkout}.pdf`,`Relatório de pertences de ${h.nome} · saída ${fmtData(r.checkout)}`);
 }
+/* o item pode vir como objeto {nome,foto} ou, em dado antigo, so o texto */
+const nomePertence=i=>String((i&&typeof i==='object'?i.nome:i)||'');
+const fotoPertence=i=>(i&&typeof i==='object'&&i.foto)||'';
 function pertencesHtml(r){
   const it=r.pertences||[];if(!it.length)return '';
-  return `<div class="pert-card">${it.slice(0,5).map(i=>`<span class="th" title="${i.nome}">${i.foto?`<img src="${i.foto}" alt="">`:'🎒'}</span>`).join('')}<small>${it.length} ${it.length===1?'item':'itens'}: ${it.map(i=>i.nome).join(', ')}</small></div>`;
+  return `<div class="pert-card">${it.slice(0,5).map(i=>`<span class="th" title="${nomePertence(i)}">${fotoPertence(i)?`<img src="${fotoPertence(i)}" alt="">`:'🎒'}</span>`).join('')}<small>${it.length} ${it.length===1?'item':'itens'}: ${it.map(nomePertence).join(', ')}</small></div>`;
 }
 function abrirConfig(){
   const rowPix=px=>`<div class="row" data-pix="${px.id}"><input placeholder="Nome (ex.: Marcelle)" value="${px.nome}" data-k="nome"><input placeholder="Chave PIX" value="${px.chave}" data-k="chave"><select data-k="tipo">${['email','cpf','cnpj','celular','aleatoria'].map(t=>`<option value="${t}" ${px.tipo===t?'selected':''}>${({email:'E-mail',cpf:'CPF',cnpj:'CNPJ',celular:'Celular',aleatoria:'Aleatória'})[t]}</option>`).join('')}</select><button class="rm" data-rmpix="${px.id}">✕</button><input placeholder="Banco (opcional)" value="${px.banco||''}" data-k="banco" style="grid-column:1/-1"></div>`;
@@ -6976,13 +6979,18 @@ function marcar(p,status){
   if(status==='presente'){p.presencas.push(D);p.chegadas[D]=D===HOJE?horaAgora():'';if($('#md-transp-chk')&&$('#md-transp-chk').checked)p.transportes.push(D)}else p.faltas.push(D);
   const lt=$('#md-transp');if(lt)lt.remove();
   sincronizarHoje(p);registrarChamada();
-  const md=$('#md');md.classList.add(status==='presente'?'ok':'falta');
-  $('#md-vez').textContent = status==='presente' ? 'PRESENÇA CONFIRMADA' : 'FALTA REGISTRADA';
-  $('#md-t').textContent = status==='presente' ? `${p.nome} chegou!` : `${p.nome} faltou`;
-  $('#md-perg').innerHTML = status==='presente'
+  /* o botão de "chegou/faltou" some depois do primeiro toque (o bloco é
+     trocado por um aviso). Num toque duplo — dedo rápido, celular travando —
+     esta função rodava de novo e estourava aqui, ANTES do render() e do
+     aviso: a presença ficava gravada mas a lista atrás não atualizava.
+     Agora cada pedaço da tela só é mexido se ainda estiver lá. */
+  const p1=$('#md');if(p1)p1.classList.add(status==='presente'?'ok':'falta');
+  const p2=$('#md-vez');if(p2)p2.textContent = status==='presente' ? 'PRESENÇA CONFIRMADA' : 'FALTA REGISTRADA';
+  const p3=$('#md-t');if(p3)p3.textContent = status==='presente' ? `${p.nome} chegou!` : `${p.nome} faltou`;
+  const p4=$('#md-perg');if(p4)p4.innerHTML = status==='presente'
     ? `<span class="fala" style="margin:0">"Bem-vindo, ${p.nome}!" 🎉</span>`
     : `<span class="fala" style="margin:0">"Sentimos sua falta, ${p.nome}!" 💛</span>`;
-  $('#md-acoes').outerHTML = status==='presente'
+  const p5=$('#md-acoes');if(p5)p5.outerHTML = status==='presente'
     ? `<div class="btn ok" style="max-width:360px;margin:18px auto 0">${st('check','style="width:18px;height:18px"')} Presente às ${p.chegou}</div>`
     : `<div class="btn falta" style="max-width:360px;margin:18px auto 0">✕ Não veio hoje</div>`;
   if(status==='presente' && !reduz) confete();
@@ -7868,7 +7876,11 @@ function abrirReserva(id,diaSugerido){
   </div>`;
   lock();
   // pertences
-  let pert=(r.pertences||[]).map(x=>({...x}));
+  /* aceita item torto sem derrubar a tela: backup antigo e importacao as
+     vezes trazem so o nome em texto, e ai o modal da reserva nao abria mais */
+  let pert=(r.pertences||[]).map(x=>(x&&typeof x==='object')
+    ?Object.assign({},x,{id:x.id||Date.now()+Math.random(),nome:String(x.nome==null?'':x.nome)})
+    :{id:Date.now()+Math.random(),nome:String(x==null?'':x)});
   const SUG=['Guia','Pote de comida','Pote de água','Ração','Caminha','Remédio','Brinquedo','Coleira','Cobertor'];
   const renderPert=()=>{
     $('#r-pert').innerHTML=pert.map(it=>`<div class="item" data-pid="${it.id}">
@@ -8373,7 +8385,7 @@ function abrirPerfilHospede(reservaId,ym){
     </div>
     ${calHotelPet(chave,ym)}
     <div class="legenda"><span><i style="background:#DCEBD8"></i>hospedado 🏡</span><span>🔑 check-in</span><span>🏁 check-out</span><span>📋 registro do diário</span><span>📸 foto enviada</span></div>
-    ${(r0.pertences||[]).length?`<div class="heat"><h4>🎒 Pertences desta estadia <small>${r0.pertences.length} ${r0.pertences.length===1?'item':'itens'}</small></h4><div class="pert-card" style="margin-top:8px">${r0.pertences.map(i=>`<span class="th" title="${i.nome}">${i.foto?`<img src="${i.foto}" alt="">`:'🎒'}</span>`).join('')}<small>${r0.pertences.map(i=>i.nome).join(', ')}</small></div></div>`:''}
+    ${(r0.pertences||[]).length?`<div class="heat"><h4>🎒 Pertences desta estadia <small>${r0.pertences.length} ${r0.pertences.length===1?'item':'itens'}</small></h4><div class="pert-card" style="margin-top:8px">${r0.pertences.map(i=>`<span class="th" title="${nomePertence(i)}">${fotoPertence(i)?`<img src="${fotoPertence(i)}" alt="">`:'🎒'}</span>`).join('')}<small>${r0.pertences.map(nomePertence).join(', ')}</small></div></div>`:''}
     <div class="heat"><h4>Diárias nos últimos 12 meses <small>${totalDiarias} no total</small></h4>
       <div class="barras">${hist.map(x=>`<div class="${x.v?'on':''}" title="${ymNome(x.ym)}: ${x.v} diárias"><i style="height:${Math.max(4,x.v/mx*100)}%"></i></div>`).join('')}</div>
       <div class="rot">${hist.map(x=>`<span>${NOMES_MES[+x.ym.split('-')[1]-1].slice(0,3)}</span>`).join('')}</div>
@@ -10101,8 +10113,12 @@ function abrirAgendaDia(d){
 <script>
 /* Pet Farm · auth.js — logins, perfis de acesso e permissões */
 const PERFIS={
-  master:{nome:'Dona / Master',desc:'Acesso total, cria e edita logins',views:['inicio','creche','pets','hotel','transporte','cobranca','financeiro','boletim','mensagens','gestao'],pode:['financeiro','config','equipe','descontos','cadastro']},
-  gestor:{nome:'Gerente',desc:'Tudo, menos criar logins',views:['inicio','creche','pets','hotel','transporte','cobranca','financeiro','boletim','mensagens','gestao'],pode:['financeiro','descontos','cadastro']},
+  /* fintransp entrou aqui: a tela do Financeiro tem um botão que leva pra
+     "Financeiro do Transporte", mas a dona não tinha essa view — clicava e
+     caía calada no Início. Agora que a van não entra mais na fatura, aquela
+     tela é o ÚNICO lugar onde o dinheiro do transporte aparece. */
+  master:{nome:'Dona / Master',desc:'Acesso total, cria e edita logins',views:['inicio','creche','pets','hotel','transporte','cobranca','financeiro','fintransp','boletim','mensagens','gestao'],pode:['financeiro','config','equipe','descontos','cadastro','meu_pagamento']},
+  gestor:{nome:'Gerente',desc:'Tudo, menos criar logins',views:['inicio','creche','pets','hotel','transporte','cobranca','financeiro','fintransp','boletim','mensagens','gestao'],pode:['financeiro','descontos','cadastro','meu_pagamento']},
   recepcao:{nome:'Recepção',desc:'Chamada, hotel, transporte e mensagens',views:['inicio','creche','pets','hotel','transporte','boletim','mensagens'],pode:['cadastro']},
   motorista:{nome:'Motorista',desc:'Rota do transporte + o próprio fechamento. Só este acesso vê o financeiro do transporte',views:['transporte','fintransp'],pode:['meu_pagamento']},
 };
@@ -10279,6 +10295,13 @@ function aplicarPerfisSalvos(){
     if(Array.isArray(s.pode))PERFIS[k].pode=s.pode.filter(p=>PODERES[p]);
   });
   if(!PERFIS.master.pode.includes('config'))PERFIS.master.pode.push('config');
+  /* quem já tinha as permissões salvas antes desta correção continuava sem
+     alcançar o Financeiro do Transporte. Quem enxerga o Financeiro tem que
+     enxergar o da van também — é pra lá que o botão de lá aponta. */
+  Object.keys(PERFIS).forEach(k=>{
+    const v=PERFIS[k].views;
+    if(v.indexOf('financeiro')>=0&&v.indexOf('fintransp')<0)v.push('fintransp');
+  });
 }
 function abrirPermissoes(){
   if(!pode('config')){toast(pets[0]||{raca:'golden'},'Sem permissão','Só o acesso master edita permissões.');return}
