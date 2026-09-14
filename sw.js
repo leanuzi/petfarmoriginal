@@ -2,7 +2,7 @@
    - deixa o app instalável no celular (ícone na tela inicial)
    - guarda a tela pra abrir mesmo sem internet
    - NUNCA guarda chamadas do Supabase: dados sempre frescos */
-const VERSAO = 'petfarm-v3';
+const VERSAO = 'petfarm-v4';
 const ESSENCIAL = ['./', './index.html', './manifest.webmanifest',
                   './icon-192x192.png', './icon-512x512.png'];
 
