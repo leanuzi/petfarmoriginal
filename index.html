@@ -6870,7 +6870,7 @@ function render(){
     const pago=!!p.pagamentos[ymC];const cls=pago?'pago':((mesCobravel(ymC)&&jaVenceu(p,ymC))?'atrasado':'aberto');
     return `<li>
       <div class="mini">${avatar(p)}</div>
-      <div><b>${nomeCompleto(p)}</b><span>${PLANOS[p.plano].nome} · ${m.vindas} dias${m.extras?` · +${m.extras} extras`:''}${m.transpVezes?` · transporte ${m.transpVezes}x`:''} · vence dia ${p.pagamentoDia}${p.cobrancas[MES]&&p.cobrancas[MES].enviada?' · cobrança enviada '+fmtData(p.cobrancas[MES].enviada):''}</span></div>
+      <div><b>${nomeCompleto(p)}</b><span>${nomePlano(p)} · ${m.vindas} dias${m.extras?` · +${m.extras} extras`:''}${m.transpVezes?` · transporte ${m.transpVezes}x`:''} · vence dia ${p.pagamentoDia}${p.cobrancas[MES]&&p.cobrancas[MES].enviada?' · cobrança enviada '+fmtData(p.cobrancas[MES].enviada):''}</span></div>
       <span class="valor">${brl(m.total)}</span>
       <span class="st-pag ${cls}">${pago?'✓ pago':(cls==='atrasado'?'vencido':'em aberto')}</span>
       <button class="btn-mini" data-cobrar="${p.id}">${pago?'📄 Fatura':'💳 Cobrar'}</button>
@@ -7517,7 +7517,7 @@ function abrirPerfil(id,ym){
       <div class="perfil-fin">
         ${pode('financeiro')?blocoPagamento(p):''}
         <div class="kv">
-          <div><span>Plano</span><b>${PLANOS[p.plano].nome}${m.meta?` · ${m.vindas}/${m.meta} dias`:''}</b></div>
+          <div><span>Plano</span><b>${nomePlano(p)}${m.meta?` · ${m.vindas}/${m.meta} dias`:''}${m.combinado&&pode('financeiro')?` · ${brl(m.valorPlano)}/mês combinado`:''}</b></div>
           ${m.extras?`<div><span>Dias extras</span><b>+${m.extras}</b></div>`:''}
           <div><span>🚐 Transporte</span><b>${m.transpVezes?`${m.transpVezes}x${pode('financeiro')?' · '+brl(m.valorTransp)+' (cobrado à parte)':''}${p.transporte?' ('+TRANSPORTE[p.transporte].nome+')':''}`:'não usou'}</b></div>
           ${m.hosp.length?`<div><span>🏡 Hotel no mês</span><b>${m.hosp.length} ${m.hosp.length===1?'hospedagem':'hospedagens'}${pode('financeiro')?' · '+brl(m.valorHotel):''}</b></div>`:''}
@@ -8837,7 +8837,12 @@ function abrirCfgMotorista(){
 /* ====== COBRANÇA DA CRECHE (mensal) ====== */
 function itensCreche(p,ym){
   const m=resumoMes(p,ym);const pl=PLANOS[p.plano];const diaria=p.peso<=10?AVULSO.ate10:AVULSO.acima10;const it=[];
-  if(p.plano==='avulso')it.push({d:`Diária avulsa (${p.peso<=10?'até 10 kg':'acima de 10 kg'})`,q:m.vindas,v:diaria,t:m.vindas*diaria});
+  /* cliente de valor combinado (o caso das famílias de irmãos com preço
+     próprio): a linha tem que mostrar o valor COMBINADO. Antes ela repetia
+     o preço de tabela do plano e dizia "12 de 0 dias", então o tutor recebia
+     um item de R$ 485 embaixo de um total de R$ 900. */
+  if(m.combinado)it.push({d:`${nomePlano(p)} · ${ymNome(ym)} (${m.vindas} ${m.vindas===1?'dia':'dias'} de creche)`,q:1,v:m.valorPlano,t:m.valorPlano});
+  else if(p.plano==='avulso')it.push({d:`Diária avulsa (${p.peso<=10?'até 10 kg':'acima de 10 kg'})`,q:m.vindas,v:diaria,t:m.vindas*diaria});
   else{it.push({d:`Plano ${pl.nome} (${m.vindas} de ${m.meta} dias)`,q:1,v:pl.preco,t:pl.preco});if(m.extras)it.push({d:'Dias extras além do plano',q:m.extras,v:diaria,t:m.extras*diaria})}
   /* transporte nao entra na fatura — fica em Financeiro do Transporte */
   m.hosp.forEach(r=>{const c=contaHotel(r);it.push({hotel:true,d:`Hotel · ${fmtData(r.checkin)} a ${fmtData(r.checkout)} (${c.n} ${c.n===1?'diária':'diárias'}${r.sinalPago?', sinal já pago':''})`,q:c.n,v:c.v,t:c.restante})});
@@ -8921,7 +8926,7 @@ function abrirCobrancaCreche(id,ym){
     <div class="modal fatura" role="dialog" aria-labelledby="cc-t">
       <button class="fechar" data-fechar aria-label="Fechar">✕</button>
       <h2 id="cc-t"><span class="mini">${avatar(p)}</span> Fatura de ${nomeCompleto(p)} · ${ymNome(ym)}</h2>
-      <div class="sub">${PLANOS[p.plano].nome}${resumoMes(p,ym).hosp.length?` + ${resumoMes(p,ym).hosp.length} ${resumoMes(p,ym).hosp.length===1?'hospedagem':'hospedagens'} 🏡`:''} · tutor ${p.tutor}${p.telefone?` · ${telFmt(p.telefone)}`:''} · vence dia ${p.pagamentoDia}${cob.enviada?` · cobrança enviada ${fmtData(cob.enviada)}`:''}</div>
+      <div class="sub">${nomePlano(p)}${resumoMes(p,ym).hosp.length?` + ${resumoMes(p,ym).hosp.length} ${resumoMes(p,ym).hosp.length===1?'hospedagem':'hospedagens'} 🏡`:''} · tutor ${p.tutor}${p.telefone?` · ${telFmt(p.telefone)}`:''} · vence dia ${p.pagamentoDia}${cob.enviada?` · cobrança enviada ${fmtData(cob.enviada)}`:''}</div>
       ${(()=>{const rc=resumoCiclo(p);return rc.esperadas?`<div class="ciclo-box">
         <div class="ciclo-h"><b>🔄 Pacote de ${fmtCurto(rc.inicio)} a ${fmtCurto(rc.fim)}</b><span>renova quando pagar</span></div>
         <div class="ciclo-n"><span><b>${rc.vindas}</b>de ${rc.esperadas} vindas</span>${rc.faltamNoPacote?`<span class="r"><b>${rc.faltamNoPacote}</b>${rc.faltamNoPacote===1?'dia pra fechar o pacote':'dias pra fechar o pacote'}</span>`:''}${rc.aMais?`<span class="m"><b>${rc.aMais}</b>${rc.aMais===1?'dia a mais':'dias a mais'} · ${brl(rc.valorAMais)}</span>`:''}${!rc.faltamNoPacote&&!rc.aMais?`<span class="v"><b>✓</b>pacote fechadinho</span>`:''}</div>
