@@ -6254,6 +6254,7 @@ function iniciar(){
   cfg=JSON.parse(JSON.stringify(CFG_PADRAO));            // sem herdar nada da unidade anterior
   try{const sv=lerLocal('petfarm.cfg');if(sv)cfg=Object.assign(cfg,JSON.parse(sv))}catch(e){}
   CRECHE_NOME=cfg.nome;aplicarPlanosSalvos();aplicarTransporteSalvo();aplicarPrecos();aplicarPerfisSalvos();aplicarRacasSalvas();
+  zerarCaixaDaVan();
   try{const sv=lerLocal('petfarm.turma');pets=ehTransporte()?turmaDasUnidades():(sv?JSON.parse(sv):JSON.parse(JSON.stringify(DEMO_PETS)))}catch(e){pets=JSON.parse(JSON.stringify(DEMO_PETS))}
   pets.forEach(p=>{if(p.aniversario==='__HOJE__')p.aniversario=MMDD});
   pets.forEach(p=>{semearHistorico(p);sincronizarHoje(p)});
@@ -8755,6 +8756,24 @@ function embarcouParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.a
 let tfMes=null;
 function pagamentosMotorista(){cfg.pagMotorista=cfg.pagMotorista||{};return cfg.pagMotorista}
 function motoristaCfg(){return Object.assign({nome:'Ramon',tipo:'tudo',valor:100},cfg.motorista||{})}
+/* Zera o caixa da van uma vez so. Limpa APENAS o que e do financeiro do
+   transporte e de mais ninguem: os meses marcados como recebidos, o
+   combustivel e os custos fixos da van. Nao encosta em pet, presenca,
+   viagem, rota nem fatura - esses dados sao da creche e continuam onde
+   estao, entao a receita e a contagem de viagens seguem aparecendo na
+   tela, calculadas a partir da chamada.
+
+   Roda na carga e grava a flag; a partir dai o que o motorista lancar de
+   novo fica. Sem a flag isso apagaria o lancamento dele toda vez que ele
+   abrisse o app. */
+function zerarCaixaDaVan(){
+  if(cfg.caixaVanZerado)return;
+  cfg.pagMotorista={};
+  delete cfg.combustivel;
+  delete cfg.custoKm;
+  cfg.caixaVanZerado=true;
+  try{salvarCfg()}catch(e){}
+}
 function transporteMes(ym){
   const lista=pets.filter(p=>p.transporte||p.transportes.length);
   const porPet=lista.map(p=>{const m=resumoMes(p,ym);return {p,viagens:m.transpVezes,valor:m.valorTransp,cidade:p.transporte?TRANSPORTE[p.transporte].nome:'—',pago:!!p.pagamentos[ym]}}).filter(x=>x.viagens>0).sort((a,b)=>b.viagens-a.viagens);
