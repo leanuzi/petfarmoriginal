@@ -1871,6 +1871,9 @@ img,svg,video,canvas{max-width:100%}
 .hd-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
 .hd-card{display:grid;grid-template-columns:56px minmax(0,1fr);column-gap:12px;align-items:center;background:var(--creme);border:1px solid var(--bege);border-radius:20px;padding:14px;box-shadow:var(--sombra)}
 .hd-card.chega{border-color:var(--amarelo);background:linear-gradient(180deg,var(--amarelo-suave),var(--creme) 60%)}
+.hd-card.chegou{border-color:#BFDDB8;background:linear-gradient(180deg,var(--verde-bg),var(--creme) 60%)}
+.hd-resumo span.chegou{background:var(--verde-bg);border-color:#BFDDB8;color:var(--verde-txt)}
+.hd-sec h3 small{font-family:var(--body);font-size:12px;font-weight:700;color:#A38560}
 .hd-card.sai{border-color:var(--bege);background:linear-gradient(180deg,var(--bege-claro),var(--creme) 60%)}
 .hd-card .foto{width:56px;height:56px;border-radius:50%;overflow:hidden;background:var(--amarelo-claro);display:grid;place-items:center;border:3px solid #fff;box-shadow:0 4px 10px rgba(91,70,54,.15)}
 .hd-card .foto img{width:100%;height:100%;object-fit:cover}.hd-card .foto .st{width:44px;height:44px}
@@ -1905,6 +1908,40 @@ img,svg,video,canvas{max-width:100%}
   .hd-card .nome{font-size:18px}
   .hd-card .fatos{grid-template-columns:1fr 1fr;gap:8px 10px}
   .hd-card .fato.tutor{grid-column:1/-1}
+}
+/* ===== arquivo: o que já está resolvido sai da frente =====
+   Check-out pago e mensalidade paga não pedem mais nada de ninguém, então
+   ficam guardados atrás de um toque em vez de ocupar a tela toda. */
+.arq{background:var(--creme);border:1px solid var(--bege);border-radius:20px;overflow:hidden}
+.arq>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;min-height:56px;-webkit-tap-highlight-color:transparent}
+.arq>summary::-webkit-details-marker{display:none}
+.arq>summary:hover{background:var(--bege-claro)}
+.arq .pasta{width:38px;height:38px;flex:none;border-radius:12px;background:var(--bege-claro);border:1px solid var(--bege);display:grid;place-items:center;font-size:19px}
+.arq .tit{flex:1;min-width:0}
+.arq .tit b{display:block;font-family:var(--display);font-weight:600;font-size:17px;color:var(--marrom-escuro);line-height:1.15}
+.arq .tit small{display:block;font-size:12px;font-weight:700;color:#A38560;margin-top:1px}
+.arq .seta{flex:none;font-size:13px;font-weight:900;color:#A38560;transition:transform .2s}
+.arq[open] .seta{transform:rotate(180deg)}
+.arq .corpo{padding:0 16px 16px;border-top:1px dashed var(--bege)}
+.arq .corpo h4{font-family:var(--display);font-weight:600;font-size:15px;color:var(--marrom-escuro);margin:16px 0 8px;display:flex;align-items:center;gap:8px}
+.arq .corpo h4 .n{font-family:var(--body);font-size:11px;font-weight:800;color:#8C7355;background:var(--bege-claro);border:1px solid var(--bege);border-radius:999px;padding:2px 8px}
+.arq .corpo table{margin-top:0}
+/* a lista de check-outs guardados tem grade propria: a .lista-fin espera
+   classes que estas linhas nao tem e no celular espremia o texto num fiapo */
+#fi-arq-hotel{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+#fi-arq-hotel li{display:grid;grid-template-columns:40px minmax(0,1fr) auto;grid-template-areas:"mini nome valor" "mini det valor" "bt bt bt";column-gap:10px;row-gap:2px;align-items:center;background:var(--bege-claro);border:1px solid var(--bege);border-radius:16px;padding:10px 12px}
+#fi-arq-hotel .mini{grid-area:mini;width:40px;height:40px;border-radius:50%;overflow:hidden;background:var(--amarelo-claro);display:grid;place-items:center}
+#fi-arq-hotel .mini img{width:100%;height:100%;object-fit:cover}#fi-arq-hotel .mini .st{width:32px;height:32px}
+#fi-arq-hotel .nome{grid-area:nome;font-family:var(--display);font-weight:600;font-size:16px;color:var(--marrom-escuro);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#fi-arq-hotel .det{grid-area:det;font-size:11px;font-weight:700;color:#8C7355;line-height:1.3;overflow-wrap:anywhere}
+#fi-arq-hotel .valor{grid-area:valor;font-family:var(--display);font-weight:600;font-size:18px;color:var(--marrom-escuro);white-space:nowrap}
+#fi-arq-hotel .bt{grid-area:bt;display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--bege)}
+#fi-arq-hotel .bt .st-pag{font-size:11px;font-weight:800;border-radius:999px;padding:4px 10px;background:var(--verde-bg);color:var(--verde-txt)}
+#fi-arq-hotel .bt .btn-mini{margin-left:auto}
+.arq .vazio-arq{font-size:13px;font-weight:700;color:#A38560;padding:12px;background:var(--bege-claro);border:1px dashed var(--bege);border-radius:14px;text-align:center}
+@media (max-width:760px){
+  .arq>summary{padding:12px 14px}
+  .arq .corpo{padding:0 14px 14px}
 }
 /* alvos de toque nunca menores que 40px no celular */
 @media (pointer:coarse){
@@ -2369,6 +2406,15 @@ img,svg,video,canvas{max-width:100%}
       <section class="hsec"><h3><svg class="st"><use href="#dog-golden"/></svg> Receita por cliente</h3><table class="tabela-simples" id="fi-clientes"></table></section>
       <section class="hsec"><h3><svg class="st"><use href="#dog-poodle"/></svg> Receita por serviço</h3><div class="servs" id="fi-servicos"></div></section>
     </div>
+    <details class="arq" id="fi-arquivo" style="margin-top:16px">
+      <summary><span class="pasta">📁</span><span class="tit"><b>Arquivo do mês</b><small id="fi-arq-sub">o que já foi pago e não precisa de nada</small></span><span class="seta">▾</span></summary>
+      <div class="corpo">
+        <h4>🏁 Check-outs finalizados e pagos <span class="n" id="fi-arq-n1">0</span></h4>
+        <ul class="lista-fin" id="fi-arq-hotel"></ul>
+        <h4>✓ Mensalidades recebidas <span class="n" id="fi-arq-n2">0</span></h4>
+        <table class="tabela-simples" id="fi-arq-pagos"></table>
+      </div>
+    </details>
   </div>
 
   <!-- ===================== MENSAGENS ===================== -->
@@ -2489,7 +2535,7 @@ img,svg,video,canvas{max-width:100%}
     <section class="hsec" id="h-mapa"></section>
     <section class="hsec"><h3><svg class="st"><use href="#dog-golden"/></svg> Hospedados agora <span class="n" id="h-n1">0</span></h3><div class="grid" id="h-hospedados"></div></section>
     <section class="hsec"><h3><svg class="st"><use href="#dog-beagle"/></svg> Próximas reservas <span class="n" id="h-n2">0</span></h3><div class="grid" id="h-reservas"></div></section>
-    <section class="hsec"><h3><svg class="st"><use href="#dog-bulldog"/></svg> Check-outs finalizados · pagamento das diárias <span class="n" id="h-n3">0</span></h3><ul class="lista-fin" id="h-finalizados"></ul></section>
+    <section class="hsec"><h3><svg class="st"><use href="#dog-bulldog"/></svg> Check-outs aguardando pagamento <span class="n" id="h-n3">0</span></h3><ul class="lista-fin" id="h-finalizados"></ul></section>
   </div>
 
   <footer class="rodape">
@@ -5737,7 +5783,7 @@ function enviarEscolhendo(p,msg,meta,assunto){
 }
 function abrirZapPet(p,msg,meta,assunto){
   if(p&&p.zapGrupo){
-    try{navigator.clipboard&&navigator.clipboard.writeText(msg)}catch(e){}
+    try{navigator.clipboard&&navigator.clipboard.writeText(msg).catch(()=>{})}catch(e){}
     if(meta)registrarMsg(Object.assign({tel:'grupo'},meta));
     abrirExterno(p.zapGrupo);
     toast(p,'Mensagem copiada 📋','Cole no grupo e envie. 💬',true);
@@ -5746,7 +5792,7 @@ function abrirZapPet(p,msg,meta,assunto){
   abrirZap(zapDoPet(p,assunto),msg,meta);
 }
 function abrirZap(tel,msg,meta){
-  try{navigator.clipboard?.writeText(msg)}catch(e){}
+  try{navigator.clipboard?.writeText(msg)?.catch(()=>{})}catch(e){}
   if(meta)registrarMsg(Object.assign({tel},meta));
   abrirExterno(wa(tel,msg));
 }
@@ -7824,7 +7870,10 @@ function renderHotel(){
   renderHotelCal();
   const hosp=reservas.filter(r=>r.status==='hospedado');
   const res=reservas.filter(r=>r.status==='reservado').sort((a,b)=>a.checkin.localeCompare(b.checkin));
-  const fin=reservas.filter(r=>r.status==='finalizado').sort((a,b)=>b.checkout.localeCompare(a.checkout));
+  const finTodos=reservas.filter(r=>r.status==='finalizado').sort((a,b)=>b.checkout.localeCompare(a.checkout));
+  /* aqui embaixo fica só o que ainda pede alguma coisa. Check-out já pago vai
+     pro arquivo do Financeiro: guardado, mas fora do caminho. */
+  const fin=finTodos.filter(r=>!r.pago);
   // esses tres contam CACHORRO: uma reserva de 3 irmaos sao 3 aumigos
   // hospedados. Ja os numerinhos ao lado dos titulos (h-n1/n2/n3) contam
   // RESERVA, porque e isso que a lista embaixo deles mostra: um card por reserva.
@@ -7872,7 +7921,7 @@ function renderHotel(){
       <span class="valor">${brl(c.total)}</span>
       <span class="st-pag ${r.pago?'pago':r.naFatura?'junto':'aberto'}">${r.pago?'✓ pago':r.naFatura?'🧾 na fatura do mês':'aguardando pagamento'}</span>
       <button class="btn-mini" data-fatura="${r.id}">📄 Fatura</button>
-    </li>`}).join(''):'<li class="nada" style="display:block">Nenhum check-out finalizado ainda.</li>';
+    </li>`}).join(''):`<li class="nada" style="display:block">Nenhum check-out esperando pagamento. ${finTodos.length?`Os ${finTodos.length} já ${finTodos.length===1?'pago está guardado':'pagos estão guardados'} em <button class="alterar" style="margin:0" data-view="financeiro">📁 Financeiro › Arquivo</button>.`:''} 🎉</li>`;
 }
 function abrirHMenu(id,btn){
   fecharMenu();const r=reservas.find(x=>x.id===id);
@@ -8230,6 +8279,7 @@ function abrirCheckin(id){
     r.checklist=r.checklist||{};r.checklist.checkin=lerChecklist('ci');const falt=CHECK_IN.filter(([k])=>!r.checklist.checkin[k]).length;
     if(falt)setTimeout(()=>toast(h.p||{raca:h.raca},`Checklist: ${falt} ${falt===1?'item pendente':'itens pendentes'}`,'Dá pra completar depois no diário.'),600);
     r.status='hospedado';if(r.checkin>HOJE)r.checkin=HOJE;r.checkinFeito=`${HOJE} ${horaAgora()}`;
+    salvarHotel();   // grava ANTES de abrir o WhatsApp: veja o comentario acima
     enviarMsg(r,'checkin',zapDe(+$('#ci-zap').value),$('#ci-msg').value);
     fecharModal();renderHotel();toast(h.p||{raca:h.raca},`Check-in de ${h.nome} feito 🔑`,'Mensagem de boas-vindas aberta no WhatsApp.',true);
   };
@@ -8347,6 +8397,7 @@ function abrirFatura(id,checkoutAgora,etapa){
       if(r.naFatura){r.faturaYm=r.faturaYm||MES;r.pago=false}
       if(!r.checklist.checkout.pertences){if(!confirm('Os pertences ainda não foram marcados como conferidos. Confirmar o check-out mesmo assim?'))return}
       r.status='finalizado';r.pago=!r.naFatura;delete r.aguardandoPgto;r.checkoutFeito=`${HOJE} ${horaAgora()}`;if(r.checkout>HOJE)r.checkout=HOJE;delete r.etapaCheckout;
+      salvarHotel();   // mesmo motivo do check-in: grava antes de qualquer coisa poder sair da pagina
       fecharModal();renderHotel();toast(h.p||{raca:h.raca},`Check-out de ${h.nome} feito 🏁`,`${brl(contaHotel(r).restante)} aguardando pagamento.`,true);
     };
   }
@@ -8441,21 +8492,30 @@ function renderHotelCal(){
 }
 function abrirDiaHotel(iso){
   const todos=ocupacaoDia(iso);
-  const entram=reservas.filter(r=>r.status!=='cancelado'&&r.checkin===iso);
+  const doDia=reservas.filter(r=>r.status!=='cancelado'&&r.checkin===iso);
   const saem=reservas.filter(r=>r.status!=='cancelado'&&r.checkout===iso);
-  /* quem chega hoje já conta em ocupacaoDia: fica só na lista de "chegam",
+  /* quem chega no dia é separado por já ter feito o check-in ou não: feito o
+     check-in o aumigo sai de "Chegam" e passa pra "Já chegaram". Antes ficava
+     em "Chegam" pra sempre e a equipe não sabia quem já tinha entrado. */
+  const aguardando=doDia.filter(r=>r.status==='reservado');
+  const jaChegaram=doDia.filter(r=>r.status!=='reservado');
+  /* quem chega no dia já conta em ocupacaoDia: fica só na lista dele,
      senão o mesmo aumigo aparece duas vezes e confunde */
-  const idsEntram=new Set(entram.map(r=>r.id));
-  const ficam=todos.filter(r=>!idsEntram.has(r.id));
+  const idsDoDia=new Set(doDia.map(r=>r.id));
+  const ficam=todos.filter(r=>!idsDoDia.has(r.id));
   const dataLonga=new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
   const ehHoje=iso===HOJE;
   const card=(r,tipo)=>{
     const h=hospede(r);const c=contaHotel(r);
     const chegaHoje=r.checkin===iso, saiHoje=r.checkout===iso;
     const chegou=r.checkin<iso;
+    const entrou=r.status!=='reservado';   // check-in já feito
+    const horaEntrou=r.checkinFeito?r.checkinFeito.slice(11):null;
     const fChega=chegaHoje
-      ?{ic:'🔑',l:ehHoje?'Chega hoje':'Chega nesse dia',v:'às '+(r.horaIn||'09:00'),hoje:true}
-      :{ic:'🔑',l:chegou?'Chegou em':'Chega em',v:fmtData(r.checkin)+' às '+(r.horaIn||'09:00')};
+      ?(entrou
+        ?{ic:'✅',l:ehHoje?'Chegou hoje':'Chegou nesse dia',v:'às '+(horaEntrou||r.horaIn||'09:00'),hoje:true}
+        :{ic:'🔑',l:ehHoje?'Chega hoje':'Chega nesse dia',v:'previsto às '+(r.horaIn||'09:00'),hoje:true})
+      :{ic:'🔑',l:chegou?'Chegou em':'Chega em',v:fmtData(r.checkin)+' às '+(horaEntrou||r.horaIn||'09:00')};
     const fSai=saiHoje
       ?{ic:'🏁',l:ehHoje?'Vai embora hoje':'Vai embora nesse dia',v:'às '+(r.horaOut||'17:00'),hoje:true}
       :{ic:'🏁',l:'Vai embora em',v:fmtData(r.checkout)+' às '+(r.horaOut||'17:00')};
@@ -8484,13 +8544,15 @@ function abrirDiaHotel(iso){
     <h2 id="hd-t">${st('dog-shihtzu')} ${dataLonga}</h2>
     <div class="hd-resumo">
       <span class="aqui">🏡 ${todos.length} ${todos.length===1?'hospedado':'hospedados'}</span>
-      ${entram.length?`<span class="chega">🔑 ${entram.length} ${entram.length===1?'chega':'chegam'}</span>`:''}
+      ${aguardando.length?`<span class="chega">🔑 ${aguardando.length} ${aguardando.length===1?'ainda chega':'ainda chegam'}</span>`:''}
+      ${jaChegaram.length?`<span class="chegou">✅ ${jaChegaram.length} ${jaChegaram.length===1?'já chegou':'já chegaram'}</span>`:''}
       ${saem.length?`<span>🏁 ${saem.length} ${saem.length===1?'vai embora':'vão embora'}</span>`:''}
       <small>Cabem ${cfg.capacidadeHotel||6} no hotel · ${Math.max(0,(cfg.capacidadeHotel||6)-todos.length)} ${((cfg.capacidadeHotel||6)-todos.length)===1?'vaga livre':'vagas livres'}</small>
     </div>
     ${nada?`<div class="hd-vazio" style="margin-top:18px">${st('dog-shihtzu')}Nenhum aumigo hospedado ${ehHoje?'hoje':'nesse dia'}. O hotel está vazio. 🛏</div>`:''}
-    ${sec('🔑 Chegam '+(ehHoje?'hoje':'nesse dia'),entram,'chega')}
-    ${sec('🏡 Já estão aqui',ficam,'aqui')}
+    ${sec('🔑 Ainda chegam '+(ehHoje?'hoje':'nesse dia'),aguardando,'chega')}
+    ${sec('✅ Já chegaram '+(ehHoje?'hoje':'nesse dia'),jaChegaram,'chegou')}
+    ${sec('🏡 Já estão aqui <small>desde antes</small>',ficam,'aqui')}
     ${sec('🏁 Vão embora '+(ehHoje?'hoje':'nesse dia'),saem,'sai')}
     ${iso>=HOJE?`<button class="btn primario hd-nova" id="hc-nova">＋ Nova reserva começando ${fmtData(iso)}</button>`:''}
   </div></div>`;
@@ -9292,7 +9354,27 @@ function renderFinanceiro(){
   const porCliente=f.creche.map(x=>({nome:nomeCompleto(x.p),tutor:x.p.tutor+(temDois(x.p)?' e '+(x.p.dono2.nome||'2º dono'):''),creche:x.m.total-x.m.valorHotel+(x.m.abatimento?0:0),hotel:f.hotelL.filter(h=>h.r.petId===x.p.id).reduce((a,h)=>a+(h.r.naFatura?h.c.restante:h.c.total),0),junto:x.m.hosp.length>0,pago:x.pago,venc:x.p.pagamentoDia,id:x.p.id}));
   f.hotelSolto.filter(h=>!h.r.petId).forEach(h=>porCliente.push({nome:h.r.nome+' (visitante)',tutor:h.r.tutor,creche:0,hotel:h.c.total,pago:h.r.pago,venc:null,rid:h.r.id}));
   porCliente.sort((a,b)=>(b.creche+b.hotel)-(a.creche+a.hotel));
-  $('#fi-clientes').innerHTML=`<tr><th>Cliente</th><th class="r">Creche</th><th class="r">Hotel</th><th class="r">Total</th><th>Status</th></tr>`+porCliente.map(c=>`<tr><td><b>${c.nome}</b><br><small style="color:#A38560">${c.tutor}</small></td><td class="r">${c.creche?brl(c.creche):'—'}</td><td class="r">${c.hotel?brl(c.hotel)+(c.junto?'<br><small style="color:var(--verde-txt)">na fatura</small>':''):'—'}</td><td class="r"><b>${brl(c.creche+c.hotel)}</b></td><td>${c.pago?'<span class="st-pag pago">✓ pago</span>':(c.venc&&finMes===MES&&hojeDia>c.venc)||finMes<MES?'<span class="st-pag aberto" style="background:var(--vermelho-bg);color:var(--vermelho-txt)">vencido</span>':'<span class="st-pag aberto" style="background:var(--amarelo-claro)">em aberto</span>'}</td></tr>`).join('')+`<tr class="tot"><td>Total</td><td class="r">${brl(f.previsao-f.creche.reduce((a,x)=>a+x.m.valorHotel,0))}</td><td class="r">${brl(f.hotel)}</td><td class="r">${brl(f.previsao+f.hotelSolto.reduce((a,x)=>a+x.c.total,0))}</td><td colspan="2"></td></tr>`;
+  /* quem já pagou sai da tabela principal e vai pro arquivo: a lista de cima
+     é pra saber de quem ainda falta receber, não pra reler quem já acertou. */
+  const pagos=porCliente.filter(c=>c.pago), devendo=porCliente.filter(c=>!c.pago);
+  const linhaCli=c=>`<tr><td><b>${c.nome}</b><br><small style="color:#A38560">${c.tutor}</small></td><td class="r">${c.creche?brl(c.creche):'—'}</td><td class="r">${c.hotel?brl(c.hotel)+(c.junto?'<br><small style="color:var(--verde-txt)">na fatura</small>':''):'—'}</td><td class="r"><b>${brl(c.creche+c.hotel)}</b></td><td>${c.pago?'<span class="st-pag pago">✓ pago</span>':(c.venc&&finMes===MES&&hojeDia>c.venc)||finMes<MES?'<span class="st-pag aberto" style="background:var(--vermelho-bg);color:var(--vermelho-txt)">vencido</span>':'<span class="st-pag aberto" style="background:var(--amarelo-claro)">em aberto</span>'}</td></tr>`;
+  const cabCli=`<tr><th>Cliente</th><th class="r">Creche</th><th class="r">Hotel</th><th class="r">Total</th><th>Status</th></tr>`;
+  $('#fi-clientes').innerHTML=cabCli+(devendo.length?devendo.map(linhaCli).join(''):`<tr><td colspan="5" style="text-align:center;color:var(--verde-txt);font-weight:700;padding:16px">🎉 Todo mundo em dia neste mês. Os recebidos estão no arquivo, ali embaixo.</td></tr>`)+`<tr class="tot"><td>Total</td><td class="r">${brl(f.previsao-f.creche.reduce((a,x)=>a+x.m.valorHotel,0))}</td><td class="r">${brl(f.hotel)}</td><td class="r">${brl(f.previsao+f.hotelSolto.reduce((a,x)=>a+x.c.total,0))}</td><td colspan="2"></td></tr>`;
+  /* a pasta: check-out pago e mensalidade paga do mês escolhido */
+  const arqHotel=f.hotelL.filter(x=>x.r.status==='finalizado'&&x.r.pago).sort((a,b)=>b.r.checkout.localeCompare(a.r.checkout));
+  $('#fi-arq-n1').textContent=arqHotel.length;
+  $('#fi-arq-n2').textContent=pagos.length;
+  $('#fi-arq-sub').textContent=(arqHotel.length+pagos.length)
+    ?`${arqHotel.length} ${arqHotel.length===1?'check-out':'check-outs'} · ${pagos.length} ${pagos.length===1?'mensalidade':'mensalidades'} · ${ymNome(finMes)}`
+    :`nada guardado em ${ymNome(finMes)} ainda`;
+  $('#fi-arq-hotel').innerHTML=arqHotel.length?arqHotel.map(({r,c})=>`<li>
+      <span class="mini" data-hperfil="${r.id}" style="cursor:pointer">${c.h.avatar}</span>
+      <span class="nome" data-hperfil="${r.id}" style="cursor:pointer">${c.h.nome}</span>
+      <span class="det">${fmtData(r.checkin)} → ${fmtData(r.checkout)} · ${c.resumoDiarias} · tutor ${c.h.tutor}</span>
+      <span class="valor">${brl(c.total)}</span>
+      <span class="bt"><span class="st-pag">✓ pago</span><button class="btn-mini" data-fatura="${r.id}">📄 Fatura</button></span>
+    </li>`).join(''):'<li class="vazio-arq" style="display:block">Nenhum check-out pago neste mês.</li>';
+  $('#fi-arq-pagos').innerHTML=pagos.length?(cabCli+pagos.map(linhaCli).join('')):`<tr><td class="vazio-arq">Nenhuma mensalidade recebida neste mês.</td></tr>`;
   const tot=Object.values(f.porServico).reduce((a,b)=>a+b,0)||1;
   $('#fi-servicos').innerHTML=Object.entries(f.porServico).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="serv"><div class="serv-h"><span>${k}</span><b>${brl(v)} <small>${Math.round(v/tot*100)}%</small></b></div><div class="barra"><i style="width:${v/tot*100}%"></i></div></div>`).join('')||'<div class="nada">Sem receita neste mês.</div>';
 }
