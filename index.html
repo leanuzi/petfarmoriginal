@@ -8632,6 +8632,7 @@ function abrirRota(d){
   const atual=rotaDe(d);
   let ordem=atual.stops.map(x=>{const p=pets.find(q=>q.id===x.petId)||{};return {petId:x.petId,hora:x.hora||''}});
   let modo=(rotas[d]&&rotas[d].ordem)||'manual';
+  let rtBusca='';
   $('#modais').innerHTML=`
   <div class="overlay" id="ov">
     <div class="modal form rota-modal" role="dialog" aria-labelledby="rt-t">
@@ -8650,7 +8651,8 @@ function abrirRota(d){
         <ol class="ordem-rota" id="rt-ordem"></ol>
       </div>
       <div class="campo">
-        <label>Toque pra adicionar na rota <small style="font-weight:700;color:#A38560" id="rt-cont"></small></label>
+        <label for="rt-busca">Toque pra adicionar na rota <small style="font-weight:700;color:#A38560" id="rt-cont"></small></label>
+        <label class="busca" style="margin-bottom:8px"><svg class="st" style="width:18px;height:18px;color:#B59B7B"><use href="#lupa"/></svg><input id="rt-busca" type="search" placeholder="Digite o nome do aumigo ou do tutor…" autocomplete="off"></label>
         <div class="pet-sel escolher" id="rt-lista"></div>
       </div>
       <div class="duplo" style="max-width:none;margin-top:14px"><button class="btn cinza" id="rt-limpar">🧹 Limpar ordem</button><button class="btn primario" id="rt-ok">${st('check')} Salvar rota</button></div>
@@ -8677,13 +8679,15 @@ function abrirRota(d){
       </li>`}).join('')
       :`<li class="vazio">Nenhum aumigo na rota ainda. Toque nos nomes abaixo na ordem que você quer buscar. 🐶</li>`;
     const dentro=new Set(ordem.map(x=>x.petId));
-    const fora=ativos().filter(p=>!dentro.has(p.id)).sort((a,b)=>a.nome.localeCompare(b.nome));
-    $('#rt-cont').textContent=`· ${ordem.length} na rota · ${fora.length} de fora`;
+    const todosFora=ativos().filter(p=>!dentro.has(p.id)).sort((a,b)=>a.nome.localeCompare(b.nome));
+    const q=rtBusca.trim().toLowerCase();
+    const fora=todosFora.filter(p=>!q||p.nome.toLowerCase().includes(q)||(p.tutor||'').toLowerCase().includes(q));
+    $('#rt-cont').textContent=`· ${ordem.length} na rota · ${todosFora.length} de fora${q?` · ${fora.length} achado${fora.length===1?'':'s'}`:''}`;
     $('#rt-lista').innerHTML=fora.length?fora.map(p=>`<button type="button" class="add-pet" data-add="${p.id}">
         <span class="mais">＋</span><span class="mini">${avatar(p)}</span>
         <span class="info-p"><b>${nomeCompleto(p)} <span style="font-size:11px;font-weight:800;color:#A38560">· ${cidadeDe(p)==='bc'?'Bal. Camboriú':'Camboriú'}</span></b><span>${p.endereco||'⚠ sem endereço'}</span></span>
       </button>`).join('')
-      :`<div class="vazio-sel">Todos os aumigos ativos já estão na rota 🎉</div>`;
+      :`<div class="vazio-sel">${q?'Nenhum aumigo com esse nome. Confira a escrita ou apague a busca.':'Todos os aumigos ativos já estão na rota 🎉'}</div>`;
   }
   pintar();
   $('#rt-modo').addEventListener('click',e=>{const b=e.target.closest('[data-modo]');if(!b)return;
@@ -8704,6 +8708,13 @@ function abrirRota(d){
     const p=pets.find(q=>q.id===+b.dataset.add);if(!p)return;
     ordem.push({petId:p.id,hora:''});pintar();
     const el=$('#rt-ordem');if(el&&el.lastElementChild)el.lastElementChild.scrollIntoView({block:'nearest',behavior:'smooth'});
+  });
+  $('#rt-busca').addEventListener('input',e=>{
+    /* pintar() redesenha a lista de cima junto, entao guarda a hora digitada
+       antes: sem isso, buscar no meio da montagem apagaria o horario que
+       ainda nao tinha saido do campo. Mesmo cuidado dos botoes de ordem. */
+    [...document.querySelectorAll('#rt-ordem [data-rth]')].forEach(inp=>{const o=ordem.find(x=>x.petId===+inp.dataset.rth);if(o)o.hora=inp.value||o.hora});
+    rtBusca=e.target.value;pintar();
   });
   $('#rt-limpar').onclick=()=>{ordem=[];pintar()};
   $('#rt-ok').onclick=()=>{
