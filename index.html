@@ -1854,6 +1854,58 @@ img,svg,video,canvas{max-width:100%}
   .rt-lista .add-pet{min-height:56px}
   .rt-rodape{position:sticky;bottom:0;z-index:3;margin:14px -16px 0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--creme);border-top:1px solid var(--bege)}
 }
+/* ===== hotel · modal do dia (toque num dia do mapa) =====
+   Lido no celular pela equipe. Cada hóspede é um cartão que explica sozinho:
+   quem é, de quem é, quando chegou, quando vai embora, quantas noites e
+   quanto dá. Três listas sem repetição: quem chega hoje, quem já está,
+   quem vai embora hoje. */
+.hd-modal h2{font-size:26px;text-transform:capitalize}
+.hd-resumo{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.hd-resumo span{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:var(--marrom);background:var(--bege-claro);border:1px solid var(--bege);border-radius:999px;padding:6px 12px}
+.hd-resumo span.chega{background:var(--amarelo-suave);border-color:var(--amarelo);color:var(--marrom-escuro)}
+.hd-resumo span.aqui{background:var(--verde-bg);border-color:#BFDDB8;color:var(--verde-txt)}
+.hd-resumo small{font-size:12px;font-weight:700;color:#A38560;width:100%;margin-top:2px}
+.hd-sec{margin-top:20px}
+.hd-sec h3{font-family:var(--display);font-weight:600;font-size:18px;color:var(--marrom-escuro);margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.hd-sec h3 .qtd{font-family:var(--body);font-size:12px;font-weight:800;color:#8C7355;background:var(--bege-claro);border:1px solid var(--bege);border-radius:999px;padding:3px 9px}
+.hd-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.hd-card{display:grid;grid-template-columns:56px minmax(0,1fr);column-gap:12px;align-items:center;background:var(--creme);border:1px solid var(--bege);border-radius:20px;padding:14px;box-shadow:var(--sombra)}
+.hd-card.chega{border-color:var(--amarelo);background:linear-gradient(180deg,var(--amarelo-suave),var(--creme) 60%)}
+.hd-card.sai{border-color:var(--bege);background:linear-gradient(180deg,var(--bege-claro),var(--creme) 60%)}
+.hd-card .foto{width:56px;height:56px;border-radius:50%;overflow:hidden;background:var(--amarelo-claro);display:grid;place-items:center;border:3px solid #fff;box-shadow:0 4px 10px rgba(91,70,54,.15)}
+.hd-card .foto img{width:100%;height:100%;object-fit:cover}.hd-card .foto .st{width:44px;height:44px}
+.hd-card .quem{min-width:0}
+.hd-card .nome{font-family:var(--display);font-weight:600;font-size:20px;color:var(--marrom-escuro);line-height:1.15;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hd-card .nome .tipo{font-family:var(--body);font-size:11px;font-weight:800;border-radius:999px;padding:3px 9px;background:var(--bege-claro);border:1px solid var(--bege);color:#8C7355}
+.hd-card .nome .tipo.aluno{background:var(--amarelo-suave);border-color:var(--amarelo);color:var(--marrom-escuro)}
+.hd-card .raca{font-size:13px;font-weight:700;color:#A38560;margin-top:2px}
+.hd-card .fatos{grid-column:1/-1;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px 12px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--bege)}
+.hd-card .fato{display:flex;align-items:center;gap:8px;min-width:0}
+.hd-card .fato .ic{width:30px;height:30px;flex:none;border-radius:10px;background:var(--bege-claro);display:grid;place-items:center;font-size:15px}
+.hd-card .fato div{min-width:0}
+.hd-card .fato small{display:block;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#A38560}
+.hd-card .fato b{display:block;font-size:14px;font-weight:700;color:var(--marrom);line-height:1.25;overflow-wrap:anywhere}
+.hd-card .fato.hoje .ic{background:var(--amarelo)}
+.hd-card .fato.hoje b{color:var(--marrom-escuro)}
+.hd-card .rodape{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--bege)}
+.hd-card .noites{font-size:13px;font-weight:800;color:var(--marrom)}
+.hd-card .noites small{display:block;font-size:11px;font-weight:700;color:#A38560}
+.hd-card .total{text-align:right}
+.hd-card .total small{display:block;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#A38560}
+.hd-card .total b{font-family:var(--display);font-weight:600;font-size:22px;color:var(--marrom-escuro);line-height:1.1}
+.hd-vazio{text-align:center;font-size:14px;font-weight:700;color:#A38560;padding:22px 14px;background:var(--bege-claro);border:2px dashed var(--bege);border-radius:18px;line-height:1.5}
+.hd-vazio .st{width:48px;height:48px;display:block;margin:0 auto 6px}
+.hd-modal .hd-nova{margin-top:18px}
+@media (max-width:760px){
+  .hd-modal{padding:20px 16px calc(20px + env(safe-area-inset-bottom))}
+  .hd-modal h2{font-size:22px;padding-right:44px}
+  .hd-modal h2 .st{width:36px;height:36px}
+  .hd-card{grid-template-columns:52px minmax(0,1fr);padding:12px}
+  .hd-card .foto{width:52px;height:52px}
+  .hd-card .nome{font-size:18px}
+  .hd-card .fatos{grid-template-columns:1fr 1fr;gap:8px 10px}
+  .hd-card .fato.tutor{grid-column:1/-1}
+}
 /* alvos de toque nunca menores que 40px no celular */
 @media (pointer:coarse){
   .btn-mini,.rota .tg button,.mv,.iconbtn,.seta,.hoje-btn{min-height:40px}
@@ -8388,20 +8440,59 @@ function renderHotelCal(){
     <div class="legenda"><span><i style="background:var(--bege-claro)"></i>livre</span><span><i style="background:#DCEBD8"></i>com hóspedes</span><span><i style="background:var(--amarelo-claro)"></i>quase cheio</span><span><i style="background:#F1C9C9"></i>lotado</span><span><i class="pt-ent"></i>chega</span><span><i class="pt-sai"></i>sai</span><span>· toque num dia pra ver quem está</span></div>`;
 }
 function abrirDiaHotel(iso){
-  const lista=ocupacaoDia(iso);
+  const todos=ocupacaoDia(iso);
   const entram=reservas.filter(r=>r.status!=='cancelado'&&r.checkin===iso);
   const saem=reservas.filter(r=>r.status!=='cancelado'&&r.checkout===iso);
-  const li=(r,tag)=>{const h=hospede(r);const c=contaHotel(r);return `<li><span class="mini">${h.avatar}</span><div><b>${h.nome}</b><span>${racaDe(h.raca).nome} · ${h.aluno?'aluno':'visitante'} · tutor ${h.tutor} · ${fmtData(r.checkin)} → ${fmtData(r.checkout)}</span></div>${tag?`<span class="st-pag ${tag==='chega'?'aberto':'junto'}">${tag==='chega'?'🔑 chega '+(r.horaIn||'09:00'):'🏁 sai '+(r.horaOut||'17:00')}</span>`:''}${pode('financeiro')?`<span class="valor">${brl(c.total)}</span>`:''}</li>`};
+  /* quem chega hoje já conta em ocupacaoDia: fica só na lista de "chegam",
+     senão o mesmo aumigo aparece duas vezes e confunde */
+  const idsEntram=new Set(entram.map(r=>r.id));
+  const ficam=todos.filter(r=>!idsEntram.has(r.id));
+  const dataLonga=new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  const ehHoje=iso===HOJE;
+  const card=(r,tipo)=>{
+    const h=hospede(r);const c=contaHotel(r);
+    const chegaHoje=r.checkin===iso, saiHoje=r.checkout===iso;
+    const chegou=r.checkin<iso;
+    const fChega=chegaHoje
+      ?{ic:'🔑',l:ehHoje?'Chega hoje':'Chega nesse dia',v:'às '+(r.horaIn||'09:00'),hoje:true}
+      :{ic:'🔑',l:chegou?'Chegou em':'Chega em',v:fmtData(r.checkin)+' às '+(r.horaIn||'09:00')};
+    const fSai=saiHoje
+      ?{ic:'🏁',l:ehHoje?'Vai embora hoje':'Vai embora nesse dia',v:'às '+(r.horaOut||'17:00'),hoje:true}
+      :{ic:'🏁',l:'Vai embora em',v:fmtData(r.checkout)+' às '+(r.horaOut||'17:00')};
+    const fato=f=>`<div class="fato ${f.hoje?'hoje':''}"><span class="ic">${f.ic}</span><div><small>${f.l}</small><b>${f.v}</b></div></div>`;
+    return `<li class="hd-card ${tipo}">
+      <div class="foto">${h.avatar}</div>
+      <div class="quem">
+        <div class="nome">${h.nome}<span class="tipo ${h.aluno?'aluno':''}">${h.aluno?'🎓 aluno da creche':'visitante'}</span></div>
+        <div class="raca">${racaDe(h.raca).nome}${h.peso?' · '+h.peso+' kg':''}</div>
+      </div>
+      <div class="fatos">
+        <div class="fato tutor"><span class="ic">👤</span><div><small>Tutor</small><b>${h.tutor}${h.telefone?' · '+telFmt(h.telefone):''}</b></div></div>
+        ${fato(fChega)}${fato(fSai)}
+      </div>
+      <div class="rodape">
+        <div class="noites">🌙 ${c.n} ${c.n===1?'noite':'noites'}<small>${c.resumoDiarias}</small></div>
+        ${pode('financeiro')?`<div class="total"><small>${r.sinalPago?'Total · sinal pago':'Total da estadia'}</small><b>${brl(c.total)}</b></div>`:''}
+      </div>
+    </li>`};
+  const lista=(arr,tipo)=>`<ul class="hd-lista">${arr.map(r=>card(r,tipo)).join('')}</ul>`;
+  const sec=(titulo,arr,tipo)=>arr.length?`<section class="hd-sec"><h3>${titulo}<span class="qtd">${arr.length}</span></h3>${lista(arr,tipo)}</section>`:'';
+  const nada=!todos.length&&!saem.length;
   $('#modais').innerHTML=`
-  <div class="overlay" id="ov"><div class="modal form" role="dialog">
+  <div class="overlay" id="ov"><div class="modal form hd-modal" role="dialog" aria-labelledby="hd-t">
     <button class="fechar" data-fechar aria-label="Fechar">✕</button>
-    <h2>${st('dog-shihtzu')} ${new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}</h2>
-    <div class="sub" style="font-size:13px;font-weight:700;color:#8C7355;margin-top:2px">${lista.length} de ${cfg.capacidadeHotel||6} vagas ocupadas${entram.length?` · ${entram.length} chega`:''}${saem.length?` · ${saem.length} sai`:''}</div>
-    <div class="cfg-h">🏡 Hospedados no dia</div>
-    <ul class="lista-fin">${lista.length?lista.map(r=>li(r,'')).join(''):'<li class="nada" style="display:block;text-align:center;color:#A38560;font-weight:700">Nenhum hóspede nesse dia.</li>'}</ul>
-    ${entram.length?`<div class="cfg-h">🔑 Chegam</div><ul class="lista-fin">${entram.map(r=>li(r,'chega')).join('')}</ul>`:''}
-    ${saem.length?`<div class="cfg-h">🏁 Saem</div><ul class="lista-fin">${saem.map(r=>li(r,'sai')).join('')}</ul>`:''}
-    ${iso>=HOJE?`<button class="btn primario" id="hc-nova" style="margin-top:16px">＋ Nova reserva começando ${fmtData(iso)}</button>`:''}
+    <h2 id="hd-t">${st('dog-shihtzu')} ${dataLonga}</h2>
+    <div class="hd-resumo">
+      <span class="aqui">🏡 ${todos.length} ${todos.length===1?'hospedado':'hospedados'}</span>
+      ${entram.length?`<span class="chega">🔑 ${entram.length} ${entram.length===1?'chega':'chegam'}</span>`:''}
+      ${saem.length?`<span>🏁 ${saem.length} ${saem.length===1?'vai embora':'vão embora'}</span>`:''}
+      <small>Cabem ${cfg.capacidadeHotel||6} no hotel · ${Math.max(0,(cfg.capacidadeHotel||6)-todos.length)} ${((cfg.capacidadeHotel||6)-todos.length)===1?'vaga livre':'vagas livres'}</small>
+    </div>
+    ${nada?`<div class="hd-vazio" style="margin-top:18px">${st('dog-shihtzu')}Nenhum aumigo hospedado ${ehHoje?'hoje':'nesse dia'}. O hotel está vazio. 🛏</div>`:''}
+    ${sec('🔑 Chegam '+(ehHoje?'hoje':'nesse dia'),entram,'chega')}
+    ${sec('🏡 Já estão aqui',ficam,'aqui')}
+    ${sec('🏁 Vão embora '+(ehHoje?'hoje':'nesse dia'),saem,'sai')}
+    ${iso>=HOJE?`<button class="btn primario hd-nova" id="hc-nova">＋ Nova reserva começando ${fmtData(iso)}</button>`:''}
   </div></div>`;
   lock();
   const bn=$('#hc-nova');if(bn)bn.onclick=()=>{fecharModal();abrirReserva(null,iso)};
