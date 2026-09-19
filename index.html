@@ -9093,9 +9093,11 @@ function renderFinanceiro(){
   const inad=f.atrasoL.length;const clientes=f.creche.filter(x=>x.m.total>0).length;
   $('#fi-kpis').innerHTML=[
     ['A receber',brl(f.aReceber+f.hotelAberto),'ag'],['Recebido',brl(f.recebido+f.hotelRecebido),'pr'],['Em atraso',brl(f.atraso),'fa'],
-    ['Previsão do mês',brl(f.total),'sem transporte'],['Hotel',brl(f.hotel),''],
+    ['Previsão do mês',brl(f.total),''],['Hotel',brl(f.hotel),''],
     ['Inadimplência',clientes?`${Math.round(inad/clientes*100)}% · ${inad} ${inad===1?'cliente':'clientes'}`:'—','fa'],
-  ].map(([k,v,c])=>`<div class="stat ${c==='sem transporte'?'':c}"><b style="font-size:22px">${v}</b><span>${k}${c==='sem transporte'?' <small>(sem van)</small>':''}</span></div>`).join('')+`<div class="nota" style="flex:100%;font-size:12px;font-weight:700;color:#A38560">🚐 O transporte fica em <button class="alterar" style="margin:0" data-view="fintransp">Financeiro do Transporte</button>, separado.</div>`;
+  /* nada de van aqui: o caixa da creche não fala do transporte, nem com um
+     rótulo, nem com atalho pro fintransp. Quem cuida da van é o motorista. */
+  ].map(([k,v,c])=>`<div class="stat ${c}"><b style="font-size:22px">${v}</b><span>${k}</span></div>`).join('');
   const porCliente=f.creche.map(x=>({nome:nomeCompleto(x.p),tutor:x.p.tutor+(temDois(x.p)?' e '+(x.p.dono2.nome||'2º dono'):''),creche:x.m.total-x.m.valorHotel+(x.m.abatimento?0:0),hotel:f.hotelL.filter(h=>h.r.petId===x.p.id).reduce((a,h)=>a+(h.r.naFatura?h.c.restante:h.c.total),0),junto:x.m.hosp.length>0,pago:x.pago,venc:x.p.pagamentoDia,id:x.p.id}));
   f.hotelSolto.filter(h=>!h.r.petId).forEach(h=>porCliente.push({nome:h.r.nome+' (visitante)',tutor:h.r.tutor,creche:0,hotel:h.c.total,pago:h.r.pago,venc:null,rid:h.r.id}));
   porCliente.sort((a,b)=>(b.creche+b.hotel)-(a.creche+a.hotel));
@@ -10149,14 +10151,14 @@ function abrirAgendaDia(d){
 <script>
 /* Pet Farm · auth.js — logins, perfis de acesso e permissões */
 const PERFIS={
-  /* fintransp entrou aqui: a tela do Financeiro tem um botão que leva pra
-     "Financeiro do Transporte", mas a dona não tinha essa view — clicava e
-     caía calada no Início. Agora que a van não entra mais na fatura, aquela
-     tela é o ÚNICO lugar onde o dinheiro do transporte aparece. */
+  /* fintransp = caixa da van, negócio do motorista, separado da creche.
+     Só o Motorista (dono da van) e a Master (dona do sistema) enxergam.
+     Gerente e Recepção não entram: não é dinheiro da Pet Farm.
+     O Financeiro da creche não cita transporte em lugar nenhum. */
   master:{nome:'Dona / Master',desc:'Acesso total, cria e edita logins',views:['inicio','creche','pets','hotel','transporte','cobranca','financeiro','fintransp','boletim','mensagens','gestao'],pode:['financeiro','config','equipe','descontos','cadastro','meu_pagamento']},
-  gestor:{nome:'Gerente',desc:'Tudo, menos criar logins',views:['inicio','creche','pets','hotel','transporte','cobranca','financeiro','fintransp','boletim','mensagens','gestao'],pode:['financeiro','descontos','cadastro','meu_pagamento']},
+  gestor:{nome:'Gerente',desc:'Tudo da creche e do hotel, menos criar logins e o caixa da van',views:['inicio','creche','pets','hotel','transporte','cobranca','financeiro','boletim','mensagens','gestao'],pode:['financeiro','descontos','cadastro','meu_pagamento']},
   recepcao:{nome:'Recepção',desc:'Chamada, hotel, transporte e mensagens',views:['inicio','creche','pets','hotel','transporte','boletim','mensagens'],pode:['cadastro']},
-  motorista:{nome:'Motorista',desc:'Rota do transporte + o próprio fechamento. Só este acesso vê o financeiro do transporte',views:['transporte','fintransp'],pode:['meu_pagamento']},
+  motorista:{nome:'Motorista',desc:'Rota do transporte + o próprio fechamento (o caixa da van)',views:['transporte','fintransp'],pode:['meu_pagamento']},
 };
 let usuario=null;
 const pode=x=>!!(usuario&&PERFIS[usuario.perfil]&&PERFIS[usuario.perfil].pode.includes(x));
@@ -10331,13 +10333,26 @@ function aplicarPerfisSalvos(){
     if(Array.isArray(s.pode))PERFIS[k].pode=s.pode.filter(p=>PODERES[p]);
   });
   if(!PERFIS.master.pode.includes('config'))PERFIS.master.pode.push('config');
-  /* quem já tinha as permissões salvas antes desta correção continuava sem
-     alcançar o Financeiro do Transporte. Quem enxerga o Financeiro tem que
-     enxergar o da van também — é pra lá que o botão de lá aponta. */
-  Object.keys(PERFIS).forEach(k=>{
-    const v=PERFIS[k].views;
-    if(v.indexOf('financeiro')>=0&&v.indexOf('fintransp')<0)v.push('fintransp');
-  });
+  /* NÃO religar fintransp em quem tem financeiro. Antes existia aqui um laço
+     que fazia isso e furava a separação: quem via o caixa da creche passava a
+     ver o caixa da van. Ver o Financeiro não dá direito ao dinheiro do
+     transporte. Quem precisar, o Master libera em Configurações › Permissões.
+
+     Faxina de uma vez só: quem já rodava o sistema tem as permissões antigas
+     salvas em cfg.perfis, com o Gerente e a Recepção enxergando o caixa da van.
+     Trocar o padrão no código não alcançaria essa gente — o salvo ganha do
+     padrão. Então tira uma vez, marca que tirou e nunca mais mexe: se depois
+     disso o Master devolver o acesso pra alguém, a escolha dele é respeitada. */
+  if(!cfg.vanSoDoDono){
+    ['gestor','recepcao'].forEach(k=>{
+      if(sv[k]&&Array.isArray(sv[k].views)){
+        sv[k].views=sv[k].views.filter(v=>v!=='fintransp');
+        if(PERFIS[k])PERFIS[k].views=PERFIS[k].views.filter(v=>v!=='fintransp');
+      }
+    });
+    cfg.vanSoDoDono=true;
+    try{salvarCfg()}catch(e){}
+  }
 }
 function abrirPermissoes(){
   if(!pode('config')){toast(pets[0]||{raca:'golden'},'Sem permissão','Só o acesso master edita permissões.');return}
