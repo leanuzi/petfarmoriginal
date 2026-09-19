@@ -1653,7 +1653,7 @@ a.maps-link:hover{text-decoration:underline}
   select,textarea{font-size:16px!important}
   /* os campos de horário tinham largura fixa pensada na letra pequena;
      com 16px o relógio não cabia mais */
-  .pet-sel input[type=time],.ordem-rota input[type=time]{width:auto;min-width:118px}
+  .pet-sel input[type=time]{width:auto;min-width:118px}
   /* botões pequenos espalhados pelos modais (sugestões, setas do calendário,
      etiquetas de pagamento) também precisam de área de toque */
   .modal .sug button,.modal .cal-nav button,.modal .perfil-fin .pag button,
@@ -1669,8 +1669,7 @@ a.maps-link:hover{text-decoration:underline}
 
   /* --- listas de escolha (pets, rota, pertences) --- */
   .pet-sel label,.pet-sel .add-pet{min-height:56px}
-  .ordem-rota li{min-height:56px}
-  .ordem-rota input[type=time],.pet-sel input[type=time]{min-height:44px}
+  .pet-sel input[type=time]{min-height:44px}
 
   /* --- modal ocupa a tela de forma confortável --- */
   .overlay{padding:8px 8px 0;align-items:flex-end}
@@ -1734,35 +1733,16 @@ a.maps-link:hover{text-decoration:underline}
 /* ---------- lista da rota: reordenar e destacar a próxima ---------- */
 .rota li.proxima{box-shadow:0 0 0 2px #2F5BA8,var(--sombra)}
 .rota .mover{display:inline-flex;gap:4px;flex:none}
-.rota .mover .mv,.ordem-rota .mv{width:32px;height:32px;border-radius:10px;background:var(--bege-claro);border:1px solid var(--bege);color:var(--marrom);font-weight:900;font-size:15px;line-height:1;display:grid;place-items:center;cursor:pointer}
-.rota .mover .mv:hover,.ordem-rota .mv:hover{background:var(--amarelo-suave)}
-.rota .mover .mv:disabled,.ordem-rota .mv:disabled{opacity:.35;cursor:default}
+.rota .mover .mv{width:32px;height:32px;border-radius:10px;background:var(--bege-claro);border:1px solid var(--bege);color:var(--marrom);font-weight:900;font-size:15px;line-height:1;display:grid;place-items:center;cursor:pointer}
+.rota .mover .mv:hover{background:var(--amarelo-suave)}
+.rota .mover .mv:disabled{opacity:.35;cursor:default}
 .tr-ordem-box{margin-top:14px}
 #tr-ordem{display:block;background:var(--creme);border:1px dashed var(--bege);border-radius:16px;padding:10px 14px;font-size:12.5px;font-weight:700;color:var(--marrom);line-height:1.6;width:100%}
 #tr-ordem b{color:var(--marrom-escuro)}
 #tr-ordem:empty{display:none;padding:0;border:0}
 
 /* ---------- modal: montar a rota ---------- */
-.rota-modal .campo{margin-top:14px}
-.modo-rota{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-.modo-rota button{text-align:left;background:var(--bege-claro);border:2px solid var(--bege);border-radius:16px;padding:10px 12px;cursor:pointer;line-height:1.3}
-.modo-rota button b{display:block;font-family:var(--display);font-weight:600;font-size:15px;color:var(--marrom-escuro)}
-.modo-rota button span{display:block;font-size:11px;font-weight:700;color:#8C7355;margin-top:2px}
-.modo-rota button.on{background:var(--amarelo-suave);border-color:var(--amarelo)}
 
-.ordem-rota{list-style:none;display:flex;flex-direction:column;gap:6px;margin:8px 0 0;padding:0;max-height:44vh;overflow:auto}
-.ordem-rota li{display:flex;align-items:center;gap:9px;background:var(--creme);border:1px solid var(--bege);border-radius:16px;padding:7px 10px;flex:none}  /* flex:none: a lista é uma coluna com altura limitada e vinha espremendo cada parada, jogando nome, hora e botões por cima da parada de baixo */
-.ordem-rota li.vazio{display:block;text-align:center;font-size:12.5px;font-weight:700;color:#A38560;padding:16px 12px;background:var(--bege-claro);border-style:dashed}
-.ordem-rota .n{width:28px;height:28px;flex:none;border-radius:50%;background:var(--marrom-escuro);color:var(--creme);display:grid;place-items:center;font-family:var(--display);font-weight:600;font-size:14px}
-.ordem-rota .mini{width:34px;height:34px;flex:none;border-radius:50%;overflow:hidden;background:var(--amarelo-claro);display:grid;place-items:center}
-.ordem-rota .mini img{width:100%;height:100%;object-fit:cover}.ordem-rota .mini .st{width:28px;height:28px}
-.ordem-rota .info{flex:1;min-width:0}
-.ordem-rota .info b{display:block;font-family:var(--display);font-weight:600;font-size:15px;color:var(--marrom-escuro);line-height:1.15}
-.ordem-rota .info b em{font-style:normal;font-family:var(--body);font-size:10.5px;font-weight:800;color:#A38560}
-.ordem-rota .info>span{display:block;font-size:11px;font-weight:700;color:#8C7355;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ordem-rota input[type=time]{width:96px;flex:none;background:#fff;border:1px solid var(--bege);border-radius:10px;padding:6px 8px;font-weight:800;font-size:13px;color:var(--marrom)}
-.ordem-rota .mv-box{display:inline-flex;gap:4px;flex:none}
-.ordem-rota .mv.rm{background:#FBECEC;border-color:#F0CFCF;color:var(--vermelho-txt)}
 
 .pet-sel.escolher{gap:6px}
 .pet-sel .add-pet{display:flex;width:100%;align-items:center;gap:10px;background:var(--bege-claro);border:1px solid var(--bege);border-radius:14px;padding:6px 10px;cursor:pointer;text-align:left}
@@ -1796,10 +1776,88 @@ img,svg,video,canvas{max-width:100%}
     .topbar .in{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
   }
 }
+/* ===== modal da rota: montar a rota do dia =====
+   Pensado pro celular na mão do motorista. Um scroll só (o do modal, nada
+   de lista rolando dentro de lista), a busca gruda no topo enquanto a lista
+   de aumigos rola por baixo, e Salvar fica sempre à mão num rodapé fixo.
+   Cada linha da ordem é uma grade fixa: nome numa faixa, endereço e botões
+   na outra, e nada estoura de lado nem some atrás do horário. */
+.rota-modal .campo{margin-top:12px}
+.rt-topo{display:grid;grid-template-columns:minmax(150px,1fr) minmax(0,1.5fr);gap:10px;align-items:end}
+.rt-modo{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bege-claro);border:1px solid var(--bege);border-radius:14px;padding:4px}
+.rt-modo button{min-height:40px;border-radius:11px;background:none;border:0;font-family:var(--display);font-weight:600;font-size:15px;color:var(--marrom);cursor:pointer;padding:0 8px;white-space:nowrap;transition:.15s}
+.rt-modo button.on{background:var(--amarelo);color:var(--marrom-escuro);box-shadow:0 2px 0 #D9A41E}
+.rt-dica{margin:8px 2px 0;font-size:12.5px;font-weight:700;color:#8C7355;line-height:1.35}
+.rt-sec{margin-top:18px}
+.rt-cab{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.rt-cab h3{font-family:var(--display);font-size:17px;font-weight:600;color:var(--marrom-escuro);margin:0}
+.rt-badge{font-size:12px;font-weight:800;color:#8C7355;background:var(--bege-claro);border:1px solid var(--bege);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.rt-badge.tem{background:var(--amarelo-suave);border-color:var(--amarelo);color:var(--marrom-escuro)}
+/* ordem da rota (a classe do nome e .nome, nao .info: .info ja existe pro
+   card do pet, com borda tracejada e grade de duas colunas, e vazava aqui) */
+.ordem-rota{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:44vh;overflow:auto}
+.ordem-rota li{display:grid;grid-template-columns:28px 34px minmax(0,1fr) auto auto;grid-template-areas:"n mini nome hora mv" "n mini end hora mv";column-gap:8px;row-gap:1px;align-items:center;background:var(--creme);border:1px solid var(--bege);border-radius:16px;padding:7px 8px 7px 10px;flex:none}
+.ordem-rota li.vazio{display:block;text-align:center;font-size:13px;font-weight:700;color:#A38560;padding:14px 12px;background:var(--bege-claro);border-style:dashed;line-height:1.4}
+.ordem-rota .n{grid-area:n;width:28px;height:28px;border-radius:50%;background:var(--marrom-escuro);color:var(--creme);display:grid;place-items:center;font-family:var(--display);font-weight:600;font-size:14px}
+.ordem-rota .mini{grid-area:mini;width:34px;height:34px;border-radius:50%;overflow:hidden;background:var(--amarelo-claro);display:grid;place-items:center}
+.ordem-rota .mini img{width:100%;height:100%;object-fit:cover}.ordem-rota .mini .st{width:28px;height:28px}
+.ordem-rota .nome{grid-area:nome;min-width:0;font-family:var(--display);font-weight:600;font-size:15px;color:var(--marrom-escuro);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ordem-rota .end em{font-style:normal;font-weight:800;color:#A38560}
+.ordem-rota .end{grid-area:end;min-width:0;font-size:11px;font-weight:700;color:#8C7355;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ordem-rota input[type=time]{grid-area:hora;width:auto;min-width:0;background:#fff;border:1px solid var(--bege);border-radius:10px;padding:6px 8px;font-weight:800;font-size:13px;color:var(--marrom)}
+.ordem-rota .mv-box{grid-area:mv;display:inline-flex;gap:4px}
+.ordem-rota .mv{width:32px;height:32px;border-radius:10px;background:var(--bege-claro);border:1px solid var(--bege);color:var(--marrom);font-weight:900;font-size:15px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.ordem-rota .mv:hover{background:var(--amarelo-suave)}
+.ordem-rota .mv:disabled{opacity:.35;cursor:default}
+.ordem-rota .mv.rm{background:#FBECEC;border-color:#F0CFCF;color:var(--vermelho-txt)}
+/* busca e lista de quem ainda não entrou */
+.rt-busca-cx{padding:0 0 8px}
+.rt-busca{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--bege);border-radius:999px;padding:0 14px;min-height:44px}
+.rt-busca .st{width:18px;height:18px;color:#B59B7B;flex:none}
+.rota-modal .rt-busca input{flex:1;min-width:0;width:auto;border:0;background:none;padding:10px 0;font-size:15px;font-weight:600;outline:none;box-shadow:none;border-radius:0;min-height:0}
+.rt-busca:focus-within{border-color:var(--amarelo);box-shadow:0 0 0 3px var(--amarelo-suave)}
+.rt-chip{flex:none;font-size:12px;font-weight:800;color:var(--marrom-escuro);background:var(--amarelo-suave);border:1px solid var(--amarelo);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.rt-chip:empty{display:none}
+.rt-lista{display:flex;flex-direction:column;gap:6px;max-height:340px;overflow:auto}
+.rt-lista .add-pet{display:flex;width:100%;align-items:center;gap:10px;min-height:52px;background:var(--bege-claro);border:1px solid var(--bege);border-radius:14px;padding:6px 10px;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent}
+.rt-lista .add-pet:hover{background:var(--amarelo-suave);border-color:var(--amarelo)}
+.rt-lista .add-pet:active{background:var(--amarelo-suave);transform:scale(.99)}
+.rt-lista .add-pet .mais{width:28px;height:28px;flex:none;border-radius:50%;background:var(--amarelo);color:var(--marrom-escuro);display:grid;place-items:center;font-weight:900;font-size:16px}
+.rt-lista .add-pet .mini{width:34px;height:34px;flex:none;border-radius:50%;overflow:hidden;background:var(--amarelo-claro);display:grid;place-items:center}
+.rt-lista .add-pet .mini img{width:100%;height:100%;object-fit:cover}.rt-lista .add-pet .mini .st{width:28px;height:28px}
+.rt-lista .add-pet .info-p{flex:1;min-width:0}
+.rt-lista .add-pet .info-p b{display:block;font-family:var(--display);font-weight:600;font-size:15px;color:var(--marrom-escuro);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt-lista .add-pet .info-p span em{font-style:normal;font-weight:800;color:#A38560}
+.rt-lista .add-pet .info-p span{display:block;font-size:11px;font-weight:700;color:#8C7355;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt-lista .vazio-sel{text-align:center;font-size:13px;font-weight:700;color:#A38560;padding:14px;background:var(--bege-claro);border:1px dashed var(--bege);border-radius:14px;line-height:1.4}
+/* rodapé */
+.rt-rodape{display:flex;gap:10px;margin-top:16px}
+.rota-modal .rt-rodape .btn{margin:0;max-width:none;flex:1;font-size:17px;padding:13px 14px}
+.rota-modal .rt-rodape #rt-ok{flex:1.7}
+@media (max-width:760px){
+  .rota-modal{padding:20px 16px 0}
+  .rota-modal h2{font-size:24px;padding-right:44px}
+  .rota-modal h2 .st{width:36px;height:36px}
+  .rt-topo{grid-template-columns:1fr;gap:0}
+  .rt-topo .campo{margin-top:10px}
+  .rt-modo button{min-height:44px}
+  .rt-sec{margin-top:16px}
+  .ordem-rota{max-height:none;overflow:visible}
+  .ordem-rota li{grid-template-columns:26px 32px minmax(0,1fr) auto;grid-template-areas:"n mini nome hora" "end end end mv";row-gap:6px;padding:8px}
+  .ordem-rota .n{width:26px;height:26px;font-size:13px}
+  .ordem-rota .mini{width:32px;height:32px}
+  .ordem-rota input[type=time]{min-height:40px;width:96px;padding:0 6px;justify-self:end;text-align:center}
+  .ordem-rota .mv-box{justify-self:end}
+  .ordem-rota .mv{width:40px;height:40px;font-size:17px}
+  .rt-busca-cx{position:sticky;top:0;z-index:2;background:var(--creme);padding:6px 0 8px;margin-top:-6px}
+  .rt-lista{max-height:none;overflow:visible}
+  .rt-lista .add-pet{min-height:56px}
+  .rt-rodape{position:sticky;bottom:0;z-index:3;margin:14px -16px 0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--creme);border-top:1px solid var(--bege)}
+}
 /* alvos de toque nunca menores que 40px no celular */
 @media (pointer:coarse){
   .btn-mini,.rota .tg button,.mv,.iconbtn,.seta,.hoje-btn{min-height:40px}
-  .rota .mover .mv,.ordem-rota .mv{width:40px;height:40px}
+  .rota .mover .mv{width:40px;height:40px}
 }
 /* desktop: rota mais confortável e ações lado a lado */
 @media (min-width:981px){
@@ -1814,9 +1872,6 @@ img,svg,video,canvas{max-width:100%}
    melhor e a rolagem encurta. No celular o min() ja devolve 100%. */
 @media (min-width:1100px){ .modal.form{width:min(880px,100%)} }
 }
-@media (max-width:900px){
-  .modo-rota{grid-template-columns:1fr}
-}
 @media (max-width:760px){
   /* cabeçalhos de seção no celular: título em cima, botões embaixo, nada espremido */
   .sec-head{row-gap:8px}
@@ -1830,15 +1885,6 @@ img,svg,video,canvas{max-width:100%}
   .rota li .exec .btn-mini{flex:1 1 auto;justify-content:center}
   .rota .mover{order:-1}
   .rota .cnt{font-size:14px}
-  .ordem-rota{max-height:38vh}
-  .ordem-rota li{flex-wrap:wrap;row-gap:8px}
-  .ordem-rota .info{flex:1 1 140px;min-width:140px;order:0}   /* largura mínima: com base 0 o nome quebrava letra por letra */
-  .ordem-rota .info b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ordem-rota li{padding:6px 8px;gap:7px}
-  .ordem-rota .info>span{display:none}          /* endereço já aparece na rota e na lista de baixo */
-  .ordem-rota li{row-gap:6px}
-  .ordem-rota input[type=time]{order:4;width:92px}
-  .ordem-rota .mv-box{order:5;margin-left:auto}
   .etapas .btn{padding:12px 10px}
   .sec-head .rota-nav{margin-left:0!important;width:100%;order:2}
   #view-transporte .sec-head .add{width:100%;justify-content:center;order:3}
@@ -8638,27 +8684,33 @@ function abrirRota(d){
     <div class="modal form rota-modal" role="dialog" aria-labelledby="rt-t">
       <button class="fechar" data-fechar aria-label="Fechar">✕</button>
       <h2 id="rt-t">${st('dog-dachshund')} Rota de ${d===HOJE?'hoje':d===dAdd(HOJE,1)?'amanhã':fmtData(d)} 🚐</h2>
-      <div class="campo" style="margin-top:12px"><label for="rt-data">Dia da rota</label><input id="rt-data" type="date" value="${d}"></div>
-      <div class="campo">
-        <label>Como montar a ordem das paradas</label>
-        <div class="modo-rota" id="rt-modo">
-          <button type="button" data-modo="manual" class="${modo==='manual'?'on':''}"><b>🔢 Eu escolho</b><span>A ordem é a ordem em que você toca nos aumigos: 1, 2, 3, 4, 5…</span></button>
-          <button type="button" data-modo="auto" class="${modo==='auto'?'on':''}"><b>🤖 Automática</b><span>Do ponto mais distante (Bal. Camboriú) fechando perto da creche.</span></button>
+      <div class="rt-topo">
+        <div class="campo"><label for="rt-data">Dia da rota</label><input id="rt-data" type="date" value="${d}"></div>
+        <div class="campo">
+          <label id="rt-modo-l">Ordem das paradas</label>
+          <div class="rt-modo" id="rt-modo" role="radiogroup" aria-labelledby="rt-modo-l">
+            <button type="button" data-modo="manual" role="radio" aria-checked="${modo==='manual'}" class="${modo==='manual'?'on':''}">🔢 Eu escolho</button>
+            <button type="button" data-modo="auto" role="radio" aria-checked="${modo==='auto'}" class="${modo==='auto'?'on':''}">🤖 Automática</button>
+          </div>
         </div>
       </div>
-      <div class="campo">
-        <label>Ordem da rota <small style="font-weight:700;color:#A38560">· sai da base 🏠 e volta pra base 🏁</small></label>
+      <p class="rt-dica" id="rt-dica"></p>
+      <section class="rt-sec">
+        <div class="rt-cab"><h3>Ordem da rota</h3><span class="rt-badge" id="rt-n-ordem"></span></div>
         <ol class="ordem-rota" id="rt-ordem"></ol>
-      </div>
-      <div class="campo">
-        <label for="rt-busca">Toque pra adicionar na rota <small style="font-weight:700;color:#A38560" id="rt-cont"></small></label>
-        <label class="busca" style="margin-bottom:8px"><svg class="st" style="width:18px;height:18px;color:#B59B7B"><use href="#lupa"/></svg><input id="rt-busca" type="search" placeholder="Digite o nome do aumigo ou do tutor…" autocomplete="off"></label>
-        <div class="pet-sel escolher" id="rt-lista"></div>
-      </div>
-      <div class="duplo" style="max-width:none;margin-top:14px"><button class="btn cinza" id="rt-limpar">🧹 Limpar ordem</button><button class="btn primario" id="rt-ok">${st('check')} Salvar rota</button></div>
+      </section>
+      <section class="rt-sec">
+        <div class="rt-cab"><h3><label for="rt-busca" style="cursor:pointer">Adicionar aumigo</label></h3><span class="rt-badge" id="rt-cont"></span></div>
+        <div class="rt-busca-cx"><label class="rt-busca"><svg class="st"><use href="#lupa"/></svg><input id="rt-busca" type="search" placeholder="Buscar aumigo ou tutor…" autocomplete="off" enterkeyhint="search"><span class="rt-chip" id="rt-na-rota" aria-live="polite"></span></label></div>
+        <div class="rt-lista" id="rt-lista"></div>
+      </section>
+      <div class="rt-rodape"><button class="btn cinza" id="rt-limpar">🧹 Limpar</button><button class="btn primario" id="rt-ok">${st('check')} Salvar rota</button></div>
     </div>
   </div>`;
   lock();
+  const DICA={manual:'A ordem é a ordem em que você toca nos aumigos: 1, 2, 3… Sai da base 🏠 e volta pra base 🏁.',auto:'Do ponto mais distante (Bal. Camboriú) fechando perto da creche. Sai da base 🏠 e volta pra base 🏁.'};
+  const pintarDica=()=>{$('#rt-dica').textContent=DICA[modo]||DICA.manual};
+  pintarDica();
   const nomeP=id=>{const p=pets.find(q=>q.id===id);return p?p.nome:'?'};
   function pintar(){
     const ordemVista=modo==='auto'?ordenarParadas(ordem):ordem;
@@ -8667,10 +8719,8 @@ function abrirRota(d){
       return `<li>
         <span class="n">${i+1}</span>
         <span class="mini">${avatar(p)}</span>
-        <span class="info">
-          <b>${p.nome||'?'} <em>${cidadeDe(p)==='bc'?'Bal. Camboriú':'Camboriú'}</em></b>
-          <span>${p.endereco||'⚠ sem endereço cadastrado'}</span>
-        </span>
+        <span class="nome">${p.nome||'?'}</span>
+        <span class="end"><em>${cidadeDe(p)==='bc'?'Bal. Camboriú':'Camboriú'}</em> · ${p.endereco||'⚠ sem endereço cadastrado'}</span>
         <input type="time" data-rth="${x.petId}" value="${x.hora}" aria-label="Hora de buscar ${p.nome||''}">
         <span class="mv-box">
           ${modo==='manual'?`<button type="button" class="mv" data-up="${real}" ${real===0?'disabled':''} aria-label="Subir">↑</button><button type="button" class="mv" data-dn="${real}" ${real===ordem.length-1?'disabled':''} aria-label="Descer">↓</button>`:''}
@@ -8678,20 +8728,22 @@ function abrirRota(d){
         </span>
       </li>`}).join('')
       :`<li class="vazio">Nenhum aumigo na rota ainda. Toque nos nomes abaixo na ordem que você quer buscar. 🐶</li>`;
+    const nOrd=$('#rt-n-ordem');nOrd.textContent=ordem.length?`${ordem.length} ${ordem.length===1?'parada':'paradas'}`:'vazia';nOrd.classList.toggle('tem',ordem.length>0);
+    $('#rt-na-rota').textContent=ordem.length?`${ordem.length} na rota`:'';
     const dentro=new Set(ordem.map(x=>x.petId));
     const todosFora=ativos().filter(p=>!dentro.has(p.id)).sort((a,b)=>a.nome.localeCompare(b.nome));
     const q=rtBusca.trim().toLowerCase();
     const fora=todosFora.filter(p=>!q||p.nome.toLowerCase().includes(q)||(p.tutor||'').toLowerCase().includes(q));
-    $('#rt-cont').textContent=`· ${ordem.length} na rota · ${todosFora.length} de fora${q?` · ${fora.length} achado${fora.length===1?'':'s'}`:''}`;
+    $('#rt-cont').textContent=q?`${fora.length} de ${todosFora.length}`:`${todosFora.length} de fora`;
     $('#rt-lista').innerHTML=fora.length?fora.map(p=>`<button type="button" class="add-pet" data-add="${p.id}">
         <span class="mais">＋</span><span class="mini">${avatar(p)}</span>
-        <span class="info-p"><b>${nomeCompleto(p)} <span style="font-size:11px;font-weight:800;color:#A38560">· ${cidadeDe(p)==='bc'?'Bal. Camboriú':'Camboriú'}</span></b><span>${p.endereco||'⚠ sem endereço'}</span></span>
+        <span class="info-p"><b>${nomeCompleto(p)}</b><span><em>${cidadeDe(p)==='bc'?'Bal. Camboriú':'Camboriú'}</em> · ${p.endereco||'⚠ sem endereço'}</span></span>
       </button>`).join('')
       :`<div class="vazio-sel">${q?'Nenhum aumigo com esse nome. Confira a escrita ou apague a busca.':'Todos os aumigos ativos já estão na rota 🎉'}</div>`;
   }
   pintar();
   $('#rt-modo').addEventListener('click',e=>{const b=e.target.closest('[data-modo]');if(!b)return;
-    modo=b.dataset.modo;[...$('#rt-modo').children].forEach(c=>c.classList.toggle('on',c.dataset.modo===modo));
+    modo=b.dataset.modo;[...$('#rt-modo').children].forEach(c=>{const on=c.dataset.modo===modo;c.classList.toggle('on',on);c.setAttribute('aria-checked',on)});pintarDica();
     if(modo==='auto')cfg.rotaDoFim=true,salvarCfg();
     pintar()});
   $('#rt-ordem').addEventListener('click',e=>{
@@ -8707,7 +8759,11 @@ function abrirRota(d){
     [...document.querySelectorAll('#rt-ordem [data-rth]')].forEach(inp=>{const o=ordem.find(x=>x.petId===+inp.dataset.rth);if(o)o.hora=inp.value||o.hora});
     const p=pets.find(q=>q.id===+b.dataset.add);if(!p)return;
     ordem.push({petId:p.id,hora:''});pintar();
-    const el=$('#rt-ordem');if(el&&el.lastElementChild)el.lastElementChild.scrollIntoView({block:'nearest',behavior:'smooth'});
+    /* so rola a lista de cima quando ela tem rolagem propria (PC). No celular ela
+       corre solta dentro do modal, e rolar ate la puxaria a tela inteira pra cima a
+       cada toque: quem escolhe 1, 2, 3, 4 perderia o lugar. O chip "N na rota" na
+       barra de busca e o retorno de que o toque entrou. */
+    const el=$('#rt-ordem');if(el&&el.lastElementChild&&el.scrollHeight>el.clientHeight)el.lastElementChild.scrollIntoView({block:'nearest',behavior:'smooth'});
   });
   $('#rt-busca').addEventListener('input',e=>{
     /* pintar() redesenha a lista de cima junto, entao guarda a hora digitada
