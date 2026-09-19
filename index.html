@@ -6254,13 +6254,13 @@ function iniciar(){
   cfg=JSON.parse(JSON.stringify(CFG_PADRAO));            // sem herdar nada da unidade anterior
   try{const sv=lerLocal('petfarm.cfg');if(sv)cfg=Object.assign(cfg,JSON.parse(sv))}catch(e){}
   CRECHE_NOME=cfg.nome;aplicarPlanosSalvos();aplicarTransporteSalvo();aplicarPrecos();aplicarPerfisSalvos();aplicarRacasSalvas();
-  zerarCaixaDaVan();
   try{const sv=lerLocal('petfarm.turma');pets=ehTransporte()?turmaDasUnidades():(sv?JSON.parse(sv):JSON.parse(JSON.stringify(DEMO_PETS)))}catch(e){pets=JSON.parse(JSON.stringify(DEMO_PETS))}
   pets.forEach(p=>{if(p.aniversario==='__HOJE__')p.aniversario=MMDD});
   pets.forEach(p=>{semearHistorico(p);sincronizarHoje(p)});
   try{const sv=lerLocal('petfarm.msgs');if(sv)msgLog=JSON.parse(sv)}catch(e){}
   try{const sv=lerLocal('petfarm.ops');if(sv)ops=JSON.parse(sv)}catch(e){}
   iniciarHotel();iniciarTransporte();
+  zerarCaixaDaVan();
   $('#data-hoje').innerHTML='<span class="d-longa">'+new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})+
     '</span><span class="d-curta">'+new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'})+'</span>';
 
@@ -8756,24 +8756,33 @@ function embarcouParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.a
 let tfMes=null;
 function pagamentosMotorista(){cfg.pagMotorista=cfg.pagMotorista||{};return cfg.pagMotorista}
 function motoristaCfg(){return Object.assign({nome:'Ramon',tipo:'tudo',valor:100},cfg.motorista||{})}
-/* Zera o caixa da van uma vez so. Limpa APENAS o que e do financeiro do
-   transporte e de mais ninguem: os meses marcados como recebidos, o
-   combustivel e os custos fixos da van. Nao encosta em pet, presenca,
-   viagem, rota nem fatura - esses dados sao da creche e continuam onde
-   estao, entao a receita e a contagem de viagens seguem aparecendo na
-   tela, calculadas a partir da chamada.
+/* Deixa o transporte como na primeira vez que se abre: apaga as viagens de
+   cada pet (p.transportes), as rotas, os meses marcados como recebidos, o
+   combustivel e os custos fixos. Com as viagens fora, a receita, o km e o
+   lucro passam a calcular zero, que e o que a tela nao fazia so limpando o
+   caixa: aqueles numeros vinham da chamada, nao daqui.
 
-   Roda na carga e grava a flag; a partir dai o que o motorista lancar de
-   novo fica. Sem a flag isso apagaria o lancamento dele toda vez que ele
-   abrisse o app. */
+   Vai junto o historico de van na ficha do pet, o valor da van em fatura de
+   mes fechado e a porcentagem de uso da van no boletim. Foi pedido assim.
+
+   Nao encosta em: plano de van do pet, presenca da creche, hotel, cadastro,
+   mensagem, login nem permissao.
+
+   Roda uma vez so, marcado em cfg.transporteDoZero; sem a flag apagaria de
+   novo tudo que o motorista rodasse, toda vez que ele abrisse o app. */
 function zerarCaixaDaVan(){
-  if(cfg.caixaVanZerado)return;
+  if(cfg.transporteDoZero)return;
+  pets.forEach(p=>{p.transportes=[]});
+  rotas={};
   cfg.pagMotorista={};
   delete cfg.combustivel;
   delete cfg.custoKm;
-  cfg.caixaVanZerado=true;
+  cfg.transporteDoZero=true;
+  try{salvar()}catch(e){}
+  try{salvarRotas()}catch(e){}
   try{salvarCfg()}catch(e){}
 }
+
 function transporteMes(ym){
   const lista=pets.filter(p=>p.transporte||p.transportes.length);
   const porPet=lista.map(p=>{const m=resumoMes(p,ym);return {p,viagens:m.transpVezes,valor:m.valorTransp,cidade:p.transporte?TRANSPORTE[p.transporte].nome:'—',pago:!!p.pagamentos[ym]}}).filter(x=>x.viagens>0).sort((a,b)=>b.viagens-a.viagens);
