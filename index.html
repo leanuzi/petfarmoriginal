@@ -1306,6 +1306,9 @@ table.fat tr.hotel td{background:#FFFCF3}
 .ag-nova input{flex:1 1 160px;min-width:0;background:var(--branco);border:1px solid var(--bege);border-radius:12px;padding:9px 12px;font-weight:700;font-size:13px}
 .ag-nova select{flex:0 1 150px;min-width:0;background:var(--branco);border:1px solid var(--bege);border-radius:12px;padding:9px 10px;font-weight:700;font-size:13px}
 .ag-nova .btn-mini{flex:none}
+.ag-nova .ag-dia{flex:0 1 150px}
+.ag-nova #in-agenda-txt{flex:3 1 200px}
+.agenda .txt .dia{font-weight:800;color:var(--marrom)}
 @media (max-width:760px){.ag-nova input,.ag-nova select{flex:1 1 100%}}
 /* nenhum valor em reais pode quebrar no meio do número */
 .h-total b,.tot b{white-space:nowrap}
@@ -2484,6 +2487,7 @@ img,svg,video,canvas{max-width:100%}
         <ul class="pend agenda" id="in-agenda"></ul>
         <div class="ag-nova">
           <input id="in-agenda-txt" placeholder="O que precisa ser feito?" maxlength="120">
+          <input type="date" id="in-agenda-dia" class="ag-dia" title="Pra que dia e a tarefa">
           <select id="in-agenda-prio">
             <option value="urgente">🔴 Urgente</option>
             <option value="hoje" selected>🟡 Hoje</option>
@@ -6269,24 +6273,39 @@ function tarefasOrdenadas(dia){
 }
 const nomeDoLogin=id=>{const u=usuarios().find(x=>x.id===id);return u?u.nome:''};
 
+/* Hoje primeiro e, depois, o que foi marcado pra frente. Sem isso a
+   tarefa que voce anota pra sexta sumia da tela no momento em que era
+   criada e so voltava a aparecer na sexta. */
+function agendaVisivel(){
+  const dias=Object.keys(agenda()).filter(d=>d>=HOJE).sort();
+  const fora=dias.filter(d=>d!==HOJE);
+  return tarefasOrdenadas(HOJE).map(t=>({t:t,d:HOJE}))
+    .concat(fora.flatMap(d=>tarefasOrdenadas(d).map(t=>({t:t,d:d}))));
+}
+const rotuloDia=d=>new Date(d+'T12:00:00')
+  .toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'})
+  .replace('.,',',');
 function renderAgenda(){
   const cx=document.getElementById('in-agenda');if(!cx)return;
-  const lista=tarefasOrdenadas(HOJE);
+  const lista=agendaVisivel();
   const meu=(usuario||{}).id;
-  const minhas=lista.filter(t=>!t.feita&&(t.para===meu||!t.para)).length;
+  /* o contador continua falando so do dia de hoje */
+  const minhas=lista.filter(x=>x.d===HOJE&&!x.t.feita&&(x.t.para===meu||!x.t.para)).length;
   const cont=document.getElementById('in-agenda-n');
   if(cont)cont.textContent=minhas?minhas+(minhas===1?' pra você':' pra você'):'';
   cx.innerHTML = lista.length
-    ? lista.map(t=>{
+    ? lista.map(x=>{
+        const t=x.t;
         const minha=t.para===meu||!t.para;
         const quem=t.para?nomeDoLogin(t.para):'todo mundo';
         const pr=prioDe(t);
+        const dia=x.d===HOJE?'':'<span class="dia">📅 '+rotuloDia(x.d)+'</span> · ';
         return '<li class="tf p-'+((t.prio)||'hoje')+(t.feita?' feita':'')+(minha?' minha':'')+'">'+
-          '<button class="tf-ok" data-tarefa="'+t.id+'" aria-label="Marcar como feita">'+(t.feita?'✓':'')+'</button>'+
+          '<button class="tf-ok" data-tarefa="'+t.id+'" data-dia="'+x.d+'" aria-label="Marcar como feita">'+(t.feita?'✓':'')+'</button>'+
           '<span class="txt">'+String(t.txt).replace(/</g,'&lt;')+
-            '<small><span class="pr">'+pr.ico+' '+pr.rot+'</span> · '+
+            '<small>'+dia+'<span class="pr">'+pr.ico+' '+pr.rot+'</span> · '+
             (minha?'para você':'para '+quem)+(t.porQuem?' · de '+t.porQuem:'')+'</small></span>'+
-          '<button class="tf-rm" data-tarefarm="'+t.id+'" aria-label="Apagar">✕</button></li>';
+          '<button class="tf-rm" data-tarefarm="'+t.id+'" data-dia="'+x.d+'" aria-label="Apagar">✕</button></li>';
       }).join('')
     : '<li class="mais">Nada anotado pra hoje. Escreva embaixo o que precisa ser feito.</li>';
   // pra quem
@@ -6467,13 +6486,18 @@ function renderInicio(){
   const bta=document.getElementById('in-agenda-add');
   if(bta&&!bta.dataset.pronto){
     bta.dataset.pronto='1';
+    const cdia=document.getElementById('in-agenda-dia');
+    if(cdia){cdia.min=HOJE;cdia.value=HOJE}
     const anotar=()=>{
       const i=document.getElementById('in-agenda-txt');
       const t=(i.value||'').trim();
       if(!t){i.focus();return}
-      addTarefa(HOJE,t,+document.getElementById('in-agenda-para').value||0,
+      /* data em branco ou pra tras vira hoje */
+      const cd=document.getElementById('in-agenda-dia');
+      const d=(cd&&cd.value&&cd.value>=HOJE)?cd.value:HOJE;
+      addTarefa(d,t,+document.getElementById('in-agenda-para').value||0,
         document.getElementById('in-agenda-prio').value);
-      i.value='';renderAgenda();
+      i.value='';if(cd)cd.value=HOJE;renderAgenda();
     };
     bta.onclick=anotar;
     const inp=document.getElementById('in-agenda-txt');
@@ -6669,9 +6693,9 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('click',e=>{
   const ok=e.target.closest&&e.target.closest('[data-tarefa]');
-  if(ok){mexerTarefa(HOJE,+ok.dataset.tarefa);renderAgenda();return}
+  if(ok){mexerTarefa(ok.dataset.dia||HOJE,+ok.dataset.tarefa);renderAgenda();return}
   const rm=e.target.closest&&e.target.closest('[data-tarefarm]');
-  if(rm){mexerTarefa(HOJE,+rm.dataset.tarefarm,'apagar');renderAgenda();return}
+  if(rm){mexerTarefa(rm.dataset.dia||HOJE,+rm.dataset.tarefarm,'apagar');renderAgenda();return}
 });
 /* Escolheu a data de nascimento: a idade aparece sozinha. Continua sendo
    um campo de texto normal — se voce escrever outra coisa, a sua vence e
