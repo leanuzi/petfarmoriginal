@@ -5346,7 +5346,12 @@ const diaChamada=()=>chamadaDia||HOJE;
 function sincronizarHoje(p){
   p.presencas=p.presencas||[];p.faltas=p.faltas||[];p.chegadas=p.chegadas||{};
   p.plano=p.plano||'avulso';p.transporte=p.transporte||'';p.peso=p.peso||(p.porte==='P'?8:p.porte==='M'?15:28);
-  if(!RACAS[p.raca])p.raca=Object.keys(RACAS)[0]||'golden';   // raça apagada não derruba a tela
+  /* Raça que não está em RACAS NÃO é trocada aqui. A linha antiga fazia
+     p.raca='golden' e isso era destrutivo: a unidade Transporte não tinha as
+     raças cadastradas pela creche, toda raça virava golden na memória, e o
+     primeiro salvar() de lá gravou golden pra todo mundo, na nuvem. A tela
+     não precisa disso pra não quebrar: racaDe() já devolve uma raça de
+     fallback só pra desenhar, sem mexer no cadastro. */
   if(!PLANOS[p.plano])p.plano='avulso';
   if(!TRANSPORTE[p.transporte||''])p.transporte='';
   if(!p.tipos||!p.tipos.length)p.tipos=['creche'];p.obs=p.obs||'';p.endereco=p.endereco||'';p.cobrancas=p.cobrancas||{};p.transportes=p.transportes||[];p.midias=p.midias||[];if(!p.pagamentos)p.pagamentos={};p.telefone=p.telefone||'';p.pagamentoDia=p.pagamentoDia||10;
@@ -10499,7 +10504,20 @@ const FIGURINHAS_NOME={'dog-golden':'Cachorro dourado','dog-poodle':'Cachorro fe
 const FIGURINHAS=Object.keys(FIGURINHAS_NOME);
 const RACAS_PADRAO=JSON.parse(JSON.stringify(RACAS));
 function aplicarRacasSalvas(){
-  const sv=(typeof cfg!=='undefined')&&cfg.racas;
+  let sv=(typeof cfg!=='undefined')&&cfg.racas;
+  /* Transporte não tem cadastro de raças próprio: os pets são das creches.
+     Então junta as raças salvas nas configurações de Camboriú e Itajaí
+     (nuvemCarregar deixa esses cfg no localStorage). Sem isso, a unidade
+     Transporte via toda raça cadastrada pela creche como desconhecida e
+     desenhava tudo como golden. */
+  if(typeof ehTransporte==='function'&&ehTransporte()){
+    const junto=Object.assign({},sv||{});
+    (typeof UN_PETS!=='undefined'?UN_PETS:['camboriu','itajai']).forEach(u=>{
+      try{const c=JSON.parse(localStorage.getItem(u+':petfarm.cfg')||'{}');
+        if(c&&c.racas)Object.entries(c.racas).forEach(([k,v])=>{if(!junto[k])junto[k]=v})}catch(e){}
+    });
+    if(Object.keys(junto).length)sv=junto;
+  }
   Object.keys(RACAS).forEach(k=>delete RACAS[k]);
   if(sv&&Object.keys(sv).length){
     Object.entries(sv).forEach(([k,v])=>{
