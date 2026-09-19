@@ -1677,6 +1677,40 @@ a.maps-link:hover{text-decoration:underline}
   .nav::-webkit-scrollbar{display:none}
 }
 
+/* =====================================================================
+   PC: o menu de abas parou de esconder metade do sistema
+   Sao 12 abas. Numa fileira so elas precisam de 1232px, mas dentro da
+   barra de cima sobrava de 306px (notebook 1024) a 937px (monitor 1920):
+   Financeiro, Fin. Transporte, Boletim, Mensagens, Painel e TV ficavam
+   fora da tela. Como a barra de rolagem do menu e invisivel, nao dava
+   nem pra desconfiar que elas existiam - parecia sistema quebrado.
+   Agora, no PC, o menu ganha uma fileira inteira embaixo da logo e
+   quebra em duas fileiras quando nao cabe. Nada fica escondido em
+   nenhum tamanho de janela.
+   Tudo aqui esta dentro de min-width:761px: no celular nada muda.
+   ===================================================================== */
+@media (min-width:761px){
+  .topbar .in{flex-wrap:wrap;row-gap:10px}
+  .nav{order:3;flex:1 1 100%;width:100%;margin:0;
+       flex-wrap:wrap;justify-content:center;
+       overflow:visible;row-gap:4px}
+  .nav button{flex:none}
+  /* a logo volta a ter tamanho proprio: quem espremia ela era o menu
+     disputando a mesma fileira, e isso agora nao acontece mais */
+  .topbar .logo{flex:none;min-width:auto}
+  .topbar .right{margin-left:auto;flex:none}
+}
+/* com a fileira inteira pra ele, o menu cabe numa linha so com o botao
+   no tamanho normal a partir de 1340px - abaixo disso vale apertar */
+@media (min-width:1340px){
+  .nav button{padding:8px 16px}
+}
+/* num notebook ou tablet a data por extenso empurrava a fileira de cima
+   pra uma terceira linha; ali ela sai e a barra volta a ter duas fileiras */
+@media (min-width:761px) and (max-width:1000px){
+  .topbar .date{display:none}
+}
+
 /* 2) itens de grade/flex precisam poder encolher, senão a tabela de 520px
       estica a caixa inteira e vaza a tela no celular. */
 .fi-grid>*,.ge-grid>*,.in-grid>*,.pn-grid>*,.bo-layout>*,.hsec,.in-box,.card{min-width:0}
