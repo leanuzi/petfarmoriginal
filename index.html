@@ -924,7 +924,27 @@ table.fat tr.desc td{color:var(--verde-txt)}
 .raca-row .raca-fig{width:40px;height:40px;flex:none;display:inline-flex}
 .raca-row .raca-fig .st{width:40px;height:40px}
 .raca-row .raca-uso{font-size:11px;font-weight:800;color:var(--texto-2);white-space:nowrap}
-.plano-row,.cidade-row{align-items:end}
+.plano-row,.cidade-row,.vpk-row{align-items:end}
+/* pacotes da van */
+.cfg-lista .row.vpk-row{grid-template-columns:1fr auto auto auto}
+.vpk-uso{font-size:10px;font-weight:800;background:var(--amarelo);border-radius:999px;padding:4px 9px;color:var(--marrom-escuro);white-space:nowrap}
+.cfg-lista .row.vpet-row{grid-template-columns:1fr 215px}
+.vpet-row .qq{min-width:0}
+.vpet-row .qq b{display:block;font-size:13.5px;font-weight:800;color:var(--marrom-escuro);overflow-wrap:anywhere}
+.vpet-row .qq small{display:block;font-size:11px;font-weight:700;color:var(--texto-2)}
+.cfg-lista .nada{background:var(--creme);border:2px dashed var(--bege);border-radius:14px;padding:16px;text-align:center;font-weight:700;font-size:13px;color:var(--texto-2)}
+.vpk-busca{width:100%;background:var(--branco);border:1px solid var(--bege);border-radius:12px;padding:10px 12px;font-weight:700;font-size:14px;margin-top:8px}
+/* no celular as tabelas do Fin. Transporte tinham 520px e a coluna de
+   valor ficava cortada, sem jeito de chegar nela. Agora a tabela rola de
+   lado dentro da propria caixa. */
+@media (max-width:760px){
+  #view-fintransp .fi-grid>section{overflow-x:auto}
+  #view-fintransp .fi-grid>section>table{min-width:600px}
+  .cfg-lista .row.vpk-row{grid-template-columns:1fr 1fr}
+  .cfg-lista .row.vpk-row input[data-k=nome]{grid-column:1/-1}
+  .cfg-lista .row.vpk-row .rm,.cfg-lista .row.vpk-row .vpk-uso{grid-column:2;justify-self:end}
+  .cfg-lista .row.vpet-row{grid-template-columns:1fr}
+}
 .mini-num{display:flex;flex-direction:column;gap:2px;flex:none}
 .mini-num span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--texto-2)}
 .mini-num input{width:96px}
@@ -2602,6 +2622,7 @@ img,svg,video,canvas{max-width:100%}
   <div id="view-fintransp" class="hidden">
     <div class="sec-head" style="margin-top:0"><h2><svg class="st"><use href="#dog-dachshund"/></svg> Financeiro do Transporte 🚐</h2><span class="sub">negócio do motorista · 100% separado da creche e do hotel</span>
       <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap"><select id="ft-mes" style="background:var(--creme);border:1px solid var(--bege);border-radius:999px;padding:9px 14px;font-weight:800;font-size:13px;color:var(--marrom)"></select>
+      <button class="ghost" id="ft-pacotes" style="background:var(--creme);border:1px solid var(--bege);padding:9px 14px;border-radius:999px;font-weight:800;font-size:13px">🎟 Pacotes da van</button>
       <button class="ghost" id="ft-comb" style="background:var(--creme);border:1px solid var(--bege);padding:9px 14px;border-radius:999px;font-weight:800;font-size:13px">⛽ Combustível e custos</button>
       </div></div>
     <div id="ft-corpo"></div>
@@ -6681,7 +6702,7 @@ document.addEventListener('click',e=>{
 });
 $('#btn-reserva').onclick=()=>abrirReserva(null);
 $('#fab').onclick=abrirNovaAcao;
-$('#btn-novo-pet').onclick=abrirEntrada;$('#ft-mes').onchange=e=>{ftMes=e.target.value;renderFinTransp()};$('#ft-comb').onclick=abrirCombustivel;$('#pets-import').onclick=importarVisitantes;
+$('#btn-novo-pet').onclick=abrirEntrada;$('#ft-mes').onchange=e=>{ftMes=e.target.value;renderFinTransp()};$('#ft-comb').onclick=abrirCombustivel;$('#ft-pacotes').onclick=abrirPacotesVan;$('#pets-import').onclick=importarVisitantes;
 let _tp=null;$('#pets-busca').addEventListener('input',e=>{petsBusca=e.target.value;clearTimeout(_tp);_tp=setTimeout(renderPets,140)});
 $('#bo-pet').onchange=e=>{boPet=+e.target.value;renderBoletim()};$('#bo-mes').onchange=e=>{boMes=e.target.value;renderBoletim()};
 $('#bo-cfg').onclick=abrirCfgBoletim;$('#bo-pdf').onclick=()=>{const p=pets.find(x=>x.id===boPet);if(p)pdfBoletim(p,boMes)};$('#bo-zap').onclick=()=>enviarBoletim(boPet,boMes);
@@ -9177,6 +9198,55 @@ function embarcouParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.a
   const todos=rotas[d].stops.every(s=>ex.paradas[s.petId]&&ex.paradas[s.petId].embarcou);if(todos&&!ex.finalizada){ex.finalizada=horaAgora();toast(p,'Rota concluída 🏁',`Todos embarcaram · ${rotas[d].stops.length} paradas.`,true)}
   salvarRotas();render();renderTransporte()}
 
+/* ====== PACOTES DA VAN ======
+   Pacote = valor fixo por mes + ida extra alem das incluidas. Quem nao
+   esta em pacote nenhum segue como sempre foi: preco por dia da cidade
+   vezes o numero de idas.
+
+   Onde fica: no cfg da unidade Transporte (transporte:petfarm.cfg).
+   NUNCA no cfg da creche. Assim nenhum valor daqui aparece na fatura do
+   tutor, no Financeiro da creche, no painel ou no boletim - so na tela
+   Fin. Transporte, que e a unica que chama vanValorMes(). Ler a chave de
+   outra unidade direto e o mesmo caminho que turmaDasUnidades() ja usa
+   pra montar a turma da van. */
+const VAN_CFG='transporte:petfarm.cfg';
+function vanCfgLer(){
+  if(ehTransporte())return cfg;
+  try{return JSON.parse(localStorage.getItem(VAN_CFG)||'{}')||{}}catch(e){return {}}
+}
+function vanPacotes(){const c=vanCfgLer();const v=c&&c.vanPacotes;return (v&&typeof v==='object')?v:{}}
+function vanMapa(){const c=vanCfgLer();const v=c&&c.vanPets;return (v&&typeof v==='object')?v:{}}
+/* id do pet sozinho nao serve: na van a turma vem das duas unidades */
+const chaveVan=p=>((p&&p._un)||UN||'camboriu')+':'+((p&&p.id)||0);
+/* cada aumigo guarda {id do pacote, desde: mes em que entrou}. O "desde"
+   existe pra o pacote NAO reescrever o passado: colocar alguem num pacote
+   hoje nao pode fazer aparecer receita em julho. Mes anterior ao "desde"
+   continua contando por dia, do jeito que foi cobrado na epoca. */
+const vanEntrada=k=>{const v=vanMapa()[k];return (v&&typeof v==='object')?v:(v?{id:v,desde:''}:null)};
+function pacoteDoPet(p,ym){
+  const e=vanEntrada(chaveVan(p));if(!e)return null;
+  if(ym&&e.desde&&ym<e.desde)return null;
+  const pk=vanPacotes()[e.id];
+  return pk?{id:e.id,nome:pk.nome||'Pacote',preco:+pk.preco||0,idas:+pk.idas||0,desde:e.desde||''}:null;
+}
+function vanPrecoDia(p){
+  if(!p)return 0;
+  if(p.transporte===DIFERENCIADO)return +p.precoTransporte||0;
+  return (TRANSPORTE[p.transporte]||{preco:0}).preco||0;
+}
+/* idas=0 quer dizer "sem limite": nunca soma extra */
+function vanValorMes(p,viagens,ym){
+  const pk=pacoteDoPet(p,ym);
+  if(!pk)return {valor:viagens*vanPrecoDia(p),pacote:null,extras:0};
+  const extras=pk.idas>0?Math.max(0,viagens-pk.idas):0;
+  return {valor:pk.preco+extras*vanPrecoDia(p),pacote:pk,extras};
+}
+function salvarVanCfg(pacotes,mapa){
+  if(ehTransporte()){cfg.vanPacotes=pacotes;cfg.vanPets=mapa;salvarCfg();return}
+  const c=vanCfgLer();c.vanPacotes=pacotes;c.vanPets=mapa;
+  salvarSeguro(VAN_CFG,JSON.stringify(c));
+}
+
 /* ====== FINANCEIRO DO TRANSPORTE ====== */
 let tfMes=null;
 function pagamentosMotorista(){cfg.pagMotorista=cfg.pagMotorista||{};return cfg.pagMotorista}
@@ -9209,8 +9279,15 @@ function zerarCaixaDaVan(){
 }
 
 function transporteMes(ym){
-  const lista=pets.filter(p=>p.transporte||p.transportes.length);
-  const porPet=lista.map(p=>{const m=resumoMes(p,ym);return {p,viagens:m.transpVezes,valor:m.valorTransp,cidade:p.transporte?TRANSPORTE[p.transporte].nome:'—',pago:!!p.pagamentos[ym]}}).filter(x=>x.viagens>0).sort((a,b)=>b.viagens-a.viagens);
+  /* quem esta num pacote entra na conta mesmo sem ter rodado no mes:
+     pacote e valor fixo, igual ao plano da creche */
+  const lista=pets.filter(p=>p.transporte||p.transportes.length||pacoteDoPet(p,ym));
+  const porPet=lista.map(p=>{
+    const viagens=doMes(p.transportes,ym).length;
+    const v=vanValorMes(p,viagens,ym);
+    return {p,viagens,valor:v.valor,pacote:v.pacote,extras:v.extras,
+      cidade:p.transporte?TRANSPORTE[p.transporte].nome:'—',pago:!!p.pagamentos[ym]};
+  }).filter(x=>x.viagens>0||x.pacote).sort((a,b)=>b.viagens-a.viagens||b.valor-a.valor);
   const dias={};lista.forEach(p=>doMes(p.transportes,ym).forEach(d=>{dias[d]=(dias[d]||0)+1}));
   const diasL=Object.entries(dias).sort((a,b)=>b[0].localeCompare(a[0])).map(([d,n])=>{
     const r=rotas[d];const ex=r&&r.exec;const km=Math.round(n*4.5+4);
@@ -10297,6 +10374,103 @@ function abrirCombustivel(){
   document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
 }
 let ftMes=null;
+/* ====== configurar os pacotes e quem esta em cada um ====== */
+function abrirPacotesVan(){
+  const pacotes=JSON.parse(JSON.stringify(vanPacotes()));
+  const mapa=Object.assign({},vanMapa());
+  let busca='';
+  const idDe=k=>{const v=mapa[k];return v&&typeof v==='object'?v.id:(v||'')};
+  const vanEntradaLocal=k=>{const v=mapa[k];return v&&typeof v==='object'?v:(v?{id:v,desde:''}:null)};
+  const noPacote=id=>Object.keys(mapa).filter(k=>idDe(k)===id).length;
+  let naVan=0;
+  const contarPacote=n=>{if(n!=null)naVan=n;
+    const e=$('#vpk-n');if(e)e.textContent=Object.keys(mapa).filter(k=>mapa[k]).length+' em pacote · '+naVan+' na van'};
+
+  /* le o que esta digitado nas linhas antes de qualquer redesenho:
+     sem isso, escolher um aumigo apagava o nome e o preco recem digitados */
+  const lerPacotes=()=>{
+    document.querySelectorAll('#vpk-lista .vpk-row').forEach(r=>{
+      const nome=r.querySelector('[data-k=nome]').value.trim();
+      pacotes[r.dataset.pk]={nome:nome||'Pacote',
+        idas:Math.max(0,parseInt(r.querySelector('[data-k=idas]').value)||0),
+        preco:Math.max(0,+r.querySelector('[data-k=preco]').value||0)};
+    });
+  };
+  const pintarPacotes=()=>{
+    lerPacotes();
+    $('#vpk-lista').innerHTML=Object.entries(pacotes).map(([id,pk])=>{
+      const uso=noPacote(id);
+      return `<div class="row vpk-row" data-pk="${id}">
+        <input placeholder="Nome do pacote" value="${String(pk.nome||'').replace(/"/g,'&quot;')}" data-k="nome">
+        <label class="mini-num"><span>idas/mês</span><input type="number" min="0" max="40" value="${+pk.idas||0}" data-k="idas"></label>
+        <label class="mini-num"><span>R$/mês</span><input type="number" min="0" value="${+pk.preco||0}" data-k="preco"></label>
+        ${uso?`<span class="vpk-uso" title="${uso} aumigo(s) neste pacote">${uso} no pacote</span>`:`<button class="rm" data-rmpk="${id}" aria-label="Apagar pacote">✕</button>`}
+      </div>`;}).join('')||'<div class="nada">Nenhum pacote ainda. Crie o primeiro aí em cima. 🐾</div>';
+  };
+  const desenhar=()=>{
+    const turma=pets.filter(p=>p.ativo!==false&&(p.transporte||p.transportes.length||idDe(chaveVan(p))))
+      .sort((a,b)=>nomeCompleto(a).localeCompare(nomeCompleto(b),'pt-BR'));
+    const q=busca.trim().toLowerCase();
+    const vistos=q?turma.filter(p=>(nomeCompleto(p)+' '+(p.tutor||'')).toLowerCase().indexOf(q)>=0):turma;
+    const ops=k=>'<option value="">Sem pacote (por dia)</option>'+
+      Object.entries(pacotes).map(([id,pk])=>`<option value="${id}" ${idDe(k)===id?'selected':''}>${(pk.nome||'Pacote').replace(/</g,'&lt;')}</option>`).join('');
+    pintarPacotes();
+    $('#vpk-pets').innerHTML=vistos.map(p=>{
+      const k=chaveVan(p);
+      return `<div class="row vpet-row">
+        <div class="qq"><b>${nomeCompleto(p)}</b><small>${p.tutor||'sem tutor'}${p._un?' · 🏠 '+nomeUnidade(p._un):''}${p.transporte?' · 🚐 '+TRANSPORTE[p.transporte].nome:''} · ${brl(vanPrecoDia(p))}/dia${(()=>{const e=vanEntradaLocal(k);return e&&e.desde&&e.desde!==MES?' · no pacote desde '+ymNome(e.desde):''})()}</small></div>
+        <select data-pet="${k}">${ops(k)}</select>
+      </div>`;}).join('')||`<div class="nada">${q?'Nenhum aumigo com esse nome.':'Nenhum aumigo usa a van ainda.'}</div>`;
+    contarPacote(turma.length);
+  };
+
+  $('#modais').innerHTML=`<div class="overlay" id="ov"><div class="modal form" role="dialog">
+    <button class="fechar" data-fechar aria-label="Fechar">✕</button>
+    <h2>${st('dog-beagle')} Pacotes da van</h2>
+    <div class="nota" style="font-size:12px;font-weight:700;color:var(--texto-2);margin-top:4px">Valor fixo por mês, mais o valor por dia da cidade em cada ida que passar das incluídas. Quem não está em pacote nenhum continua pagando por dia, como sempre. O pacote passa a contar do mês em que você coloca o aumigo nele pra frente — mês que já passou continua do jeito que foi cobrado. Isso vale só aqui no Financeiro do Transporte: não aparece na fatura da creche nem no financeiro dela.</div>
+    <div class="cfg-h">🎟 Pacotes <button class="btn-mini" id="vpk-add" type="button">＋ Novo pacote</button></div>
+    <div class="cfg-lista" id="vpk-lista"></div>
+    <div class="cfg-h">🐾 Quem está em cada pacote <small id="vpk-n" style="font-size:12px;font-weight:800;color:var(--texto-2)"></small></div>
+    <input class="vpk-busca" id="vpk-busca" placeholder="🔎 Procurar o aumigo pelo nome ou pelo tutor...">
+    <div class="cfg-lista" id="vpk-pets" style="margin-top:8px"></div>
+    <button class="btn primario" id="vpk-ok" style="margin-top:16px">${st('check')} Salvar pacotes</button>
+  </div></div>`;
+  lock();
+  desenhar();
+  $('#vpk-busca').addEventListener('input',e=>{busca=e.target.value;desenhar()});
+  $('#vpk-add').onclick=()=>{
+    lerPacotes();
+    pacotes['v'+Date.now().toString(36)]={nome:'Novo pacote',idas:8,preco:0};
+    desenhar();      /* os selects tambem mudam: o pacote novo entra na lista */
+  };
+  $('#ov').addEventListener('change',e=>{
+    const sp=e.target.closest('[data-pet]');
+    if(sp){const k=sp.dataset.pet,v=sp.value;
+      if(v){const ant=mapa[k]&&typeof mapa[k]==='object'?mapa[k]:null;
+        mapa[k]=(ant&&ant.id===v)?ant:{id:v,desde:MES}}   /* entrou agora: conta deste mes pra frente */
+      else delete mapa[k];
+      pintarPacotes();contarPacote()}
+  });
+  $('#ov').addEventListener('click',e=>{
+    const rm=e.target.closest('[data-rmpk]');
+    if(rm){lerPacotes();delete pacotes[rm.dataset.rmpk];
+      Object.keys(mapa).forEach(k=>{if(idDe(k)===rm.dataset.rmpk)delete mapa[k]});
+      desenhar();return}
+    if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal();
+  });
+  $('#vpk-ok').onclick=()=>{
+    lerPacotes();
+    Object.keys(mapa).forEach(k=>{const id=idDe(k);
+      if(!pacotes[id])delete mapa[k];
+      else if(typeof mapa[k]!=='object')mapa[k]={id,desde:MES}});
+    salvarVanCfg(pacotes,mapa);
+    fecharModal();renderFinTransp();
+    toast(pets[0]||{raca:'golden'},'Pacotes salvos 🎟',
+      Object.keys(pacotes).length+' pacote(s) · '+Object.keys(mapa).length+' aumigo(s) no pacote.',true);
+  };
+  document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
+}
+
 function renderFinTransp(){
   const box=$('#view-fintransp');if(!box||box.classList.contains('hidden'))return;
   cfg.custoKm=custoKmCalc();
@@ -10363,9 +10537,9 @@ function renderFinTransp(){
     </section>
     <div class="fi-grid" style="margin-top:16px">
       <section><h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Por aumigo</h3>
-        <table class="tabela-simples"><tr><th>Aumigo</th><th>Cidade</th><th class="r">Viagens</th><th class="r">Valor</th><th>Status</th></tr>
-        ${t.porPet.map(x=>`<tr><td><b>${nomeCompleto(x.p)}</b><br><small style="color:var(--texto-2)">${x.p.tutor}</small></td><td>${cidadeEndereco(x.p)}</td><td class="r">${x.viagens}</td><td class="r"><b>${brl(x.valor)}</b></td><td>${x.pago?'<span class="st-pag pago">pago</span>':'<span class="st-pag">em aberto</span>'}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--texto-2)">Sem viagens nesse mês.</td></tr>'}
-        <tr class="tot"><td colspan="2">Total</td><td class="r">${t.viagens}</td><td class="r">${brl(t.receita)}</td><td></td></tr></table></section>
+        <table class="tabela-simples"><tr><th>Aumigo</th><th>Cidade</th><th>Pacote</th><th class="r">Viagens</th><th class="r">Valor</th><th>Status</th></tr>
+        ${t.porPet.map(x=>`<tr><td><b>${nomeCompleto(x.p)}</b><br><small style="color:var(--texto-2)">${x.p.tutor}</small></td><td>${cidadeEndereco(x.p)}</td><td>${x.pacote?`${x.pacote.nome}${x.extras?`<br><small style="color:var(--texto-2)">+${x.extras} ida${x.extras===1?'':'s'} extra</small>`:''}`:'<span style="color:var(--texto-2)">por dia</span>'}</td><td class="r">${x.viagens}</td><td class="r"><b>${brl(x.valor)}</b></td><td>${x.pago?'<span class="st-pag pago">pago</span>':'<span class="st-pag">em aberto</span>'}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--texto-2)">Sem viagens nesse mês.</td></tr>'}
+        <tr class="tot"><td colspan="3">Total</td><td class="r">${t.viagens}</td><td class="r">${brl(t.receita)}</td><td></td></tr></table></section>
       <section><h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Por dia (rota a rota)</h3>
         <table class="tabela-simples"><tr><th>Dia</th><th class="r">Paradas</th><th>Início</th><th>Fim</th><th class="r">Duração</th><th class="r">Km ≈</th><th class="r">⛽</th></tr>
         ${t.diasL.map(d=>`<tr><td>${fmtData(d.d)}</td><td class="r">${d.paradas}</td><td>${d.inicio||'—'}</td><td>${d.fim||'—'}</td><td class="r">${d.min!=null?d.min+' min':'—'}</td><td class="r">${d.km}</td><td class="r">${brl(d.km*custoKmCalc())}</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--texto-2)">Sem rotas nesse mês.</td></tr>'}
