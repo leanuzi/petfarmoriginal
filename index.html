@@ -611,6 +611,22 @@ body.lock{overflow:hidden}
 .btn.pdf:hover{background:var(--amarelo-suave)}
 .modal .campo textarea{width:100%;background:var(--bege-claro);border:1px solid var(--bege);border-radius:14px;padding:11px 14px;font-size:13px;font-weight:600;line-height:1.5;min-height:120px;resize:vertical;font-family:inherit;color:var(--marrom)}
 .sel-linha{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+/* lista de contatos: tutor, cachorro e telefone */
+.ct-cx{margin-top:10px;max-height:52vh;overflow:auto;border:1px solid var(--bege);border-radius:16px;background:var(--branco)}
+table.ct{width:100%;border-collapse:collapse;font-size:13.5px}
+table.ct th{position:sticky;top:0;background:var(--bege-claro);text-align:left;font-size:10px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.06em;color:var(--texto-2);padding:10px 12px;border-bottom:1px solid var(--bege)}
+table.ct td{padding:10px 12px;border-bottom:1px solid var(--bege-claro);font-weight:700;color:var(--marrom-escuro);vertical-align:top}
+table.ct tr:last-child td{border-bottom:0}
+table.ct td.tel{white-space:nowrap;font-variant-numeric:tabular-nums}
+table.ct td.sem{color:var(--vermelho-txt);font-weight:800}
+table.ct tr.off td{opacity:.6}
+.ct-acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.ct-acoes .btn{flex:1 1 180px;margin:0}
+@media (max-width:760px){
+  table.ct th,table.ct td{padding:9px 8px}
+  .ct-cx{max-height:46vh}
+}
 .cfg-lista{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .cfg-lista .row{display:grid;grid-template-columns:1fr 1.4fr .8fr auto;gap:8px;align-items:center;background:var(--bege-claro);border:1px solid var(--bege);border-radius:14px;padding:8px}
 .cfg-lista .row.zap{grid-template-columns:1.2fr 1fr auto}
@@ -2596,7 +2612,9 @@ img,svg,video,canvas{max-width:100%}
   <!-- ===================== PETS ===================== -->
   <div id="view-pets" class="hidden">
     <div class="sec-head" style="margin-top:0"><h2><svg class="st"><use href="#dog-beagle"/></svg> Pets</h2><span class="sub">creche · hotel · fim de ano · outros</span>
-      <button class="add" id="btn-novo-pet" style="margin-left:auto"><span style="font-size:18px;line-height:1">＋</span> Cadastrar pet</button></div>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="ghost" id="btn-contatos" style="background:var(--creme);border:1px solid var(--bege);padding:9px 14px;border-radius:999px;font-weight:800;font-size:13px">📇 Lista de contatos</button>
+      <button class="add" id="btn-novo-pet"><span style="font-size:18px;line-height:1">＋</span> Cadastrar pet</button></div></div>
     <div class="filtros" style="margin-top:12px"><label class="busca"><svg class="st" style="width:18px;height:18px;color:var(--texto-4)"><use href="#lupa"/></svg><input id="pets-busca" type="search" placeholder="Buscar pet, tutor, raça ou telefone…" autocomplete="off"></label></div>
     <div class="chips" id="pets-filtros" style="margin-top:10px;flex-wrap:wrap;background:transparent;border:0;padding:0;gap:6px"></div>
     <button class="btn-mini hidden" id="pets-import" style="margin-top:10px"></button>
@@ -6702,7 +6720,7 @@ document.addEventListener('click',e=>{
 });
 $('#btn-reserva').onclick=()=>abrirReserva(null);
 $('#fab').onclick=abrirNovaAcao;
-$('#btn-novo-pet').onclick=abrirEntrada;$('#ft-mes').onchange=e=>{ftMes=e.target.value;renderFinTransp()};$('#ft-comb').onclick=abrirCombustivel;$('#ft-pacotes').onclick=abrirPacotesVan;$('#pets-import').onclick=importarVisitantes;
+$('#btn-novo-pet').onclick=abrirEntrada;$('#btn-contatos').onclick=abrirContatos;$('#ft-mes').onchange=e=>{ftMes=e.target.value;renderFinTransp()};$('#ft-comb').onclick=abrirCombustivel;$('#ft-pacotes').onclick=abrirPacotesVan;$('#pets-import').onclick=importarVisitantes;
 let _tp=null;$('#pets-busca').addEventListener('input',e=>{petsBusca=e.target.value;clearTimeout(_tp);_tp=setTimeout(renderPets,140)});
 $('#bo-pet').onchange=e=>{boPet=+e.target.value;renderBoletim()};$('#bo-mes').onchange=e=>{boMes=e.target.value;renderBoletim()};
 $('#bo-cfg').onclick=abrirCfgBoletim;$('#bo-pdf').onclick=()=>{const p=pets.find(x=>x.id===boPet);if(p)pdfBoletim(p,boMes)};$('#bo-zap').onclick=()=>enviarBoletim(boPet,boMes);
@@ -9018,6 +9036,80 @@ function moverParada(d,i,dir){
   const s=rotas[d].stops;const j=i+dir;if(j<0||j>=s.length)return;
   const t=s[i];s[i]=s[j];s[j]=t;rotas[d].ordem='manual';salvarRotas();renderTransporte();
 }
+/* ====== LISTA DE CONTATOS ======
+   So tres colunas, do jeito que foi pedido: tutor, cachorro e telefone.
+   Uma linha por cadastro - cadastro com irmaos sai com os dois nomes
+   juntos, que e como o resto do sistema ja mostra. Sai em .csv (abre no
+   Excel) e da pra copiar pra colar direto numa planilha. */
+function listaContatos(todos){
+  return pets.filter(p=>todos||p.ativo!==false)
+    .map(p=>({tutor:(p.tutor||'').trim(),pet:nomeCompleto(p),
+      tel:telFmt(p.telefone),cru:(p.telefone||'').trim(),off:p.ativo===false}))
+    .sort((a,b)=>(a.tutor||'zzz').localeCompare(b.tutor||'zzz','pt-BR')
+      ||a.pet.localeCompare(b.pet,'pt-BR'));
+}
+function abrirContatos(){
+  let todos=true;
+  const esc=t=>String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const pintar=()=>{
+    const l=listaContatos(todos);
+    const semTel=l.filter(x=>!x.cru).length;
+    $('#ct-corpo').innerHTML=l.map(x=>`<tr class="${x.off?'off':''}">
+      <td>${esc(x.tutor)||'<span class="sem">sem tutor</span>'}</td>
+      <td>${esc(x.pet)}${x.off?' <small style="font-weight:800;color:var(--texto-2)">(inativo)</small>':''}</td>
+      <td class="tel ${x.cru?'':'sem'}">${x.cru?esc(x.tel):'sem telefone'}</td></tr>`).join('')
+      ||'<tr><td colspan="3" style="text-align:center;color:var(--texto-2);padding:22px">Nenhum pet cadastrado ainda. 🐾</td></tr>';
+    $('#ct-n').textContent=l.length+(l.length===1?' cadastro':' cadastros')
+      +(semTel?' · '+semTel+' sem telefone':'');
+    [...$('#ct-chips').children].forEach(b=>b.classList.toggle('on',(b.dataset.ct==='todos')===todos));
+  };
+  $('#modais').innerHTML=`<div class="overlay" id="ov"><div class="modal form" role="dialog">
+    <button class="fechar" data-fechar aria-label="Fechar">✕</button>
+    <h2>${st('dog-beagle')} Lista de contatos</h2>
+    <div class="nota" style="font-size:12px;font-weight:700;color:var(--texto-2);margin-top:4px">Tutor, cachorro e telefone. <span id="ct-n"></span></div>
+    <div class="chips" id="ct-chips" style="margin-top:10px;background:transparent;border:0;padding:0;gap:6px">
+      <button class="chip" data-ct="todos">Todos</button>
+      <button class="chip" data-ct="ativos">Só os ativos</button>
+    </div>
+    <div class="ct-cx"><table class="ct">
+      <thead><tr><th>Tutor</th><th>Cachorro</th><th>Telefone</th></tr></thead>
+      <tbody id="ct-corpo"></tbody></table></div>
+    <div class="ct-acoes">
+      <button class="btn primario" id="ct-csv">⬇ Baixar .csv</button>
+      <button class="btn secund" id="ct-copiar">📋 Copiar pra planilha</button>
+    </div>
+  </div></div>`;
+  lock();
+  pintar();
+  $('#ct-chips').addEventListener('click',e=>{
+    const b=e.target.closest('[data-ct]');if(!b)return;
+    todos=b.dataset.ct==='todos';pintar();
+  });
+  $('#ct-csv').onclick=()=>{
+    /* ; em vez de , porque o Excel em portugues separa por ponto e virgula.
+       O BOM no comeco e o que faz ele abrir os acentos certos. */
+    const asp=t=>'"'+String(t||'').replace(/"/g,'""')+'"';
+    const linhas=[['Tutor','Cachorro','Telefone']].concat(
+      listaContatos(todos).map(x=>[x.tutor,x.pet,x.tel||x.cru]));
+    const csv='\ufeff'+linhas.map(l=>l.map(asp).join(';')).join('\r\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');
+    a.href=url;a.download=`contatos-petfarm-${HOJE}.csv`;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+    toast(pets[0]||{raca:'golden'},'Lista baixada 📇',listaContatos(todos).length+' cadastros no arquivo.',true);
+  };
+  $('#ct-copiar').onclick=()=>{
+    const txt=[['Tutor','Cachorro','Telefone']]
+      .concat(listaContatos(todos).map(x=>[x.tutor,x.pet,x.tel||x.cru]))
+      .map(l=>l.join('\t')).join('\n');
+    const ok=()=>toast(pets[0]||{raca:'golden'},'Contatos copiados 📋','Cole direto no Excel ou no Google Planilhas.',true);
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok).catch(()=>fallbackCopiar(txt,ok));
+    else fallbackCopiar(txt,ok);
+  };
+  $('#ov').addEventListener('click',e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()});
+  document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
+}
+
 function copiarRota(d){
   const rota=rotaDe(d);
   const linhas=[`🚐 Rota ${fmtData(d)} — ${cfg.nome}`,`🏠 Saída: ${BASE}`]
