@@ -636,6 +636,16 @@ table.ct tr.off td{opacity:.6}
    tipo de cliente), entao a caixa ocupa a largura toda em vez de 1/3 */
 .rv-campos .row3{grid-template-columns:1fr}
 .rv-campos .row2{grid-template-columns:1fr}
+/* alterar datas da estadia: antes -> depois */
+.hd-cmp{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;
+  background:var(--bege-claro);border:1px solid var(--bege);border-radius:14px;padding:12px 14px;margin-top:12px}
+.hd-cmp>div{min-width:0}
+.hd-cmp small{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--texto-2)}
+.hd-cmp b{display:block;font-size:14px;color:var(--marrom-escuro);margin-top:2px;overflow-wrap:anywhere}
+.hd-cmp .seta{font-size:22px;color:var(--texto-4);font-weight:900}
+.hd-cmp .dif{font-size:12px;font-weight:800;margin-top:3px}
+.hd-cmp .dif.mais{color:var(--verde-txt)}.hd-cmp .dif.menos{color:var(--vermelho-txt)}
+@media (max-width:760px){.hd-cmp{grid-template-columns:1fr}.hd-cmp .seta{transform:rotate(90deg);text-align:center}}
 .cfg-lista{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .cfg-lista .row{display:grid;grid-template-columns:1fr 1.4fr .8fr auto;gap:8px;align-items:center;background:var(--bege-claro);border:1px solid var(--bege);border-radius:14px;padding:8px}
 .cfg-lista .row.zap{grid-template-columns:1.2fr 1fr auto}
@@ -6716,6 +6726,7 @@ document.addEventListener('click',e=>{
   // hotel
   if(b=g('hmenu')){e.stopPropagation();abrirHMenu(+b.dataset.hmenu,b);return}
   if(b=g('hedit')){fecharMenu();abrirReserva(+b.dataset.hedit);return}
+  if(b=g('hdatas')){fecharMenu();abrirDatasHotel(+b.dataset.hdatas);return}
   if(b=g('checkout')){abrirFatura(+b.dataset.checkout,true);return}
   if(b=g('fatura')){fecharMenu();abrirFatura(+b.dataset.fatura,false,'cobranca');return}
   if(b=g('checkin')){abrirCheckin(+b.dataset.checkin);return}
@@ -8218,6 +8229,7 @@ function abrirHMenu(id,btn){
   fecharMenu();const r=reservas.find(x=>x.id===id);
   const m=document.createElement('div');m.className='menu';m.id='menu';
   m.innerHTML=`<button data-hperfil="${id}"><span class="ic">📅</span> Perfil e calendário</button>
+    ${r.status==='hospedado'||r.status==='reservado'?`<button data-hdatas="${id}"><span class="ic">🗓</span> ${r.status==='hospedado'?'Estender ou encurtar a estadia':'Alterar as datas'}</button>`:''}
     <button data-hedit="${id}"><span class="ic">✏️</span> Editar reserva e pertences</button>
     <button data-pdfpert="${id}"><span class="ic">🎒</span> Relatório de pertences (PDF)</button>
     ${r.status==='hospedado'?`<button data-remsg="${id}" data-tipo="checkin"><span class="ic">💬</span> Reenviar mensagem de check-in</button>`:''}
@@ -8538,6 +8550,66 @@ function abrirReserva(id,diaSugerido){
     const h=hospede(o);toast(h.p||{raca:h.raca},id?'Reserva atualizada 🏡':`Reserva de ${h.nome} confirmada 🏡`,`${fmtData(o.checkin)} → ${fmtData(o.checkout)} · ${diarias(o)} ${diarias(o)===1?'diária':'diárias'}.`,true);
   };
   $('#ov').onclick=e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()};
+  document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
+}
+/* ====== estender ou encurtar uma estadia ======
+   So as datas e as horas. Nao passa pelo formulario da reserva de
+   proposito: aquele formulario re-le raca, peso, tutor e pertences do
+   visitante, e uma raca que nao esteja na lista voltaria trocada. Aqui
+   nenhum outro campo e sequer lido. */
+function abrirDatasHotel(id){
+  const r=reservas.find(x=>x.id===id);if(!r)return;
+  const h=hospede(r);
+  const hosp=r.status==='hospedado';
+  const antes={checkin:r.checkin,checkout:r.checkout,n:diarias(r),total:contaHotel(r).total};
+  $('#modais').innerHTML=`<div class="overlay" id="ov"><div class="modal form" role="dialog">
+    <button class="fechar" data-fechar aria-label="Fechar">✕</button>
+    <h2>${st('dog-golden')} ${hosp?'Estadia de':'Datas de'} ${h.nome}</h2>
+    <div class="nota" style="font-size:12px;font-weight:700;color:var(--texto-2);margin-top:4px">${hosp?'Já hospedado desde '+fmtData(r.checkin)+'. ':''}Mexe só nas datas e nas horas — raça, peso, tutor e pertences ficam como estão.</div>
+    <div class="row2" style="margin-top:14px">
+      <div class="campo"><label for="hd-in">Check-in</label><div style="display:flex;gap:6px"><input id="hd-in" type="date" value="${r.checkin}" ${hosp?'disabled':''} style="flex:1.4"><input id="hd-hin" type="time" value="${r.horaIn||'09:00'}" ${hosp?'disabled':''} style="flex:1"></div></div>
+      <div class="campo"><label for="hd-out">Check-out</label><div style="display:flex;gap:6px"><input id="hd-out" type="date" value="${r.checkout}" min="${dAddS(r.checkin,1)}" style="flex:1.4"><input id="hd-hout" type="time" value="${r.horaOut||'17:00'}" style="flex:1"></div></div>
+    </div>
+    <div class="hd-cmp" id="hd-cmp"></div>
+    <div class="etapas" style="margin-top:16px">
+      <button class="btn primario" id="hd-ok">${st('check')} Salvar datas</button>
+      ${hosp?`<button class="btn secund hidden" id="hd-out-agora">🏁 Salvar e fazer o check-out agora</button>`:''}
+    </div>
+  </div></div>`;
+  lock();
+  const novo=()=>{
+    const ci=hosp?r.checkin:($('#hd-in').value||r.checkin);
+    const co=$('#hd-out').value||r.checkout;
+    const sim={...r,checkin:ci,checkout:co};
+    return {checkin:ci,checkout:co,horaIn:$('#hd-hin').value||r.horaIn,horaOut:$('#hd-hout').value||r.horaOut,
+      n:diarias(sim),total:contaHotel(sim).total,ok:co>ci};
+  };
+  const pintar=()=>{
+    const n=novo();const d=n.n-antes.n;
+    $('#hd-cmp').innerHTML=`
+      <div><small>Como está</small><b>${fmtData(antes.checkin)} → ${fmtData(antes.checkout)}</b><span class="dif" style="color:var(--texto-2)">${antes.n} ${antes.n===1?'diária':'diárias'}${pode('financeiro')?' · '+brl(antes.total):''}</span></div>
+      <div class="seta">→</div>
+      <div><small>Como vai ficar</small><b>${fmtData(n.checkin)} → ${fmtData(n.checkout)}</b><span class="dif ${d>0?'mais':d<0?'menos':''}">${n.ok?`${n.n} ${n.n===1?'diária':'diárias'}${d?` (${d>0?'+':''}${d})`:''}${pode('financeiro')?' · '+brl(n.total):''}`:'⚠ o check-out precisa ser depois do check-in'}</span></div>`;
+    $('#hd-ok').disabled=!n.ok;
+    const ba=$('#hd-out-agora');if(ba)ba.classList.toggle('hidden',!(n.ok&&n.checkout<=HOJE));
+  };
+  pintar();
+  ['hd-in','hd-out','hd-hin','hd-hout'].forEach(k=>{const e=$('#'+k);if(e)e.addEventListener('input',pintar)});
+  const gravar=()=>{
+    const n=novo();if(!n.ok)return false;
+    r.checkin=n.checkin;r.checkout=n.checkout;r.horaIn=n.horaIn;r.horaOut=n.horaOut;
+    if(h.p){h.p.log=h.p.log||[];h.p.log.push({d:HOJE,h:horaAgora(),ico:'📅',txt:`Estadia alterada: ${fmtData(antes.checkin)}→${fmtData(antes.checkout)} virou ${fmtData(n.checkin)}→${fmtData(n.checkout)}`})}
+    salvarHotel();if(h.p)salvar();
+    return true;
+  };
+  $('#hd-ok').onclick=()=>{
+    if(!gravar())return;
+    fecharModal();renderHotel();
+    const d=diarias(r)-antes.n;
+    toast(h.p||{raca:h.raca},'Datas atualizadas 📅',`${fmtData(r.checkin)} → ${fmtData(r.checkout)} · ${diarias(r)} ${diarias(r)===1?'diária':'diárias'}${d?` (${d>0?'+':''}${d})`:''}.`,true);
+  };
+  const ba=$('#hd-out-agora');if(ba)ba.onclick=()=>{if(!gravar())return;fecharModal();renderHotel();abrirFatura(id,true)};
+  $('#ov').addEventListener('click',e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()});
   document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
 }
 function enviarMsg(r,tipo,via,texto){
