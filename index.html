@@ -8683,7 +8683,7 @@ function abrirFatura(id,checkoutAgora,etapa){
   const passos=`<div class="passos"><span class="${etapa==='cobranca'?'on':''} ${feitoCob&&feitoPix?'ok':''}">1 · Cobrança ${feitoCob&&feitoPix?'✓':''}</span><span class="${etapa==='checkout'?'on':''} ${feitoOut?'ok':''}">2 · Mensagem de check-out ${feitoOut?'✓':''}</span></div>`;
   /* aluno da creche não pode ficar preso no check-out esperando o PIX cair:
      o "Ainda não" joga a hospedagem na fatura do mês e libera a saída. */
-  const podeJogarNaFatura=h.aluno&&cfg.faturaUnica!==false;
+  const podeJogarNaFatura=!!h.p;
   const tabela=`<table class="fat">
         <tr><th>Item</th><th class="r">Qtd</th><th class="r">Valor</th><th class="r">Total</th></tr>
         <tr><td>Diária ${h.aluno?'aluno da creche':(h.peso<=10?'porte pequeno (até 10 kg)':'porte grande (acima de 10 kg)')}</td><td class="r">${c.n}</td><td class="r">${brl(c.v)}</td><td class="r">${brl(c.subtotal)}</td></tr>
@@ -8698,11 +8698,7 @@ function abrirFatura(id,checkoutAgora,etapa){
         <div class="campo"><label for="ft-pix">PIX de quem recebe</label><select id="ft-pix">${opsPix}</select></div>
         <div class="campo"><label for="ft-zap">Sai pelo</label><select id="ft-zap">${opsZap(r.zapCobranca||cfg.zapCobranca)}</select></div>
       </div>
-      ${h.aluno&&cfg.faturaUnica!==false?`<label class="check junta ${r.naFatura?'on':''}" style="justify-content:flex-start;margin-top:14px"><input type="checkbox" id="ft-junta" ${r.naFatura?'checked':''}> 🧾 Somar na fatura de ${NOMES_MES[+MES.split('-')[1]-1]} do(a) ${h.nome} (cobrar tudo junto no fim do mês)</label>`
-      :`<div class="nota junta-nao" style="margin-top:14px;font-size:12px;font-weight:700;color:var(--texto-2)">🧾 Somar na mensalidade da creche: ${cfg.faturaUnica===false
-          ?'desligado em Configurações ("Juntar hotel e creche numa fatura só").'
-          :!h.p?`${h.nome} é visitante, sem cadastro na creche — não tem mensalidade pra juntar.`
-          :`${h.nome} está como ${tiposDe(h.p).includes('visitante')?'visitante do hotel':'inativo'} no cadastro. Só aluno ativo da creche tem mensalidade pra juntar — pra virar aluno, no cadastro dele: menu ··· → "Voltar pra turma".`}${h.p&&cfg.faturaUnica!==false?` <button class="btn-mini" data-perfil="${h.p.id}" type="button">Abrir cadastro</button>`:''}</div>`}
+      <label class="check junta ${r.naFatura?'on':''}" style="justify-content:flex-start;margin-top:14px;${h.p?'':'opacity:.55'}"><input type="checkbox" id="ft-junta" ${r.naFatura?'checked':''} ${h.p?'':'disabled'}> 🧾 Somar na mensalidade de ${NOMES_MES[+MES.split('-')[1]-1]} do(a) ${h.nome} (cobrar tudo junto no fim do mês)${h.p?'':' — sem cadastro, não tem mensalidade'}</label>
       ${pode('descontos')?campoDesconto('ft-desc',r.desconto,c.bruto):''}
       <div class="campo" style="margin-top:12px"><label for="ft-msg">Mensagem de cobrança (já vai com o PIX)</label><textarea id="ft-msg" style="min-height:150px">${msgCobrancaNatural(r)}</textarea></div>
       ${r.naFatura?`<div class="junta-aviso">🧾 Esta hospedagem (${brl(c.restante)}) entra na fatura de ${NOMES_MES[+MES.split('-')[1]-1]} do(a) ${h.nome}, junto com a creche. A cobrança sai lá no fim do mês, em Financeiro.${h.p?` <button class="btn-mini" data-cobrar="${h.p.id}" data-ym="${MES}">Ver a fatura do mês</button>`:''}</div>`
@@ -9641,7 +9637,7 @@ function itensCreche(p,ym){
      o preço de tabela do plano e dizia "12 de 0 dias", então o tutor recebia
      um item de R$ 485 embaixo de um total de R$ 900. */
   if(m.combinado)it.push({d:`${nomePlano(p)} · ${ymNome(ym)} (${m.vindas} ${m.vindas===1?'dia':'dias'} de creche)`,q:1,v:m.valorPlano,t:m.valorPlano});
-  else if(p.plano==='avulso')it.push({d:`Diária avulsa (${p.peso<=10?'até 10 kg':'acima de 10 kg'})`,q:m.vindas,v:diaria,t:m.vindas*diaria});
+  else if(p.plano==='avulso'){if(m.vindas||!m.hosp.length)it.push({d:`Diária avulsa (${p.peso<=10?'até 10 kg':'acima de 10 kg'})`,q:m.vindas,v:diaria,t:m.vindas*diaria})}
   else{it.push({d:`Plano ${pl.nome} (${m.vindas} de ${m.meta} dias)`,q:1,v:pl.preco,t:pl.preco});if(m.extras)it.push({d:'Dias extras além do plano',q:m.extras,v:diaria,t:m.extras*diaria})}
   /* transporte nao entra na fatura — fica em Financeiro do Transporte */
   m.hosp.forEach(r=>{const c=contaHotel(r);it.push({hotel:true,d:`Hotel · ${fmtData(r.checkin)} a ${fmtData(r.checkout)} (${c.n} ${c.n===1?'diária':'diárias'}${r.sinalPago?', sinal já pago':''})`,q:c.n,v:c.v,t:c.restante})});
@@ -9767,7 +9763,7 @@ function abrirCobrancaCreche(id,ym){
 /* ====== FINANCEIRO ====== */
 function financeiroResumo(ym){
   const hojeDia=new Date().getDate();
-  const creche=pets.filter(p=>p.ativo!==false||doMes(p.presencas,ym).length).map(p=>({p,m:resumoMes(p,ym),pago:!!p.pagamentos[ym]}));
+  const creche=pets.filter(p=>p.ativo!==false||doMes(p.presencas,ym).length||hospedagensNaFatura(p,ym).length).map(p=>({p,m:resumoMes(p,ym),pago:!!p.pagamentos[ym]}));
   const aReceber=creche.filter(x=>!x.pago).reduce((a,x)=>a+x.m.total,0);
   const recebido=creche.filter(x=>x.pago).reduce((a,x)=>a+x.m.total,0);
   const atrasoL=creche.filter(x=>!x.pago&&x.m.total>0&&mesCobravel(ym)&&jaVenceu(x.p,ym));
