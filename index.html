@@ -8594,7 +8594,8 @@ function abrirDatasHotel(id){
     const ba=$('#hd-out-agora');if(ba)ba.classList.toggle('hidden',!(n.ok&&n.checkout<=HOJE));
   };
   pintar();
-  ['hd-in','hd-out','hd-hin','hd-hout'].forEach(k=>{const e=$('#'+k);if(e)e.addEventListener('input',pintar)});
+  ['hd-in','hd-out','hd-hin','hd-hout'].forEach(k=>{const e=$('#'+k);if(!e)return;
+    e.addEventListener('input',pintar);e.addEventListener('change',pintar)});
   const gravar=()=>{
     const n=novo();if(!n.ok)return false;
     r.checkin=n.checkin;r.checkout=n.checkout;r.horaIn=n.horaIn;r.horaOut=n.horaOut;
@@ -8697,7 +8698,11 @@ function abrirFatura(id,checkoutAgora,etapa){
         <div class="campo"><label for="ft-pix">PIX de quem recebe</label><select id="ft-pix">${opsPix}</select></div>
         <div class="campo"><label for="ft-zap">Sai pelo</label><select id="ft-zap">${opsZap(r.zapCobranca||cfg.zapCobranca)}</select></div>
       </div>
-      ${h.aluno&&cfg.faturaUnica!==false?`<label class="check junta ${r.naFatura?'on':''}" style="justify-content:flex-start;margin-top:14px"><input type="checkbox" id="ft-junta" ${r.naFatura?'checked':''}> 🧾 Somar na fatura de ${NOMES_MES[+MES.split('-')[1]-1]} do(a) ${h.nome} (cobrar tudo junto no fim do mês)</label>`:''}
+      ${h.aluno&&cfg.faturaUnica!==false?`<label class="check junta ${r.naFatura?'on':''}" style="justify-content:flex-start;margin-top:14px"><input type="checkbox" id="ft-junta" ${r.naFatura?'checked':''}> 🧾 Somar na fatura de ${NOMES_MES[+MES.split('-')[1]-1]} do(a) ${h.nome} (cobrar tudo junto no fim do mês)</label>`
+      :`<div class="nota junta-nao" style="margin-top:14px;font-size:12px;font-weight:700;color:var(--texto-2)">🧾 Somar na mensalidade da creche: ${cfg.faturaUnica===false
+          ?'desligado em Configurações ("Juntar hotel e creche numa fatura só").'
+          :!h.p?`${h.nome} é visitante, sem cadastro na creche — não tem mensalidade pra juntar.`
+          :`${h.nome} está como ${tiposDe(h.p).includes('visitante')?'visitante do hotel':'inativo'} no cadastro. Só aluno ativo da creche tem mensalidade pra juntar — pra virar aluno, no cadastro dele: menu ··· → "Voltar pra turma".`}${h.p&&cfg.faturaUnica!==false?` <button class="btn-mini" data-perfil="${h.p.id}" type="button">Abrir cadastro</button>`:''}</div>`}
       ${pode('descontos')?campoDesconto('ft-desc',r.desconto,c.bruto):''}
       <div class="campo" style="margin-top:12px"><label for="ft-msg">Mensagem de cobrança (já vai com o PIX)</label><textarea id="ft-msg" style="min-height:150px">${msgCobrancaNatural(r)}</textarea></div>
       ${r.naFatura?`<div class="junta-aviso">🧾 Esta hospedagem (${brl(c.restante)}) entra na fatura de ${NOMES_MES[+MES.split('-')[1]-1]} do(a) ${h.nome}, junto com a creche. A cobrança sai lá no fim do mês, em Financeiro.${h.p?` <button class="btn-mini" data-cobrar="${h.p.id}" data-ym="${MES}">Ver a fatura do mês</button>`:''}</div>`
