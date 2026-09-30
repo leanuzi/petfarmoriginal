@@ -850,6 +850,15 @@ table.fat tr.desc td{color:var(--verde-txt)}
 .fi-kpis{flex-wrap:wrap;margin-top:14px;position:relative;z-index:1}
 .fi-kpis .stat{flex:1;min-width:150px}
 .fi-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;align-items:start}
+/* so creche: o que entrou sem hotel e sem van */
+.soc-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.soc-kpis div{background:var(--branco);border:1px solid var(--bege);border-radius:16px;padding:12px 14px}
+.soc-kpis b{display:block;font-size:20px;color:var(--marrom-escuro);font-variant-numeric:tabular-nums}
+.soc-kpis span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--texto-2)}
+.soc-kpis .pr b{color:var(--verde-txt)}.soc-kpis .ag b{color:var(--amarelo-forte)}
+.soc-cx{margin-top:12px;overflow-x:auto}
+.soc-cx .tabela-simples td small{color:var(--texto-2);font-weight:700}
+@media (max-width:760px){.soc-kpis{grid-template-columns:1fr 1fr}.soc-kpis div:first-child{grid-column:1/-1}}
 .servs{display:flex;flex-direction:column;gap:10px;background:var(--creme);border:1px solid var(--bege);border-radius:16px;padding:14px}
 .serv .serv-h{display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:var(--marrom)}
 .serv .serv-h b{color:var(--marrom-escuro)}.serv .serv-h small{color:var(--texto-2);font-weight:800}
@@ -2606,6 +2615,7 @@ img,svg,video,canvas{max-width:100%}
       <section class="hsec"><h3><svg class="st"><use href="#dog-golden"/></svg> Receita por cliente</h3><table class="tabela-simples" id="fi-clientes"></table></section>
       <section class="hsec"><h3><svg class="st"><use href="#dog-poodle"/></svg> Receita por serviço</h3><div class="servs" id="fi-servicos"></div></section>
     </div>
+    <section class="hsec" id="fi-creche"></section>
     <details class="arq" id="fi-arquivo" style="margin-top:16px">
       <summary><span class="pasta">📁</span><span class="tit"><b>Arquivo do mês</b><small id="fi-arq-sub">o que já foi pago e não precisa de nada</small></span><span class="seta">▾</span></summary>
       <div class="corpo">
@@ -9630,6 +9640,16 @@ function abrirCfgMotorista(){
 <script>
 /* Pet Farm · financeiro.js — cobrança mensal da creche e painel financeiro */
 /* ====== COBRANÇA DA CRECHE (mensal) ====== */
+/* lista de dias do jeito que se fala: "25, 26, 27 e 28/09".
+   Virou o mes, fecha um grupo e abre outro: "30/09, 01 e 02/10". */
+function fmtDias(isos){
+  const ds=[...new Set((isos||[]).filter(Boolean))].sort();
+  if(!ds.length)return '';
+  const grupos=[];let g=null;
+  ds.forEach(d=>{const ym=d.slice(0,7);if(!g||g.ym!==ym){g={ym,dd:[]};grupos.push(g)}g.dd.push(d.slice(8,10))});
+  const junta=a=>a.length>1?a.slice(0,-1).join(', ')+' e '+a[a.length-1]:a[0];
+  return grupos.map(x=>junta(x.dd)+'/'+x.ym.slice(5,7)).join(', ');
+}
 function itensCreche(p,ym){
   const m=resumoMes(p,ym);const pl=PLANOS[p.plano];const diaria=p.peso<=10?AVULSO.ate10:AVULSO.acima10;const it=[];
   /* cliente de valor combinado (o caso das famílias de irmãos com preço
@@ -9637,10 +9657,10 @@ function itensCreche(p,ym){
      o preço de tabela do plano e dizia "12 de 0 dias", então o tutor recebia
      um item de R$ 485 embaixo de um total de R$ 900. */
   if(m.combinado)it.push({d:`${nomePlano(p)} · ${ymNome(ym)} (${m.vindas} ${m.vindas===1?'dia':'dias'} de creche)`,q:1,v:m.valorPlano,t:m.valorPlano});
-  else if(p.plano==='avulso'){if(m.vindas||!m.hosp.length)it.push({d:`Diária avulsa (${p.peso<=10?'até 10 kg':'acima de 10 kg'})`,q:m.vindas,v:diaria,t:m.vindas*diaria})}
+  else if(p.plano==='avulso'){if(m.vindas||!m.hosp.length)it.push({d:`Diária avulsa (${p.peso<=10?'até 10 kg':'acima de 10 kg'})${m.vindas?' · dias '+fmtDias(doMes(p.presencas,ym)):''}`,q:m.vindas,v:diaria,t:m.vindas*diaria})}
   else{it.push({d:`Plano ${pl.nome} (${m.vindas} de ${m.meta} dias)`,q:1,v:pl.preco,t:pl.preco});if(m.extras)it.push({d:'Dias extras além do plano',q:m.extras,v:diaria,t:m.extras*diaria})}
   /* transporte nao entra na fatura — fica em Financeiro do Transporte */
-  m.hosp.forEach(r=>{const c=contaHotel(r);it.push({hotel:true,d:`Hotel · ${fmtData(r.checkin)} a ${fmtData(r.checkout)} (${c.n} ${c.n===1?'diária':'diárias'}${r.sinalPago?', sinal já pago':''})`,q:c.n,v:c.v,t:c.restante})});
+  m.hosp.forEach(r=>{const c=contaHotel(r);it.push({hotel:true,d:`Hotel · dormiu ${c.n===1?'a noite':'as noites'} de ${fmtDias(c.dias.map(x=>x.iso))} (${c.n} ${c.n===1?'diária':'diárias'}${r.sinalPago?', sinal já pago':''})`,q:c.n,v:c.v,t:c.restante})});
   if(m.abatimento)it.push({desc:true,d:`Desconto${m.desconto.motivo?' · '+m.desconto.motivo:''}${m.desconto.tipo==='%'?` (${m.desconto.valor}%)`:''}`,q:1,v:-m.abatimento,t:-m.abatimento});
   return {it,total:m.total,m};
 }
@@ -9783,6 +9803,33 @@ function financeiroResumo(ym){
   };
   return {creche,aReceber,recebido,atraso,atrasoL,previsao,hotel,hotelRecebido,hotelAberto,hotelL,hotelSolto,transporte,porServico,total:previsao+hotelSolto.reduce((a,x)=>a+x.c.total,0)};
 }
+/* Parte da fatura que e so creche: plano ou avulso, sem hotel (mesmo o
+   somado na mensalidade) e sem van. Desconto da fatura e dividido na
+   proporcao, senao a creche "pagaria" o desconto que foi dado no hotel. */
+function soCreche(m){
+  const bruto=m.valorPlano+m.valorHotel;
+  if(!bruto)return 0;
+  return Math.round((m.valorPlano-(m.abatimento||0)*m.valorPlano/bruto)*100)/100;
+}
+function renderSoCreche(f){
+  const box=document.getElementById('fi-creche');if(!box)return;
+  const l=f.creche.map(x=>({p:x.p,m:x.m,pago:x.pago,v:soCreche(x.m)})).filter(x=>x.v>0);
+  const entrou=l.filter(x=>x.pago), falta=l.filter(x=>!x.pago);
+  const soma=a=>a.reduce((s,x)=>s+x.v,0);
+  entrou.sort((a,b)=>b.v-a.v);
+  box.innerHTML=`<h3><svg class="st"><use href="#dog-beagle"/></svg> Entrou só de creche <small style="font-size:12px;font-weight:800;color:var(--texto-2)">${ymNome(finMes)} · sem hotel e sem van</small></h3>
+    <div class="soc-kpis">
+      <div class="pr"><b>${brl(soma(entrou))}</b><span>Já entrou · ${entrou.length} ${entrou.length===1?'cliente':'clientes'}</span></div>
+      <div class="ag"><b>${brl(soma(falta))}</b><span>Falta entrar · ${falta.length}</span></div>
+      <div><b>${brl(soma(l))}</b><span>Creche no mês</span></div>
+    </div>
+    <div class="soc-cx"><table class="tabela-simples">
+      <tr><th>Aumigo</th><th>Plano</th><th class="r">Dias</th><th class="r">Creche</th></tr>
+      ${entrou.map(x=>`<tr><td><b>${nomeCompleto(x.p)}</b><br><small>${x.p.tutor||''}</small></td><td>${nomePlano(x.p)}${x.p.plano==='avulso'&&!temValorCombinado(x.p)&&x.m.vindas?`<br><small>${fmtDias(doMes(x.p.presencas,finMes))}</small>`:''}</td><td class="r">${x.m.vindas}</td><td class="r"><b>${brl(x.v)}</b></td></tr>`).join('')
+        ||'<tr><td colspan="4" style="text-align:center;color:var(--texto-2);padding:16px">Nada de creche recebido neste mês ainda.</td></tr>'}
+      ${entrou.length?`<tr class="tot"><td colspan="3">Total que entrou de creche</td><td class="r">${brl(soma(entrou))}</td></tr>`:''}
+    </table></div>`;
+}
 /* ---- Cobrança: a vencer, vencidos e pagos, separado do Financeiro ---- */
 let cobMes=null;
 function renderCobranca(){
@@ -9869,6 +9916,7 @@ function renderFinanceiro(){
       <span class="bt"><span class="st-pag">✓ pago</span><button class="btn-mini" data-fatura="${r.id}">📄 Fatura</button></span>
     </li>`).join(''):'<li class="vazio-arq" style="display:block">Nenhum check-out pago neste mês.</li>';
   $('#fi-arq-pagos').innerHTML=pagos.length?(cabCli+pagos.map(linhaCli).join('')):`<tr><td class="vazio-arq">Nenhuma mensalidade recebida neste mês.</td></tr>`;
+  renderSoCreche(f);
   const tot=Object.values(f.porServico).reduce((a,b)=>a+b,0)||1;
   $('#fi-servicos').innerHTML=Object.entries(f.porServico).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="serv"><div class="serv-h"><span>${k}</span><b>${brl(v)} <small>${Math.round(v/tot*100)}%</small></b></div><div class="barra"><i style="width:${v/tot*100}%"></i></div></div>`).join('')||'<div class="nada">Sem receita neste mês.</div>';
 }
@@ -10836,13 +10884,14 @@ function pfTabela(doc,cols,linhas,opts={}){
   y+=8;doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...PDF_COR.escuro);
   linhas.forEach((l,li)=>{
     doc._pf.y=y;pfQuebra(doc,10);y=doc._pf.y;
-    const alt=l.alt||9;
+    const nLin=Math.max(1,...l.c.map((v,i)=>doc.splitTextToSize(semAcento(String(v??'')),cols[i].w-6).length));
+    const alt=l.alt||(nLin>1?9+(nLin-1)*4.2:9);
     if(l.tipo==='tot'){doc.setFillColor(...PDF_COR.amareloSuave);doc.rect(14,y,182,alt+2,'F')}
     else if(li%2){doc.setFillColor(...PDF_COR.creme);doc.rect(14,y,182,alt,'F')}
     if(l.tipo==='hotel'){doc.setFillColor(...PDF_COR.amareloSuave);doc.rect(14,y,2,alt,'F')}
     if(l.tipo==='desc'){doc.setTextColor(...PDF_COR.verdeTxt)}
     doc.setFont('helvetica',l.tipo==='tot'?'bold':'normal');doc.setFontSize(l.tipo==='tot'?11:9.5);
-    l.c.forEach((v,i)=>{const c=cols[i];const tx=semAcento(String(v??''));const lines=doc.splitTextToSize(tx,c.w-6);doc.text(lines[0]||'',c.al==='right'?xs[i]+c.w-3:xs[i]+3,y+(l.tipo==='tot'?7:6),{align:c.al||'left'})});
+    l.c.forEach((v,i)=>{const c=cols[i];const tx=semAcento(String(v??''));const lines=doc.splitTextToSize(tx,c.w-6);doc.text(c.al==='right'?(lines[0]||''):lines,c.al==='right'?xs[i]+c.w-3:xs[i]+3,y+(l.tipo==='tot'?7:6),{align:c.al||'left',lineHeightFactor:1.25})});
     doc.setTextColor(...PDF_COR.escuro);doc.setDrawColor(...PDF_COR.bege);if(l.tipo!=='tot')doc.line(14,y+alt,196,y+alt);
     y+=alt+(l.tipo==='tot'?2:0);
   });
