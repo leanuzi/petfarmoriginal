@@ -977,6 +977,8 @@ table.fat tr.desc td{color:var(--verde-txt)}
 .vpet-row .qq b{display:block;font-size:13.5px;font-weight:800;color:var(--marrom-escuro);overflow-wrap:anywhere}
 .vpet-row .qq small{display:block;font-size:11px;font-weight:700;color:var(--texto-2)}
 .cfg-lista .nada{background:var(--creme);border:2px dashed var(--bege);border-radius:14px;padding:16px;text-align:center;font-weight:700;font-size:13px;color:var(--texto-2)}
+button.st-pag.vp{border:0;cursor:pointer;font-family:inherit;white-space:nowrap}
+button.st-pag.vp:not(.pago){background:var(--amarelo-claro);color:var(--marrom-escuro)}
 .vpk-busca{width:100%;background:var(--branco);border:1px solid var(--bege);border-radius:12px;padding:10px 12px;font-weight:700;font-size:14px;margin-top:8px}
 /* no celular as tabelas do Fin. Transporte tinham 520px e a coluna de
    valor ficava cortada, sem jeito de chegar nela. Agora a tabela rola de
@@ -1373,6 +1375,7 @@ table.fat tr.hotel td{background:#FFFCF3}
 .ag-nova .ag-dia{flex:0 1 150px}
 .ag-nova #in-agenda-txt{flex:3 1 200px}
 .agenda .txt .dia{font-weight:800;color:var(--marrom)}
+.agenda .txt .dia.atras{color:var(--vermelho-txt)}
 @media (max-width:760px){.ag-nova input,.ag-nova select{flex:1 1 100%}}
 /* nenhum valor em reais pode quebrar no meio do número */
 .h-total b,.tot b{white-space:nowrap}
@@ -6345,9 +6348,11 @@ const nomeDoLogin=id=>{const u=usuarios().find(x=>x.id===id);return u?u.nome:''}
    tarefa que voce anota pra sexta sumia da tela no momento em que era
    criada e so voltava a aparecer na sexta. */
 function agendaVisivel(){
-  const dias=Object.keys(agenda()).filter(d=>d>=HOJE).sort();
-  const fora=dias.filter(d=>d!==HOJE);
-  return tarefasOrdenadas(HOJE).map(t=>({t:t,d:HOJE}))
+  const todos=Object.keys(agenda()).sort();
+  /* o que ficou pra tras sem fazer vem primeiro, marcado como atrasado */
+  const atras=todos.filter(d=>d<HOJE).flatMap(d=>tarefasOrdenadas(d).filter(t=>!t.feita).map(t=>({t:t,d:d})));
+  const fora=todos.filter(d=>d>HOJE);
+  return atras.concat(tarefasOrdenadas(HOJE).map(t=>({t:t,d:HOJE})))
     .concat(fora.flatMap(d=>tarefasOrdenadas(d).map(t=>({t:t,d:d}))));
 }
 const rotuloDia=d=>new Date(d+'T12:00:00')
@@ -6358,7 +6363,7 @@ function renderAgenda(){
   const lista=agendaVisivel();
   const meu=(usuario||{}).id;
   /* o contador continua falando so do dia de hoje */
-  const minhas=lista.filter(x=>x.d===HOJE&&!x.t.feita&&(x.t.para===meu||!x.t.para)).length;
+  const minhas=lista.filter(x=>x.d<=HOJE&&!x.t.feita&&(x.t.para===meu||!x.t.para)).length;
   const cont=document.getElementById('in-agenda-n');
   if(cont)cont.textContent=minhas?minhas+(minhas===1?' pra você':' pra você'):'';
   cx.innerHTML = lista.length
@@ -6367,7 +6372,7 @@ function renderAgenda(){
         const minha=t.para===meu||!t.para;
         const quem=t.para?nomeDoLogin(t.para):'todo mundo';
         const pr=prioDe(t);
-        const dia=x.d===HOJE?'':'<span class="dia">📅 '+rotuloDia(x.d)+'</span> · ';
+        const dia=x.d===HOJE?'':x.d<HOJE?'<span class="dia atras">⚠ atrasada · '+rotuloDia(x.d)+'</span> · ':'<span class="dia">📅 '+rotuloDia(x.d)+'</span> · ';
         return '<li class="tf p-'+((t.prio)||'hoje')+(t.feita?' feita':'')+(minha?' minha':'')+'">'+
           '<button class="tf-ok" data-tarefa="'+t.id+'" data-dia="'+x.d+'" aria-label="Marcar como feita">'+(t.feita?'✓':'')+'</button>'+
           '<span class="txt">'+String(t.txt).replace(/</g,'&lt;')+
@@ -6715,7 +6720,8 @@ document.addEventListener('click',e=>{
   if(b=g('diario')){abrirDiario(+b.dataset.diario);return}
   if(b=g('rstart')){iniciarRota(rotaDia);return}
   if(b=g('tfcfg')){abrirCfgMotorista();return}
-  if(b=g('tfpago')){const pg=pagamentosMotorista();const ym=ftMes||tfMes||MES;if(pg[ym])delete pg[ym];else pg[ym]={em:HOJE,valor:transporteMes(ym).pagMot};salvarCfg();renderFinTransp();return}
+  if(b=g('vanpago')){alternarVanPago(b.dataset.vanpago,ftMes||tfMes||MES);renderFinTransp();return}
+  if(b=g('tfpago')){const pg=pagamentosMotorista();const ym=ftMes||tfMes||MES;if(pg[ym])delete pg[ym];else pg[ym]={em:HOJE,valor:transporteMes(ym).pagMot};vanSalvarCfgObj(vanCfgLer());renderFinTransp();return}
   if(b=g('tfpdf')){pdfFechamentoTransporte(ftMes||MES);return}
   if(b=g('hdia')){abrirDiaHotel(b.dataset.hdia);return}
   if(b=g('agdia')){abrirAgendaDia(b.dataset.agdia);return}
@@ -7350,11 +7356,11 @@ function blocoMes(p){
     <div class="topo"><span>${nomeMes}</span><b>${m.vindas} <small>${m.meta?`de ${m.meta} dias`:`${m.vindas===1?'dia':'dias'} · ${brl(m.valorPlano)}`}</small></b></div>
     <div class="barra"><i class="${cls}" style="width:${pct}%"></i></div>
     <div class="rod">
-      <span class="plano-chip ${p.plano==='avulso'?'avulso':''}">🗓 ${p.plano==='avulso'?`Avulso · ${brl(m.diaria)}/dia`:`${pl.nome} · ${brl(pl.preco)}`}</span>
+      <span class="plano-chip ${p.plano==='avulso'?'avulso':''}">🗓 ${m.combinado?`${nomePlano(p)} · ${brl(m.valorPlano)}/mês`:p.plano==='avulso'?`Avulso · ${brl(m.diaria)}/dia`:`${pl.nome} · ${brl(pl.preco)}`}</span>
       <span>${m.faltas?`${m.faltas} ${m.faltas===1?'falta':'faltas'}`:'sem faltas'}${m.extras?` · <span class="extra">+${m.extras} extra</span>`:''}${m.abatimento?` · <span class="descto">🏷 −${brl(m.abatimento)}</span>`:''}${m.hosp.length?` · <span class="hotelx">🏡 ${m.hosp.length} hosp. ${brl(m.valorHotel)}</span>`:''}</span>
     </div>
     ${(()=>{const rn=renovacao(p);return rn.meta?`<div class="renov ${rn.acabando?'acabando':''}"><span>🗓 ${rn.restam===0?'Plano completo':`faltam ${rn.restam} ${rn.restam===1?'dia':'dias'} do plano`} · renova ${fmtData(rn.data)} (${rn.emDias}d)</span>${rn.acabando&&p.telefone?`<button data-renov="${p.id}">avisar tutor</button>`:''}</div>`:''})()}
-    <div class="rod" style="margin-top:4px"><span>🚐 Transporte: ${m.transpVezes?`${m.transpVezes}x · ${brl(m.valorTransp)} <small>(à parte)</small>`:'não usou'}${p.transporte?` (${TRANSPORTE[p.transporte].nome})`:''}</span><span><b>Total ${brl(m.total)}</b></span>
+    <div class="rod" style="margin-top:4px"><span>🚐 Transporte: ${m.transpVezes?`${m.transpVezes}x <small>(cobrado à parte)</small>`:'não usou'}${p.transporte?` (${TRANSPORTE[p.transporte].nome})`:''}</span><span><b>Total ${brl(m.total)}</b></span>
     </div>
   </div>`;
 }
@@ -8016,7 +8022,7 @@ function abrirPerfil(id,ym){
         <div class="kv">
           <div><span>Plano</span><b>${nomePlano(p)}${m.meta?` · ${m.vindas}/${m.meta} dias`:''}${m.combinado&&pode('financeiro')?` · ${brl(m.valorPlano)}/mês combinado`:''}</b></div>
           ${m.extras?`<div><span>Dias extras</span><b>+${m.extras}</b></div>`:''}
-          <div><span>🚐 Transporte</span><b>${m.transpVezes?`${m.transpVezes}x${pode('financeiro')?' · '+brl(m.valorTransp)+' (cobrado à parte)':''}${p.transporte?' ('+TRANSPORTE[p.transporte].nome+')':''}`:'não usou'}</b></div>
+          <div><span>🚐 Transporte</span><b>${m.transpVezes?`${m.transpVezes}x${pode('financeiro')?' (cobrado à parte)':''}${p.transporte?' ('+TRANSPORTE[p.transporte].nome+')':''}`:'não usou'}</b></div>
           ${m.hosp.length?`<div><span>🏡 Hotel no mês</span><b>${m.hosp.length} ${m.hosp.length===1?'hospedagem':'hospedagens'}${pode('financeiro')?' · '+brl(m.valorHotel):''}</b></div>`:''}
           ${m.abatimento&&pode('financeiro')?`<div><span>🏷 Desconto</span><b style="color:var(--verde-txt)">− ${brl(m.abatimento)} (${descTxt(m.desconto)})</b></div>`:''}
           ${pode('financeiro')?`<div><span>Total do mês</span><b>${brl(m.total)}</b></div>`:''}
@@ -9098,7 +9104,7 @@ function renderTransporte(){
   const usaram=stops.filter(x=>{const p=pets.find(q=>q.id===x.petId);return p&&p.transportes.includes(d)}).length;
   const lista=ativos().filter(p=>p.transporte||p.transportes.length);
   const viagens=lista.reduce((a,p)=>a+resumoMes(p).transpVezes,0);
-  const valor=lista.reduce((a,p)=>a+resumoMes(p).valorTransp,0);
+  const tmV=ehTransporte()?transporteMes(MES):null;const valor=tmV?tmV.receita:0;
   $('#tr-hoje').textContent=stops.length;$('#tr-mes').textContent=viagens;$('#tr-valor').textContent=brl(valor).replace(',00','');
   $('#tr-data').textContent=dNome(d);
   $('#tr-resumo').textContent=`${d===HOJE?'Hoje':'Nesse dia'}: ${stops.length} ${stops.length===1?'parada':'paradas'}${d<=HOJE?` · ${usaram} ${usaram===1?'usou':'usaram'} a van`:''}${stops.length?(manual?' · ordem escolhida por você':' · rota automática'):''}. Saída sempre da base em Camboriú.`;
@@ -9157,10 +9163,10 @@ function renderTransporte(){
   const b2=$('#btn-rota2');if(b2)b2.onclick=()=>abrirRota(d);
   const rows=lista.map(p=>({p,m:resumoMes(p)})).sort((a,b)=>b.m.transpVezes-a.m.transpVezes);
   $('#tr-n2').textContent=nomeMes;
-  document.querySelectorAll('#view-transporte .stat.ch, #view-transporte .hsec.somente-fin').forEach(el=>el.classList.toggle('hidden',!podeFinTransp()));
-  if(!podeFinTransp())return;
+  document.querySelectorAll('#view-transporte .stat.ch, #view-transporte .hsec.somente-fin').forEach(el=>el.classList.toggle('hidden',!podeFinTransp()||!ehTransporte()));
+  if(!podeFinTransp()||!ehTransporte())return;
   $('#tr-tabela').innerHTML=`<tr><th>Aumigo</th><th>Cidade</th><th>Endereço</th><th class="r">Viagens</th><th class="r">Valor</th></tr>`+
-    rows.map(({p,m})=>`<tr><td>${nomeCompleto(p)}</td><td>${p.transporte?TRANSPORTE[p.transporte].nome:'—'}</td><td>${p.endereco||'<span style="color:var(--vermelho-txt)">sem endereço</span>'}</td><td class="r">${m.transpVezes}</td><td class="r">${brl(m.valorTransp)}</td></tr>`).join('')+
+    rows.map(({p,m})=>`<tr><td>${nomeCompleto(p)}</td><td>${p.transporte?TRANSPORTE[p.transporte].nome:'—'}</td><td>${p.endereco||'<span style="color:var(--vermelho-txt)">sem endereço</span>'}</td><td class="r">${m.transpVezes}</td><td class="r">${brl(vanValorMes(p,m.transpVezes,MES).valor)}</td></tr>`).join('')+
     `<tr class="tot"><td colspan="3">Total de ${nomeMes}</td><td class="r">${viagens}</td><td class="r">${brl(valor)}</td></tr>`;
 }
 
@@ -9437,24 +9443,82 @@ function embarcouParada(d,petId){const ex=execRota(d);ex.paradas[petId]=Object.a
    outra unidade direto e o mesmo caminho que turmaDasUnidades() ja usa
    pra montar a turma da van. */
 const VAN_CFG='transporte:petfarm.cfg';
+/* Na unidade Transporte o cfg ja e o da van. Nas outras (a dona entra
+   por Camboriu ou Itajai) o cfg da van vem da nuvem, lido na hora - a
+   copia que fica no aparelho pode estar velha, e ai combustivel, pacote,
+   repasse e pagamentos sairiam errados. Sem nuvem, usa a copia local. */
+let _vanRaw, _vanObj={};
+let _vanNuvem=null,_vanNuvemEm=0,_vanNuvemBusca=null,_vanNuvemFalhou=false;
 function vanCfgLer(){
   if(ehTransporte())return cfg;
-  try{return JSON.parse(localStorage.getItem(VAN_CFG)||'{}')||{}}catch(e){return {}}
+  if(_vanNuvem&&_vanNuvem.cfg)return _vanNuvem.cfg;
+  let raw=null;try{raw=localStorage.getItem(VAN_CFG)}catch(e){}
+  if(raw!==_vanRaw){_vanRaw=raw;try{_vanObj=JSON.parse(raw||'{}')||{}}catch(e){_vanObj={}}}
+  return _vanObj;
 }
+function vanSalvarCfgObj(c){
+  if(ehTransporte()){salvarCfg();return}
+  const txt=JSON.stringify(c);
+  salvarSeguro(VAN_CFG,txt);_vanRaw=txt;_vanObj=c;
+}
+/* ---- dados da van vistos de outra unidade ----
+   A van junta os aumigos de Camboriu e de Itajai. Aberta de Camboriu, a
+   tela so tinha os de Camboriu: faltava metade da receita. Aqui busca na
+   nuvem a turma da outra unidade, o cfg e as rotas da van. */
+function vanNuvemCarregar(forcar){
+  if(ehTransporte())return Promise.resolve(null);
+  if(!forcar&&_vanNuvem&&Date.now()-_vanNuvemEm<60000)return Promise.resolve(_vanNuvem);
+  if(_vanNuvemBusca)return _vanNuvemBusca;
+  let cli=null;try{cli=(typeof nuvemCliente==='function')&&nuvemOk&&nuvemCliente()}catch(e){cli=null}
+  if(!cli){_vanNuvemFalhou=true;return Promise.resolve(null)}
+  const outras=UN_PETS.filter(u=>u!==UN).map(u=>u+':petfarm.turma');
+  const ch=outras.concat([VAN_CFG,'transporte:petfarm.rotas']);
+  _vanNuvemBusca=cli.from('estado').select('chave,dados').in('chave',ch).then(({data,error})=>{
+    _vanNuvemBusca=null;
+    if(error||!Array.isArray(data)){_vanNuvemFalhou=true;return null}
+    const by={};data.forEach(r=>{by[r.chave]=r.dados});
+    const turma=[];
+    UN_PETS.filter(u=>u!==UN).forEach(u=>{const a=by[u+':petfarm.turma'];(Array.isArray(a)?a:[]).forEach(x=>{if(x&&x.id!=null){x._un=u;turma.push(x)}})});
+    const c=(by[VAN_CFG]&&typeof by[VAN_CFG]==='object')?by[VAN_CFG]:{};
+    _vanNuvem={turma,cfg:c,rotas:(by['transporte:petfarm.rotas']&&typeof by['transporte:petfarm.rotas']==='object')?by['transporte:petfarm.rotas']:{}};
+    _vanNuvemEm=Date.now();_vanNuvemFalhou=false;
+    try{const t=JSON.stringify(c);localStorage.setItem(VAN_CFG,t);_vanRaw=t;_vanObj=c}catch(e){}
+    return _vanNuvem;
+  }).catch(()=>{_vanNuvemBusca=null;_vanNuvemFalhou=true;return null});
+  return _vanNuvemBusca;
+}
+function petsDaVan(){
+  if(ehTransporte())return pets;
+  return _vanNuvem?pets.concat(_vanNuvem.turma):pets;
+}
+function rotasDaVan(){return ehTransporte()?rotas:((_vanNuvem&&_vanNuvem.rotas)||{})}
+
 function vanPacotes(){const c=vanCfgLer();const v=c&&c.vanPacotes;return (v&&typeof v==='object')?v:{}}
 function vanMapa(){const c=vanCfgLer();const v=c&&c.vanPets;return (v&&typeof v==='object')?v:{}}
 /* id do pet sozinho nao serve: na van a turma vem das duas unidades */
 const chaveVan=p=>((p&&p._un)||UN||'camboriu')+':'+((p&&p.id)||0);
-/* cada aumigo guarda {id do pacote, desde: mes em que entrou}. O "desde"
-   existe pra o pacote NAO reescrever o passado: colocar alguem num pacote
-   hoje nao pode fazer aparecer receita em julho. Mes anterior ao "desde"
-   continua contando por dia, do jeito que foi cobrado na epoca. */
-const vanEntrada=k=>{const v=vanMapa()[k];return (v&&typeof v==='object')?v:(v?{id:v,desde:''}:null)};
+/* Historico de pacote por aumigo: lista de periodos
+   {id, desde, ate, nome, preco, idas}. Cada periodo guarda o preco DA
+   EPOCA. Assim:
+   - colocar alguem num pacote hoje nao inventa receita em julho;
+   - tirar alguem do pacote nao apaga o que ele pagou nos meses de antes;
+   - mudar o preco do pacote vale deste mes pra frente, sem reescrever
+     fechamento de mes que ja passou. */
+function vanPeriodos(v){
+  if(!v)return [];
+  if(Array.isArray(v))return v.filter(x=>x&&x.id);
+  if(typeof v==='object')return v.id?[v]:[];
+  return [{id:v,desde:''}];
+}
 function pacoteDoPet(p,ym){
-  const e=vanEntrada(chaveVan(p));if(!e)return null;
-  if(ym&&e.desde&&ym<e.desde)return null;
+  const alvo=ym||MES;
+  const e=vanPeriodos(vanMapa()[chaveVan(p)]).find(x=>(!x.desde||x.desde<=alvo)&&(!x.ate||alvo<=x.ate));
+  if(!e)return null;
   const pk=vanPacotes()[e.id];
-  return pk?{id:e.id,nome:pk.nome||'Pacote',preco:+pk.preco||0,idas:+pk.idas||0,desde:e.desde||''}:null;
+  if(e.preco==null&&!pk)return null;
+  return {id:e.id,nome:e.nome||(pk&&pk.nome)||'Pacote',
+    preco:+(e.preco!=null?e.preco:pk.preco)||0,idas:+(e.idas!=null?e.idas:pk.idas)||0,
+    desde:e.desde||'',ate:e.ate||''};
 }
 function vanPrecoDia(p){
   if(!p)return 0;
@@ -9468,16 +9532,21 @@ function vanValorMes(p,viagens,ym){
   const extras=pk.idas>0?Math.max(0,viagens-pk.idas):0;
   return {valor:pk.preco+extras*vanPrecoDia(p),pacote:pk,extras};
 }
-function salvarVanCfg(pacotes,mapa){
-  if(ehTransporte()){cfg.vanPacotes=pacotes;cfg.vanPets=mapa;salvarCfg();return}
-  const c=vanCfgLer();c.vanPacotes=pacotes;c.vanPets=mapa;
-  salvarSeguro(VAN_CFG,JSON.stringify(c));
+function salvarVanCfg(pacotes,mapa){const c=vanCfgLer();c.vanPacotes=pacotes;c.vanPets=mapa;vanSalvarCfgObj(c)}
+/* A van tem o PROPRIO "pago". Antes o status vinha da fatura da creche:
+   o tutor pagava a creche e a van aparecia paga junto, sem ter pago. */
+function vanPagoEm(p,ym){const v=((vanCfgLer().vanPagos||{})[chaveVan(p)])||{};return v[ym]||null}
+function alternarVanPago(k,ym){
+  const c=vanCfgLer();c.vanPagos=c.vanPagos||{};const m=c.vanPagos[k]=c.vanPagos[k]||{};
+  if(m[ym])delete m[ym];else m[ym]=HOJE;
+  if(!Object.keys(m).length)delete c.vanPagos[k];
+  vanSalvarCfgObj(c);
 }
 
 /* ====== FINANCEIRO DO TRANSPORTE ====== */
 let tfMes=null;
-function pagamentosMotorista(){cfg.pagMotorista=cfg.pagMotorista||{};return cfg.pagMotorista}
-function motoristaCfg(){return Object.assign({nome:'Ramon',tipo:'tudo',valor:100},cfg.motorista||{})}
+function pagamentosMotorista(){const c=vanCfgLer();c.pagMotorista=c.pagMotorista||{};return c.pagMotorista}
+function motoristaCfg(){return Object.assign({nome:'Ramon',tipo:'tudo',valor:100},vanCfgLer().motorista||{})}
 /* Deixa o transporte como na primeira vez que se abre: apaga as viagens de
    cada pet (p.transportes), as rotas, os meses marcados como recebidos, o
    combustivel e os custos fixos. Com as viagens fora, a receita, o km e o
@@ -9508,16 +9577,16 @@ function zerarCaixaDaVan(){
 function transporteMes(ym){
   /* quem esta num pacote entra na conta mesmo sem ter rodado no mes:
      pacote e valor fixo, igual ao plano da creche */
-  const lista=pets.filter(p=>p.transporte||p.transportes.length||pacoteDoPet(p,ym));
+  const lista=petsDaVan().filter(p=>p.transporte||(p.transportes||[]).length||pacoteDoPet(p,ym));
   const porPet=lista.map(p=>{
-    const viagens=doMes(p.transportes,ym).length;
-    const v=vanValorMes(p,viagens,ym);
+    const viagens=doMes(p.transportes||[],ym).length;
+    const v=vanValorMes(p,viagens,ym);const pagoEm=vanPagoEm(p,ym);
     return {p,viagens,valor:v.valor,pacote:v.pacote,extras:v.extras,
-      cidade:p.transporte?TRANSPORTE[p.transporte].nome:'—',pago:!!p.pagamentos[ym]};
+      cidade:(TRANSPORTE[p.transporte]||{}).nome||'—',pago:!!pagoEm,pagoEm};
   }).filter(x=>x.viagens>0||x.pacote).sort((a,b)=>b.viagens-a.viagens||b.valor-a.valor);
-  const dias={};lista.forEach(p=>doMes(p.transportes,ym).forEach(d=>{dias[d]=(dias[d]||0)+1}));
+  const dias={};lista.forEach(p=>doMes(p.transportes||[],ym).forEach(d=>{dias[d]=(dias[d]||0)+1}));const _rv=rotasDaVan();
   const diasL=Object.entries(dias).sort((a,b)=>b[0].localeCompare(a[0])).map(([d,n])=>{
-    const r=rotas[d];const ex=r&&r.exec;const km=Math.round(n*4.5+4);
+    const r=_rv[d];const ex=r&&r.exec;const km=Math.round(n*4.5+4);
     return {d,paradas:n,km,inicio:ex&&ex.iniciada,fim:ex&&ex.finalizada,min:ex&&ex.iniciada&&ex.finalizada?minutosEntre(ex.iniciada,ex.finalizada):null};
   });
   const viagens=porPet.reduce((a,x)=>a+x.viagens,0);
@@ -9626,12 +9695,12 @@ function abrirCfgMotorista(){
       </select></div>
     </div>
     <div class="campo" id="mo-cvalor"><label for="mo-valor">Valor</label><input id="mo-valor" type="number" min="0" step="0.5" value="${mc.valor}"></div>
-    <div class="campo"><label for="mo-km">Custo por km da van (R$)</label><input id="mo-km" type="number" min="0" step="0.1" value="${cfg.custoKm||1.2}"></div>
+    <div class="campo"><label for="mo-km">Custo por km da van (R$)</label><input id="mo-km" type="number" min="0" step="0.1" value="${vanCfgLer().custoKm||1.2}"></div>
     <button class="btn primario" id="mo-ok" style="margin-top:16px">${st('check')} Salvar</button>
   </div></div>`;
   lock();
   const tg=()=>{$('#mo-cvalor').classList.toggle('hidden',$('#mo-tipo').value==='tudo')};$('#mo-tipo').onchange=tg;tg();
-  $('#mo-ok').onclick=()=>{cfg.motorista={nome:$('#mo-nome').value.trim()||'Motorista',tipo:$('#mo-tipo').value,valor:parseFloat($('#mo-valor').value)||0};cfg.custoKm=parseFloat($('#mo-km').value)||1.2;salvarCfg();fecharModal();renderTransporte();toast(pets[0]||{raca:'golden'},'Pagamento do motorista salvo 🚐','',true)};
+  $('#mo-ok').onclick=()=>{const vc=vanCfgLer();vc.motorista={nome:$('#mo-nome').value.trim()||'Motorista',tipo:$('#mo-tipo').value,valor:parseFloat($('#mo-valor').value)||0};vc.custoKm=parseFloat($('#mo-km').value)||1.2;vanSalvarCfgObj(vc);fecharModal();renderTransporte();toast(pets[0]||{raca:'golden'},'Pagamento do motorista salvo 🚐','',true)};
   $('#ov').addEventListener('click',e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()});
   document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
 }
@@ -9717,7 +9786,7 @@ function pdfCobrancaCreche(p,ym,pixId){
   const doc=pdfBase(m.hosp.length?'Fatura do mes (creche + hotel)':'Cobranca da creche',`${p.nome}  ·  ${ymNome(ym)}  ·  emitido em ${dataBR(HOJE)}`);
   let y=60;doc.setFontSize(11);
   const linha=(k,v)=>{doc.setFont('helvetica','bold');doc.text(k,14,y);doc.setFont('helvetica','normal');doc.text(String(v),60,y);y+=6};
-  linha('Pet',`${p.nome}  (${racaDe(p.raca).nome}, ${p.peso} kg)`);linha('Tutor',p.tutor+(p.telefone?`  ·  ${telFmt(p.telefone)}`:''));linha('Plano',PLANOS[p.plano].nome);linha('Frequencia',`${m.vindas} presencas  ·  ${m.faltas} faltas  ·  transporte ${m.transpVezes}x`);linha('Vencimento',`dia ${p.pagamentoDia}`);if(m.hosp.length)linha('Hotel',`${m.hosp.length} ${m.hosp.length===1?'hospedagem':'hospedagens'} no mes  =  ${brl(m.valorHotel)}`);if(m.abatimento)linha('Desconto',descTxt(m.desconto).normalize('NFD').replace(/[\u0300-\u036f]/g,'')+'  =  - '+brl(m.abatimento));
+  linha('Pet',`${p.nome}  (${racaDe(p.raca).nome}, ${p.peso} kg)`);linha('Tutor',p.tutor+(p.telefone?`  ·  ${telFmt(p.telefone)}`:''));linha('Plano',nomePlano(p));linha('Frequencia',`${m.vindas} presencas  ·  ${m.faltas} faltas  ·  transporte ${m.transpVezes}x`);linha('Vencimento',`dia ${p.pagamentoDia}`);if(m.hosp.length)linha('Hotel',`${m.hosp.length} ${m.hosp.length===1?'hospedagem':'hospedagens'} no mes  =  ${brl(m.valorHotel)}`);if(m.abatimento)linha('Desconto',descTxt(m.desconto).normalize('NFD').replace(/[\u0300-\u036f]/g,'')+'  =  - '+brl(m.abatimento));
   y+=4;const w=182;
   doc.setFillColor(246,235,221);doc.rect(14,y,w,8,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);
   doc.text('ITEM',16,y+5.5);doc.text('QTD',120,y+5.5,{align:'right'});doc.text('VALOR',157,y+5.5,{align:'right'});doc.text('TOTAL',196,y+5.5,{align:'right'});y+=8;
@@ -9782,26 +9851,48 @@ function abrirCobrancaCreche(id,ym){
 
 /* ====== FINANCEIRO ====== */
 function financeiroResumo(ym){
-  const hojeDia=new Date().getDate();
-  const creche=pets.filter(p=>p.ativo!==false||doMes(p.presencas,ym).length||hospedagensNaFatura(p,ym).length).map(p=>({p,m:resumoMes(p,ym),pago:!!p.pagamentos[ym]}));
-  const aReceber=creche.filter(x=>!x.pago).reduce((a,x)=>a+x.m.total,0);
-  const recebido=creche.filter(x=>x.pago).reduce((a,x)=>a+x.m.total,0);
+  const r2=v=>Math.round(v*100)/100;
+  /* cada fatura dividida em creche e hotel, com o desconto na proporcao.
+     Tudo que mostra dinheiro parte daqui: KPIs, receita por cliente,
+     receita por servico, so creche e o painel. */
+  const creche=pets.filter(p=>p.ativo!==false||doMes(p.presencas,ym).length||hospedagensNaFatura(p,ym).length).map(p=>{
+    const m=resumoMes(p,ym);const soC=soCreche(m);
+    const sinais=r2(m.hosp.filter(r=>r.sinalPago).reduce((a,r)=>a+contaHotel(r).sinal,0));
+    return {p,m,pago:!!p.pagamentos[ym],soC,soH:r2(m.total-soC),sinais};
+  });
+  const aReceber=r2(creche.filter(x=>!x.pago).reduce((a,x)=>a+x.m.total,0));
+  const recebido=r2(creche.filter(x=>x.pago).reduce((a,x)=>a+x.m.total,0));
   const atrasoL=creche.filter(x=>!x.pago&&x.m.total>0&&mesCobravel(ym)&&jaVenceu(x.p,ym));
-  const atraso=atrasoL.reduce((a,x)=>a+x.m.total,0);
-  const previsao=creche.reduce((a,x)=>a+x.m.total,0);
+  const atraso=r2(atrasoL.reduce((a,x)=>a+x.m.total,0));
+  const previsao=r2(creche.reduce((a,x)=>a+x.m.total,0));
   const hotelL=reservas.filter(r=>r.status!=='reservado'&&r.status!=='cancelado'&&(r.checkout||'').startsWith(ym)).map(r=>({r,c:contaHotel(r)}));
-  const hotelSolto=hotelL.filter(x=>!x.r.naFatura);
-  const hotel=hotelL.reduce((a,x)=>a+x.c.total,0);const hotelRecebido=hotelSolto.filter(x=>x.r.pago).reduce((a,x)=>a+x.c.total,0);
-  const hotelAberto=hotelSolto.filter(x=>x.r.status==='finalizado'&&!x.r.pago).reduce((a,x)=>a+x.c.restante,0);
+  /* so e "da fatura" depois do check-out fechado: antes disso a estadia
+     ainda conta como hotel avulso (senao ela sumiria das duas contas) */
+  const hotelSolto=hotelL.filter(x=>!(x.r.naFatura&&x.r.status==='finalizado'));
+  const sinaisFatura=r2(creche.reduce((a,x)=>a+x.sinais,0));
+  const hotelFatura=r2(creche.reduce((a,x)=>a+x.soH,0)+sinaisFatura);
+  const hotel=r2(hotelFatura+hotelSolto.reduce((a,x)=>a+x.c.total,0));
+  /* sinal pago na reserva ja entrou, mesmo com o resto em aberto */
+  const hotelRecebido=r2(hotelSolto.reduce((a,x)=>a+(x.r.pago?x.c.total:(x.r.sinalPago?x.c.sinal:0)),0)+sinaisFatura);
+  const hotelAberto=r2(hotelSolto.filter(x=>x.r.status==='finalizado'&&!x.r.pago).reduce((a,x)=>a+x.c.restante,0));
   const hotelTransp=hotelL.reduce((a,x)=>a+x.c.transp,0);
   const transporte=creche.reduce((a,x)=>a+x.m.valorTransp,0)+hotelTransp;
-  const porServico={
-    'Planos mensais':creche.filter(x=>x.p.plano!=='avulso').reduce((a,x)=>a+PLANOS[x.p.plano].preco,0),
-    'Diárias avulsas':creche.filter(x=>x.p.plano==='avulso').reduce((a,x)=>a+x.m.valorPlano,0),
-    'Dias extras':creche.filter(x=>x.p.plano!=='avulso').reduce((a,x)=>a+(x.m.valorPlano-PLANOS[x.p.plano].preco),0),
-    'Hotel · diárias':hotelL.reduce((a,x)=>a+x.c.subtotal,0),
-  };
-  return {creche,aReceber,recebido,atraso,atrasoL,previsao,hotel,hotelRecebido,hotelAberto,hotelL,hotelSolto,transporte,porServico,total:previsao+hotelSolto.reduce((a,x)=>a+x.c.total,0)};
+  const crecheTot=r2(creche.reduce((a,x)=>a+x.soC,0));
+  /* receita por servico = a mesma soma, quebrada por tipo. Antes usava o
+     preco de tabela do plano: cliente de valor combinado entrava como o
+     plano cheio e o desconto sumia. */
+  const ps={'Planos mensais':0,'Dias extras':0,'Diárias avulsas':0,'Hotel · diárias':hotel};
+  creche.forEach(x=>{
+    const m=x.m;const fat=m.bruto?m.total/m.bruto:0;
+    const dia=x.p.peso<=10?AVULSO.ate10:AVULSO.acima10;
+    let k='Planos mensais',ext=0;
+    if(!m.combinado&&x.p.plano==='avulso')k='Diárias avulsas';
+    else if(!m.combinado)ext=r2((m.extras||0)*dia*fat);
+    ps[k]+=x.soC-ext;ps['Dias extras']+=ext;
+  });
+  Object.keys(ps).forEach(k=>{ps[k]=r2(ps[k])});
+  return {creche,aReceber,recebido,atraso,atrasoL,previsao,hotel,hotelRecebido,hotelAberto,hotelL,hotelSolto,transporte,
+    porServico:ps,crecheTot,sinaisFatura,total:r2(crecheTot+hotel)};
 }
 /* Parte da fatura que e so creche: plano ou avulso, sem hotel (mesmo o
    somado na mensalidade) e sem van. Desconto da fatura e dividido na
@@ -9892,15 +9983,20 @@ function renderFinanceiro(){
   /* nada de van aqui: o caixa da creche não fala do transporte, nem com um
      rótulo, nem com atalho pro fintransp. Quem cuida da van é o motorista. */
   ].map(([k,v,c])=>`<div class="stat ${c}"><b style="font-size:22px">${v}</b><span>${k}</span></div>`).join('');
-  const porCliente=f.creche.map(x=>({nome:nomeCompleto(x.p),tutor:x.p.tutor+(temDois(x.p)?' e '+(x.p.dono2.nome||'2º dono'):''),creche:x.m.total-x.m.valorHotel+(x.m.abatimento?0:0),hotel:f.hotelL.filter(h=>h.r.petId===x.p.id).reduce((a,h)=>a+(h.r.naFatura?h.c.restante:h.c.total),0),junto:x.m.hosp.length>0,pago:x.pago,venc:x.p.pagamentoDia,id:x.p.id}));
-  f.hotelSolto.filter(h=>!h.r.petId).forEach(h=>porCliente.push({nome:h.r.nome+' (visitante)',tutor:h.r.tutor,creche:0,hotel:h.c.total,pago:h.r.pago,venc:null,rid:h.r.id}));
+  const porCliente=f.creche.map(x=>({nome:nomeCompleto(x.p),tutor:x.p.tutor+(temDois(x.p)?' e '+(x.p.dono2.nome||'2º dono'):''),
+    creche:x.soC,hotel:Math.round((x.soH+x.sinais)*100)/100,sinal:x.sinais,junto:x.m.hosp.length>0,pago:x.pago,venc:x.p.pagamentoDia,id:x.p.id}));
+  /* hotel pago a parte: linha propria, com o pago dele. Antes ia somado
+     na linha da creche e herdava o "pago" da mensalidade. */
+  f.hotelSolto.forEach(h=>{const hh=hospede(h.r);porCliente.push({nome:hh.nome+(h.r.petId?' · hotel':' (visitante)'),
+    tutor:(hh.tutor||'')+' · '+fmtData(h.r.checkin)+' → '+fmtData(h.r.checkout)+(h.r.status==='hospedado'?' · hospedado':''),
+    creche:0,hotel:h.c.total,pago:!!h.r.pago,venc:null,rid:h.r.id})});
   porCliente.sort((a,b)=>(b.creche+b.hotel)-(a.creche+a.hotel));
   /* quem já pagou sai da tabela principal e vai pro arquivo: a lista de cima
      é pra saber de quem ainda falta receber, não pra reler quem já acertou. */
   const pagos=porCliente.filter(c=>c.pago), devendo=porCliente.filter(c=>!c.pago);
-  const linhaCli=c=>`<tr><td><b>${c.nome}</b><br><small style="color:var(--texto-2)">${c.tutor}</small></td><td class="r">${c.creche?brl(c.creche):'—'}</td><td class="r">${c.hotel?brl(c.hotel)+(c.junto?'<br><small style="color:var(--verde-txt)">na fatura</small>':''):'—'}</td><td class="r"><b>${brl(c.creche+c.hotel)}</b></td><td>${c.pago?'<span class="st-pag pago">✓ pago</span>':(c.venc&&finMes===MES&&hojeDia>c.venc)||finMes<MES?'<span class="st-pag aberto" style="background:var(--vermelho-bg);color:var(--vermelho-txt)">vencido</span>':'<span class="st-pag aberto" style="background:var(--amarelo-claro)">em aberto</span>'}</td></tr>`;
+  const linhaCli=c=>`<tr><td><b>${c.nome}</b><br><small style="color:var(--texto-2)">${c.tutor}</small></td><td class="r">${c.creche?brl(c.creche):'—'}</td><td class="r">${c.hotel?brl(c.hotel)+(c.junto?'<br><small style="color:var(--verde-txt)">na fatura</small>':'')+(c.sinal?`<br><small style="color:var(--texto-2)">inclui sinal de ${brl(c.sinal)} já pago</small>`:''):'—'}</td><td class="r"><b>${brl(c.creche+c.hotel)}</b></td><td>${c.pago?'<span class="st-pag pago">✓ pago</span>':(c.venc&&finMes===MES&&hojeDia>c.venc)||finMes<MES?'<span class="st-pag aberto" style="background:var(--vermelho-bg);color:var(--vermelho-txt)">vencido</span>':'<span class="st-pag aberto" style="background:var(--amarelo-claro)">em aberto</span>'}</td></tr>`;
   const cabCli=`<tr><th>Cliente</th><th class="r">Creche</th><th class="r">Hotel</th><th class="r">Total</th><th>Status</th></tr>`;
-  $('#fi-clientes').innerHTML=cabCli+(devendo.length?devendo.map(linhaCli).join(''):`<tr><td colspan="5" style="text-align:center;color:var(--verde-txt);font-weight:700;padding:16px">🎉 Todo mundo em dia neste mês. Os recebidos estão no arquivo, ali embaixo.</td></tr>`)+`<tr class="tot"><td>Total</td><td class="r">${brl(f.previsao-f.creche.reduce((a,x)=>a+x.m.valorHotel,0))}</td><td class="r">${brl(f.hotel)}</td><td class="r">${brl(f.previsao+f.hotelSolto.reduce((a,x)=>a+x.c.total,0))}</td><td colspan="2"></td></tr>`;
+  $('#fi-clientes').innerHTML=cabCli+(devendo.length?devendo.map(linhaCli).join(''):`<tr><td colspan="5" style="text-align:center;color:var(--verde-txt);font-weight:700;padding:16px">🎉 Todo mundo em dia neste mês. Os recebidos estão no arquivo, ali embaixo.</td></tr>`)+`<tr class="tot"><td>Total</td><td class="r">${brl(f.crecheTot)}</td><td class="r">${brl(f.hotel)}</td><td class="r">${brl(f.total)}</td><td colspan="2"></td></tr>`;
   /* a pasta: check-out pago e mensalidade paga do mês escolhido */
   const arqHotel=f.hotelL.filter(x=>x.r.status==='finalizado'&&x.r.pago).sort((a,b)=>b.r.checkout.localeCompare(a.r.checkout));
   $('#fi-arq-n1').textContent=arqHotel.length;
@@ -10229,9 +10325,9 @@ function indicadores(ym){
   return {
     clientes:[['Clientes ativos',at.length],['Novos no mês',novos],['Perdidos',perdidos],['Recuperados',recuperados],['Taxa de retorno',contatados.length?`${Math.round(voltaram/contatados.length*100)}% (${voltaram}/${contatados.length} contatados)`:'—']],
     creche:[['Ocupação média',`${Math.round(presencasMes/du/capC*100)}% (${(presencasMes/du).toFixed(1)}/${capC} por dia)`],['Frequência média',freq.length?`${Math.round(freq.reduce((a,b)=>a+b,0)/freq.length*100)}%`:'—'],['Faltas no mês',faltasMes],['Plano mais vendido',planoTop?`${PLANOS[planoTop[0]].nome} (${planoTop[1]})`:'—'],['Dias extras',pres.reduce((a,m)=>a+m.extras,0)]],
-    hotel:[['Taxa de ocupação',`${Math.round(diarias/(capH*diasMes)*100)}% (${diarias}/${capH*diasMes} diárias)`],['Diárias vendidas',diarias],['Faturamento',brl(fatH)],['Ticket médio',hotelL.length?brl(fatH/hotelL.length):'—'],['Cancelamentos',cancH]],
-    transporte:[['Rotas no mês',rotasN],['Pets transportados',petsT],['Km estimados',`≈ ${Math.round(kmT)} km`],['Custo estimado',brl(kmT*(cfg.custoKm||1.2))],['Receita',brl(recT)],['Utilização',planejadas?`${Math.round(petsT/planejadas*100)}%`:'—']],
-    financeiro:[['Faturamento',brl(fin.total)],['Recebido',brl(fin.recebido+fin.hotelRecebido)],['Inadimplência',clientesFat?`${Math.round(fin.atrasoL.length/clientesFat*100)}% · ${brl(fin.atraso)}`:'—'],['Previsão',brl(fin.previsao)],['Ticket médio',clientesFat?brl(fin.total/clientesFat):'—']],
+    hotel:[['Taxa de ocupação',`${Math.round(diarias/(capH*diasMes)*100)}% (${diarias}/${capH*diasMes} diárias)`],['Diárias vendidas',diarias],['Faturamento',brl(fin.hotel)],['Ticket médio',hotelL.length?brl(fin.hotel/hotelL.length):'—'],['Cancelamentos',cancH]],
+    transporte:[['Rotas no mês',rotasN],['Pets transportados',petsT],['Km estimados',`≈ ${Math.round(kmT)} km`],['Utilização',planejadas?`${Math.round(petsT/planejadas*100)}%`:'—']],
+    financeiro:[['Faturamento',brl(fin.total)],['Recebido',brl(fin.recebido+fin.hotelRecebido)],['Inadimplência',clientesFat?`${Math.round(fin.atrasoL.length/clientesFat*100)}% · ${brl(fin.atraso)}`:'—'],['A receber',brl(fin.aReceber+fin.hotelAberto)],['Ticket médio',clientesFat?brl(fin.total/clientesFat):'—']],
     operacional:[['Chamada · tempo médio',tempos.length?`${media(tempos)} min`:'—'],['Chamada · dias concluídos',opsMes.filter(o=>o.chamadaFim).length],['Pets atendidos',presencasMes],['Atrasos (>30 min)',atrasos],['Hotel · check-ins',checkins],['Hotel · check-outs',checkouts],['Hotel · pagamentos pendentes',reservas.filter(r=>r.status==='finalizado'&&!r.pago).length],['Ocorrências',ocorr],['Rotas concluídas',rotasExec.length],['Rota · tempo médio',tempoRotas.length?`${media(tempoRotas)} min`:'—']],
   };
 }
@@ -10454,7 +10550,7 @@ function confirmarFim(id){const p=pets.find(x=>x.id===id);const ano=new Date().g
 <script>
 /* Pet Farm · painel.js — dashboard geral (estilo gateway) */
 function serieMeses(n){const out=[];for(let i=n-1;i>=0;i--)out.push(ymAdd(MES,-i));return out}
-function fatMes(ym){const f=financeiroResumo(ym);return {ym,total:f.total,recebido:f.recebido+f.hotelRecebido,creche:f.previsao-f.creche.reduce((a,x)=>a+x.m.valorHotel,0),hotel:f.hotel,transporte:f.transporte,atraso:f.atraso,clientes:f.creche.filter(x=>x.m.total>0).length}}
+function fatMes(ym){const f=financeiroResumo(ym);return {ym,total:f.total,recebido:f.recebido+f.hotelRecebido,creche:f.crecheTot,hotel:f.hotel,transporte:f.transporte,atraso:f.atraso,clientes:f.creche.filter(x=>x.m.total>0).length}}
 function spark(vals,w=160,h=40){const mx=Math.max(1,...vals);const pts=vals.map((v,i)=>`${(i/(vals.length-1||1))*w},${h-(v/mx)*(h-4)-2}`).join(' ');return `<svg viewBox="0 0 ${w} ${h}" class="spark"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${w}" cy="${h-(vals[vals.length-1]/mx)*(h-4)-2}" r="3.5" fill="currentColor"/></svg>`}
 function renderPainel(){
   const box=$('#pn-corpo');if(!box)return;
@@ -10495,13 +10591,12 @@ function renderPainel(){
       ${kpi('Ticket médio',atual.clientes?brl(atual.total/atual.clientes):'—',`${atual.clientes} clientes faturados`)}
       ${kpi('Creche',brl(atual.creche),`ocupação ${ocupC}% · ${presMes} presenças`,'',spark(serie.map(s=>s.creche)))}
       ${kpi('Hotel',brl(atual.hotel),`ocupação ${mp.taxa}% · ${mp.diarias} diárias`,'',spark(serie.map(s=>s.hotel)))}
-      ${kpi('Transporte',brl(t.receita),`${t.viagens} viagens · repasse ${brl(t.pagMot)}`,'',spark(serie.map(s=>s.transporte)))}
       ${kpi('Pendências',pend.length,`${urg} urgentes · ${renov} renovações · ${ina} sumindo`,urg?'bad':'ok')}
     </div>
     <div class="pn-2">
       <section class="in-box"><h3>📈 Faturamento · últimos 6 meses</h3>
-        <div class="pn-chart">${serie.map(s=>`<div class="col" title="${ymNome(s.ym)}: ${brl(s.total)}"><div class="stack"><i class="c" style="height:${s.creche/mx*100}%"></i><i class="h" style="height:${s.hotel/mx*100}%"></i><i class="t" style="height:${s.transporte/mx*100}%"></i></div><b>${brl(s.total).replace(',00','').replace('R$ ','')}</b><span>${NOMES_MES[+s.ym.split('-')[1]-1].slice(0,3)}</span></div>`).join('')}</div>
-        <div class="pn-leg"><span><i class="c"></i>creche</span><span><i class="h"></i>hotel</span><span><i class="t"></i>transporte</span></div>
+        <div class="pn-chart">${serie.map(s=>`<div class="col" title="${ymNome(s.ym)}: ${brl(s.total)}"><div class="stack"><i class="c" style="height:${s.creche/mx*100}%"></i><i class="h" style="height:${s.hotel/mx*100}%"></i></div><b>${brl(s.total).replace(',00','').replace('R$ ','')}</b><span>${NOMES_MES[+s.ym.split('-')[1]-1].slice(0,3)}</span></div>`).join('')}</div>
+        <div class="pn-leg"><span><i class="c"></i>creche</span><span><i class="h"></i>hotel</span></div>
       </section>
       <section class="in-box"><h3>🏆 Maiores clientes do mês</h3>
         <ul class="pn-top">${top.map((x,i)=>`<li><span class="pos">${i+1}</span><span class="mini">${avatar(x.p)}</span><b>${x.n}</b><span class="v">${brl(x.v)}</span><span class="st-pag ${x.pago?'pago':'aberto'}">${x.pago?'pago':'aberto'}</span></li>`).join('')||'<li>—</li>'}</ul>
@@ -10613,8 +10708,8 @@ function abrirPrecos(){
 </script>
 <script>
 /* Pet Farm · fintransp.js — Financeiro do Transporte (100% separado) */
-function custoKmCalc(){const c=combustivelCfg();return c.consumo>0?Math.round(c.precoLitro/c.consumo*100)/100:(cfg.custoKm||1.2)}
-function combustivelCfg(){return Object.assign({consumo:9,precoLitro:6.2,fixoMensal:0,fixoDesc:'seguro, manutenção, lavagem'},cfg.combustivel||{})}
+function custoKmCalc(){const c=combustivelCfg();return c.consumo>0?Math.round(c.precoLitro/c.consumo*100)/100:(vanCfgLer().custoKm||1.2)}
+function combustivelCfg(){return Object.assign({consumo:9,precoLitro:6.2,fixoMensal:0,fixoDesc:'seguro, manutenção, lavagem'},vanCfgLer().combustivel||{})}
 function abrirCombustivel(){
   const c=combustivelCfg();
   $('#modais').innerHTML=`<div class="overlay" id="ov"><div class="modal form" role="dialog">
@@ -10634,23 +10729,24 @@ function abrirCombustivel(){
   lock();
   const upd=()=>{const k=(+$('#cb-preco').value||0)/(+$('#cb-cons').value||1);$('#cb-km').textContent=brl(k);$('#cb-ex').textContent=brl(k*25)};
   $('#cb-cons').oninput=upd;$('#cb-preco').oninput=upd;
-  $('#cb-ok').onclick=()=>{cfg.combustivel={consumo:+$('#cb-cons').value||9,precoLitro:+$('#cb-preco').value||0,fixoMensal:+$('#cb-fixo').value||0,fixoDesc:$('#cb-desc').value.trim()};cfg.custoKm=custoKmCalc();salvarCfg();fecharModal();renderFinTransp();toast(pets[0]||{raca:'golden'},'Custos da van salvos ⛽',`${brl(custoKmCalc())} por km.`,true)};
+  $('#cb-ok').onclick=()=>{const vc=vanCfgLer();vc.combustivel={consumo:+$('#cb-cons').value||9,precoLitro:+$('#cb-preco').value||0,fixoMensal:+$('#cb-fixo').value||0,fixoDesc:$('#cb-desc').value.trim()};vc.custoKm=custoKmCalc();vanSalvarCfgObj(vc);fecharModal();renderFinTransp();toast(pets[0]||{raca:'golden'},'Custos da van salvos ⛽',`${brl(custoKmCalc())} por km.`,true)};
   $('#ov').addEventListener('click',e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()});
   document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
 }
 let ftMes=null;
 /* ====== configurar os pacotes e quem esta em cada um ====== */
 function abrirPacotesVan(){
-  const pacotes=JSON.parse(JSON.stringify(vanPacotes()));
-  const mapa=Object.assign({},vanMapa());
+  const orig=vanPacotes();
+  const pacotes=JSON.parse(JSON.stringify(orig));
+  const mapaOrig=vanMapa();
+  /* o que esta marcado AGORA pra cada aumigo (o historico fica intocado) */
+  const escolha={}, desde={};
+  Object.keys(mapaOrig).forEach(k=>{const a=vanPeriodos(mapaOrig[k]).find(x=>!x.ate);if(a){escolha[k]=a.id;desde[k]=a.desde||''}});
   let busca='';
-  const idDe=k=>{const v=mapa[k];return v&&typeof v==='object'?v.id:(v||'')};
-  const vanEntradaLocal=k=>{const v=mapa[k];return v&&typeof v==='object'?v:(v?{id:v,desde:''}:null)};
-  const noPacote=id=>Object.keys(mapa).filter(k=>idDe(k)===id).length;
+  const noPacote=id=>Object.values(escolha).filter(v=>v===id).length;
   let naVan=0;
   const contarPacote=n=>{if(n!=null)naVan=n;
-    const e=$('#vpk-n');if(e)e.textContent=Object.keys(mapa).filter(k=>mapa[k]).length+' em pacote · '+naVan+' na van'};
-
+    const e=$('#vpk-n');if(e)e.textContent=Object.values(escolha).filter(Boolean).length+' em pacote · '+naVan+' na van'};
   /* le o que esta digitado nas linhas antes de qualquer redesenho:
      sem isso, escolher um aumigo apagava o nome e o preco recem digitados */
   const lerPacotes=()=>{
@@ -10673,17 +10769,17 @@ function abrirPacotesVan(){
       </div>`;}).join('')||'<div class="nada">Nenhum pacote ainda. Crie o primeiro aí em cima. 🐾</div>';
   };
   const desenhar=()=>{
-    const turma=pets.filter(p=>p.ativo!==false&&(p.transporte||p.transportes.length||idDe(chaveVan(p))))
+    const turma=petsDaVan().filter(p=>p.ativo!==false&&(p.transporte||(p.transportes||[]).length||escolha[chaveVan(p)]))
       .sort((a,b)=>nomeCompleto(a).localeCompare(nomeCompleto(b),'pt-BR'));
     const q=busca.trim().toLowerCase();
     const vistos=q?turma.filter(p=>(nomeCompleto(p)+' '+(p.tutor||'')).toLowerCase().indexOf(q)>=0):turma;
     const ops=k=>'<option value="">Sem pacote (por dia)</option>'+
-      Object.entries(pacotes).map(([id,pk])=>`<option value="${id}" ${idDe(k)===id?'selected':''}>${(pk.nome||'Pacote').replace(/</g,'&lt;')}</option>`).join('');
+      Object.entries(pacotes).map(([id,pk])=>`<option value="${id}" ${escolha[k]===id?'selected':''}>${(pk.nome||'Pacote').replace(/</g,'&lt;')}</option>`).join('');
     pintarPacotes();
     $('#vpk-pets').innerHTML=vistos.map(p=>{
       const k=chaveVan(p);
       return `<div class="row vpet-row">
-        <div class="qq"><b>${nomeCompleto(p)}</b><small>${p.tutor||'sem tutor'}${p._un?' · 🏠 '+nomeUnidade(p._un):''}${p.transporte?' · 🚐 '+TRANSPORTE[p.transporte].nome:''} · ${brl(vanPrecoDia(p))}/dia${(()=>{const e=vanEntradaLocal(k);return e&&e.desde&&e.desde!==MES?' · no pacote desde '+ymNome(e.desde):''})()}</small></div>
+        <div class="qq"><b>${nomeCompleto(p)}</b><small>${p.tutor||'sem tutor'}${p._un?' · 🏠 '+nomeUnidade(p._un):''}${p.transporte&&TRANSPORTE[p.transporte]?' · 🚐 '+TRANSPORTE[p.transporte].nome:''} · ${brl(vanPrecoDia(p))}/dia${escolha[k]&&desde[k]&&desde[k]!==MES?' · no pacote desde '+ymNome(desde[k]):''}</small></div>
         <select data-pet="${k}">${ops(k)}</select>
       </div>`;}).join('')||`<div class="nada">${q?'Nenhum aumigo com esse nome.':'Nenhum aumigo usa a van ainda.'}</div>`;
     contarPacote(turma.length);
@@ -10692,7 +10788,7 @@ function abrirPacotesVan(){
   $('#modais').innerHTML=`<div class="overlay" id="ov"><div class="modal form" role="dialog">
     <button class="fechar" data-fechar aria-label="Fechar">✕</button>
     <h2>${st('dog-beagle')} Pacotes da van</h2>
-    <div class="nota" style="font-size:12px;font-weight:700;color:var(--texto-2);margin-top:4px">Valor fixo por mês, mais o valor por dia da cidade em cada ida que passar das incluídas. Quem não está em pacote nenhum continua pagando por dia, como sempre. O pacote passa a contar do mês em que você coloca o aumigo nele pra frente — mês que já passou continua do jeito que foi cobrado. Isso vale só aqui no Financeiro do Transporte: não aparece na fatura da creche nem no financeiro dela.</div>
+    <div class="nota" style="font-size:12px;font-weight:700;color:var(--texto-2);margin-top:4px">Valor fixo por mês, mais o valor por dia da cidade em cada ida que passar das incluídas. Quem não está em pacote nenhum continua pagando por dia. Colocar, tirar ou mudar o preço vale <b>deste mês pra frente</b>: os meses que já passaram continuam com o valor da época. Isso vale só aqui no Financeiro do Transporte.</div>
     <div class="cfg-h">🎟 Pacotes <button class="btn-mini" id="vpk-add" type="button">＋ Novo pacote</button></div>
     <div class="cfg-lista" id="vpk-lista"></div>
     <div class="cfg-h">🐾 Quem está em cada pacote <small id="vpk-n" style="font-size:12px;font-weight:800;color:var(--texto-2)"></small></div>
@@ -10706,39 +10802,64 @@ function abrirPacotesVan(){
   $('#vpk-add').onclick=()=>{
     lerPacotes();
     pacotes['v'+Date.now().toString(36)]={nome:'Novo pacote',idas:8,preco:0};
-    desenhar();      /* os selects tambem mudam: o pacote novo entra na lista */
+    desenhar();
   };
   $('#ov').addEventListener('change',e=>{
     const sp=e.target.closest('[data-pet]');
-    if(sp){const k=sp.dataset.pet,v=sp.value;
-      if(v){const ant=mapa[k]&&typeof mapa[k]==='object'?mapa[k]:null;
-        mapa[k]=(ant&&ant.id===v)?ant:{id:v,desde:MES}}   /* entrou agora: conta deste mes pra frente */
-      else delete mapa[k];
-      pintarPacotes();contarPacote()}
+    if(sp){const k=sp.dataset.pet;if(sp.value)escolha[k]=sp.value;else delete escolha[k];pintarPacotes();contarPacote()}
   });
   $('#ov').addEventListener('click',e=>{
     const rm=e.target.closest('[data-rmpk]');
-    if(rm){lerPacotes();delete pacotes[rm.dataset.rmpk];
-      Object.keys(mapa).forEach(k=>{if(idDe(k)===rm.dataset.rmpk)delete mapa[k]});
-      desenhar();return}
+    if(rm){lerPacotes();delete pacotes[rm.dataset.rmpk];desenhar();return}
     if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal();
   });
   $('#vpk-ok').onclick=()=>{
     lerPacotes();
-    Object.keys(mapa).forEach(k=>{const id=idDe(k);
-      if(!pacotes[id])delete mapa[k];
-      else if(typeof mapa[k]!=='object')mapa[k]={id,desde:MES}});
-    salvarVanCfg(pacotes,mapa);
+    const ant=ymAdd(MES,-1), novo={};
+    new Set([...Object.keys(mapaOrig),...Object.keys(escolha)]).forEach(k=>{
+      /* periodo antigo sem o preco guardado: guarda o preco de ANTES da
+         edicao, pra ele nao mudar junto se o pacote mudou de preco agora */
+      const per=vanPeriodos(mapaOrig[k]).map(x=>{const y=Object.assign({},x);
+        if(y.preco==null){const pk=orig[y.id]||{};y.preco=+pk.preco||0;y.idas=+pk.idas||0;y.nome=pk.nome||'Pacote'}
+        return y});
+      const quer=escolha[k]&&pacotes[escolha[k]]?escolha[k]:'';
+      const pk=quer?pacotes[quer]:null;
+      let cur=per.find(x=>!x.ate);
+      if(cur&&(!quer||cur.id!==quer||+cur.preco!==+pk.preco||+cur.idas!==+pk.idas||(cur.nome||'')!==(pk.nome||''))){
+        if(cur.desde&&cur.desde>=MES)per.splice(per.indexOf(cur),1);   /* entrou e mudou no mesmo mes */
+        else cur.ate=ant;                                                /* fecha no mes passado */
+        cur=null;
+      }
+      if(pk&&!cur)per.push({id:quer,desde:MES,nome:pk.nome,preco:+pk.preco||0,idas:+pk.idas||0});
+      if(per.length)novo[k]=per;
+    });
+    salvarVanCfg(pacotes,novo);
     fecharModal();renderFinTransp();
     toast(pets[0]||{raca:'golden'},'Pacotes salvos 🎟',
-      Object.keys(pacotes).length+' pacote(s) · '+Object.keys(mapa).length+' aumigo(s) no pacote.',true);
+      Object.keys(pacotes).length+' pacote(s) · '+Object.values(escolha).filter(Boolean).length+' aumigo(s) no pacote.',true);
   };
   document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
 }
 
 function renderFinTransp(){
   const box=$('#view-fintransp');if(!box||box.classList.contains('hidden'))return;
-  cfg.custoKm=custoKmCalc();
+  if(!ehTransporte()&&!_vanNuvem){
+    const cab=document.querySelector('#view-fintransp .sec-head>div');
+    if(_vanNuvemFalhou&&!_vanNuvemBusca){
+      if(cab)cab.style.visibility='hidden';
+      $('#ft-corpo').innerHTML=`<div class="in-box" style="margin-top:14px;text-align:center;padding:26px 18px"><div style="font-size:34px">🚐</div>
+        <h3 style="margin-top:6px">Sem conexão com a nuvem</h3>
+        <p style="font-size:13px;font-weight:700;color:var(--texto-2);margin-top:6px">A van junta os aumigos de Camboriú e de Itajaí. Daqui de ${nomeUnidade()} dá pra ver só uma parte, e os números sairiam errados — por isso eles não aparecem até a conexão voltar.</p>
+        <button class="btn primario" id="ft-tenta" style="max-width:280px;margin:14px auto 0">Tentar de novo</button></div>`;
+      const bt=$('#ft-tenta');if(bt)bt.onclick=()=>{_vanNuvemFalhou=false;renderFinTransp()};
+      return;
+    }
+    $('#ft-corpo').innerHTML='<div class="nada" style="margin-top:14px;padding:26px;text-align:center;font-weight:700;color:var(--texto-2)">Buscando os dados da van (Camboriú + Itajaí)… 🚐</div>';
+    vanNuvemCarregar().then(()=>renderFinTransp());
+    return;
+  }
+  {const cab=document.querySelector('#view-fintransp .sec-head>div');if(cab)cab.style.visibility=''}
+  if(!ehTransporte())vanNuvemCarregar();   /* atualiza por tras pra proxima vez */
   ftMes=ftMes||MES;tfMes=ftMes;
   const t=transporteMes(ftMes);const cb=combustivelCfg();const comb=t.km*custoKmCalc();const fixo=cb.fixoMensal||0;
   const liquido=t.receita-comb-fixo-(t.mc.tipo==='tudo'?0:t.pagMot);
@@ -10803,14 +10924,14 @@ function renderFinTransp(){
     <div class="fi-grid" style="margin-top:16px">
       <section><h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Por aumigo</h3>
         <table class="tabela-simples"><tr><th>Aumigo</th><th>Cidade</th><th>Pacote</th><th class="r">Viagens</th><th class="r">Valor</th><th>Status</th></tr>
-        ${t.porPet.map(x=>`<tr><td><b>${nomeCompleto(x.p)}</b><br><small style="color:var(--texto-2)">${x.p.tutor}</small></td><td>${cidadeEndereco(x.p)}</td><td>${x.pacote?`${x.pacote.nome}${x.extras?`<br><small style="color:var(--texto-2)">+${x.extras} ida${x.extras===1?'':'s'} extra</small>`:''}`:'<span style="color:var(--texto-2)">por dia</span>'}</td><td class="r">${x.viagens}</td><td class="r"><b>${brl(x.valor)}</b></td><td>${x.pago?'<span class="st-pag pago">pago</span>':'<span class="st-pag">em aberto</span>'}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--texto-2)">Sem viagens nesse mês.</td></tr>'}
+        ${t.porPet.map(x=>`<tr><td><b>${nomeCompleto(x.p)}</b><br><small style="color:var(--texto-2)">${x.p.tutor}</small></td><td>${cidadeEndereco(x.p)}</td><td>${x.pacote?`${x.pacote.nome}${x.extras?`<br><small style="color:var(--texto-2)">+${x.extras} ida${x.extras===1?'':'s'} extra</small>`:''}`:'<span style="color:var(--texto-2)">por dia</span>'}</td><td class="r">${x.viagens}</td><td class="r"><b>${brl(x.valor)}</b></td><td><button type="button" class="st-pag vp ${x.pago?'pago':''}" data-vanpago="${chaveVan(x.p)}" title="Toque pra ${x.pago?'desmarcar':'marcar como pago'}">${x.pago?'✓ pago '+fmtData(x.pagoEm):'em aberto'}</button></td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--texto-2)">Sem viagens nesse mês.</td></tr>'}
         <tr class="tot"><td colspan="3">Total</td><td class="r">${t.viagens}</td><td class="r">${brl(t.receita)}</td><td></td></tr></table></section>
       <section><h3 style="font-size:18px;font-weight:600;margin-bottom:8px">Por dia (rota a rota)</h3>
         <table class="tabela-simples"><tr><th>Dia</th><th class="r">Paradas</th><th>Início</th><th>Fim</th><th class="r">Duração</th><th class="r">Km ≈</th><th class="r">⛽</th></tr>
         ${t.diasL.map(d=>`<tr><td>${fmtData(d.d)}</td><td class="r">${d.paradas}</td><td>${d.inicio||'—'}</td><td>${d.fim||'—'}</td><td class="r">${d.min!=null?d.min+' min':'—'}</td><td class="r">${d.km}</td><td class="r">${brl(d.km*custoKmCalc())}</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--texto-2)">Sem rotas nesse mês.</td></tr>'}
         <tr class="tot"><td>${t.rotas} rotas</td><td class="r">${t.viagens}</td><td colspan="3"></td><td class="r">${t.km}</td><td class="r">${brl(comb)}</td></tr></table></section>
     </div>
-    <div class="nota" style="margin-top:10px;font-size:12px;font-weight:700;color:var(--texto-2)">💼 O transporte é um negócio à parte, do motorista — 100% separado do caixa da creche e do hotel. O tutor paga a van na fatura dele, mas o valor é contabilizado aqui e repassado. Só este acesso enxerga esses números.</div>`;
+    <div class="nota" style="margin-top:10px;font-size:12px;font-weight:700;color:var(--texto-2)">💼 O transporte é um negócio à parte, do motorista — 100% separado do caixa da creche e do hotel. O pagamento da van é marcado aqui, aumigo por aumigo (toque no "em aberto"). Só este acesso enxerga esses números.</div>`;
 }
 
 </script>
@@ -10943,8 +11064,8 @@ async function pdfCobrancaCreche(p,ym,pixId){
   const {it,total,m}=itensCreche(p,ym);const px=pixDe(pixId||cfg.pixPadrao);
   const doc=await novoDoc(m.hosp.length?'Fatura do mes · creche + hotel':'Cobranca da creche',`${p.nome} · ${ymNome(ym)} · emitido em ${dataBR(HOJE)}`);
   pfTitulo(doc,'Aluno');
-  pfLinhaInfo(doc,[['Pet',`${p.nome} (${racaDe(p.raca).nome}, ${p.peso} kg)`],['Tutor',p.tutor+(p.telefone?' · '+telFmt(p.telefone):'')],['Plano',PLANOS[p.plano].nome],['Vencimento',`dia ${p.pagamentoDia}`]]);
-  pfKpis(doc,[{valor:String(m.vindas),rotulo:'presencas',cor:PDF_COR.verdeTxt},{valor:String(m.faltas),rotulo:'faltas',cor:m.faltas?PDF_COR.vermelhoTxt:PDF_COR.escuro},{valor:String(m.transpVezes),rotulo:'van',sub:m.transpVezes?brl(m.valorTransp)+' (a parte)':''},{valor:String(m.hosp.length),rotulo:'hospedagens',sub:m.hosp.length?brl(m.valorHotel):''}]);
+  pfLinhaInfo(doc,[['Pet',`${p.nome} (${racaDe(p.raca).nome}, ${p.peso} kg)`],['Tutor',p.tutor+(p.telefone?' · '+telFmt(p.telefone):'')],['Plano',nomePlano(p)],['Vencimento',`dia ${p.pagamentoDia}`]]);
+  pfKpis(doc,[{valor:String(m.vindas),rotulo:'presencas',cor:PDF_COR.verdeTxt},{valor:String(m.faltas),rotulo:'faltas',cor:m.faltas?PDF_COR.vermelhoTxt:PDF_COR.escuro},{valor:String(m.transpVezes),rotulo:'van',sub:m.transpVezes?'cobrado a parte':''},{valor:String(m.hosp.length),rotulo:'hospedagens',sub:m.hosp.length?brl(m.valorHotel):''}]);
   pfTitulo(doc,'Resumo da fatura');
   const linhas=it.map(x=>({tipo:x.hotel?'hotel':x.desc?'desc':'normal',c:[x.d,x.desc?'':x.q,x.desc?'':brl(x.v),x.desc?'- '+brl(-x.t):brl(x.t)]}));
   pfTabela(doc,[{t:'Item',w:104},{t:'Qtd',w:20,al:'right'},{t:'Valor',w:28,al:'right'},{t:'Total',w:30,al:'right'}],linhas);
