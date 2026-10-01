@@ -6894,7 +6894,7 @@ function pdfCobranca(r,pixId){
   doc.text('ITEM',col[0]+2,y+5.5);doc.text('QTD',col[1],y+5.5,{align:'right'});doc.text('VALOR',col[2]+12,y+5.5,{align:'right'});doc.text('TOTAL',196,y+5.5,{align:'right'});
   y+=8;doc.setFont('helvetica','normal');doc.setFontSize(10);
   const row=(a,b,cc,d,bold)=>{doc.setFont('helvetica',bold?'bold':'normal');doc.text(a,col[0]+2,y+6);doc.text(String(b),col[1],y+6,{align:'right'});doc.text(cc,col[2]+12,y+6,{align:'right'});doc.text(d,196,y+6,{align:'right'});doc.setDrawColor(232,213,181);doc.line(14,y+9,196,y+9);y+=9};
-  row(`Diaria ${h.aluno?'aluno da creche':(h.peso<=10?'porte pequeno (ate 10 kg)':'porte grande (acima de 10 kg)')}`,c.n,brl(c.v),brl(c.subtotal));
+  row(semAcento(`Diaria ${c.porteTxt}`),c.n,brl(c.v),brl(c.subtotal));
   if(c.abatimento)row(('Desconto'+(r.desconto.motivo?' - '+r.desconto.motivo:'')).normalize('NFD').replace(/[\u0300-\u036f]/g,''),'','','- '+brl(c.abatimento));
   if(r.sinalPago)row('Sinal 30% pago na reserva','','','- '+brl(c.sinal));
   doc.setFillColor(255,244,204);doc.rect(14,y,w,11,'F');doc.setFont('helvetica','bold');doc.setFontSize(13);
@@ -8148,8 +8148,32 @@ const petsDaReserva=r=>{
 };
 /* quanto custa a diária dessa reserva, já com todos os cachorros.
    Se você digitou um valor combinado, é ele que vale. */
+/* Os caes da reserva com o peso/porte de cada um. Irmao pequeno e irmao
+   grande pagam diarias diferentes no hotel (visitante): antes todos pagavam
+   pelo peso do primeiro. Irmao sem peso cadastrado usa o porte (P/G); sem
+   isso tambem, segue o primeiro, que era o jeito antigo. */
+function caesComPorte(r){
+  if(!r)return [];
+  const p=r.petId?pets.find(x=>x.id===r.petId):null;
+  const lista=p?[{nome:p.nome,peso:p.peso,porte:p.porte}].concat(irmaosDe(p))
+    :(r.nome?[{nome:r.nome,peso:r.peso,porte:r.porte}].concat((r.irmaos||[]).filter(x=>x&&x.nome)):[]);
+  const sel=caesDaReserva(r);
+  const out=lista.filter(d=>sel.indexOf(d.nome)>=0);
+  const base=+(lista[0]&&lista[0].peso)||0;
+  return (out.length?out:lista).map((d,i)=>{
+    const pe=+d.peso||0;
+    const grande=pe>0?pe>10:(i===0&&d===lista[0]?false:(d.porte==='G'?true:d.porte==='P'?false:base>10));
+    return {nome:d.nome,peso:pe,grande};
+  });
+}
 function diariaDaReserva(r,h,feriado){
   if(r.valorDiaria!=null&&r.valorDiaria!=='')return Math.max(0,+r.valorDiaria);
+  const dele=h&&h.p?+h.p.diariaHotel:0;
+  if(h&&!h.aluno&&!(dele>0&&!feriado)){
+    const cs=caesComPorte(r);
+    if(cs.length&&cs.length===petsDaReserva(r))
+      return cs.reduce((a,d)=>a+(feriado?(d.grande?HOTEL.ferGrande:HOTEL.ferPequeno):(d.grande?HOTEL.grande:HOTEL.pequeno)),0);
+  }
   return valorDiaria(h,feriado)*petsDaReserva(r);
 }
 /* uma linha por diária, do check-in até a véspera do check-out */
@@ -8174,13 +8198,19 @@ function contaHotel(r){
   /* transporte fora da conta do hotel tambem: a van e cobrada a parte.
      transp continua calculado pro Financeiro do Transporte. */
   const subtotal=dias.reduce((a,x)=>a+x.valor,0), transp=(r.transporteVezes||0)*tp, bruto=subtotal;
-  const porQtd=(qtd>1&&!manual)?' ('+qtd+' aumigos)':(manual?' (valor combinado)':'');
+  /* porte de cada cao: quando tem pequeno e grande juntos, a conta mostra */
+  const cs=(!h.aluno&&!manual)?caesComPorte(r):[];
+  const nG=cs.filter(d=>d.grande).length, nP=cs.length-nG;
+  const misto=nG>0&&nP>0&&!(h.p&&+h.p.diariaHotel>0);
+  const porteTxt=h.aluno?'aluno da creche':misto?(nP+' até 10 kg + '+nG+' acima de 10 kg'):(h.peso<=10?'porte pequeno (até 10 kg)':'porte grande (acima de 10 kg)');
+  const porteCurto=h.aluno?'aluno':misto?(nP+' até 10 kg + '+nG+' acima de 10 kg'):(h.peso<=10?'até 10 kg':'acima de 10 kg');
+  const porQtd=(qtd>1&&!manual)?(misto?' ('+qtd+' aumigos: '+porteCurto+')':' ('+qtd+' aumigos)'):(manual?' (valor combinado)':'');
   const resumoDiarias=(nFer
     ? (nNorm?nNorm+' '+(nNorm===1?'diária':'diárias')+' × '+brl(v)+' + ':'')+nFer+' de feriado × '+brl(vFer)
     : n+' '+(n===1?'diária':'diárias')+' × '+brl(v))+porQtd;
   const abat=calcDesc(r.desconto,bruto), total=Math.max(0,bruto-abat);
   const sinal=Math.round(subtotal*HOTEL.sinal*100)/100;
-  return {h,n,v,tp,subtotal,transp,bruto,abatimento:abat,total,sinal,restante:Math.max(0,total-(r.sinalPago?sinal:0)),dias,nFeriado:nFer,vFeriado:vFer,resumoDiarias,qtd,manual};
+  return {h,n,v,tp,subtotal,transp,bruto,abatimento:abat,total,sinal,restante:Math.max(0,total-(r.sinalPago?sinal:0)),dias,nFeriado:nFer,vFeriado:vFer,resumoDiarias,qtd,manual,misto,porteTxt,porteCurto};
 }
 const fmtData=d=>{const [y,m,dd]=d.split('-');return `${dd}/${m}`};
 function renderHotel(){
@@ -8312,6 +8342,85 @@ function ehVisitante(r){
   const p=pets.find(x=>x.id===r.petId);
   return !!(p&&tiposDe(p).includes('visitante'));
 }
+/* Editor dos dados do pet e do tutor que aparece dentro da reserva e do
+   check-in. Mexe so em nome, raca, porte, peso (de cada irmao), tutor,
+   WhatsApp, CPF e endereco. Raca que nao esta na lista continua a mesma. */
+function dadosPetHtml(pre){
+  return `<details class="dp-cx" id="${pre}-dp" style="margin:4px 0 12px;border:2px solid var(--bege);border-radius:14px;padding:10px 12px;background:var(--branco)">
+    <summary style="cursor:pointer;font-weight:800;color:var(--marrom-escuro)">✏️ Editar dados do pet e do tutor</summary>
+    <div id="${pre}-dp-corpo" style="margin-top:10px"></div></details>`;
+}
+function pintarDadosPet(pre,p){
+  const cx=document.getElementById(pre+'-dp-corpo'), box=document.getElementById(pre+'-dp');
+  if(!cx||!box)return;
+  if(!p){box.classList.add('hidden');cx.innerHTML='';cx.dataset.pet='';return}
+  box.classList.remove('hidden');
+  if(cx.dataset.pet===String(p.id))return;
+  cx.dataset.pet=String(p.id);
+  const esc=t=>String(t==null?'':t).split('"').join('&quot;');
+  const opsR=sel=>(RACAS[sel]||!sel?'':`<option value="${esc(sel)}" selected>${esc(sel)}</option>`)+
+    Object.entries(RACAS).map(([k,v])=>`<option value="${k}" ${k===sel?'selected':''}>${v.nome}</option>`).join('');
+  const caes=[{nome:p.nome,raca:p.raca,porte:p.porte,peso:p.peso}].concat(irmaosDe(p));
+  cx.innerHTML=caes.map((d,i)=>`<div class="irm-cx" style="margin-bottom:8px">
+      ${caes.length>1?`<div class="cfg-h" style="margin-top:0">${i+1}º aumigo</div>`:''}
+      <div class="row2">
+        <div class="campo"><label>Nome</label><input data-dp-nome="${i}" value="${esc(d.nome)}"></div>
+        <div class="campo"><label>Raça</label><select data-dp-raca="${i}">${opsR(d.raca)}</select></div>
+      </div>
+      <div class="row2">
+        <div class="campo"><label>Porte</label><select data-dp-porte="${i}">${['P','M','G'].map(x=>`<option value="${x}" ${x===(d.porte||'M')?'selected':''}>${{P:'Pequeno',M:'Médio',G:'Grande'}[x]}</option>`).join('')}</select></div>
+        <div class="campo"><label>Peso (kg) <small style="font-weight:700;color:var(--texto-2)">· até 10 kg é diária de pequeno</small></label><input data-dp-peso="${i}" type="number" min="0" step="0.5" value="${d.peso||''}"></div>
+      </div></div>`).join('')+`
+    <div class="row2">
+      <div class="campo"><label>Tutor</label><input data-dp-tutor value="${esc(p.tutor)}"></div>
+      <div class="campo"><label>WhatsApp do tutor</label><input data-dp-tel value="${esc(p.telefone)}" inputmode="tel"></div>
+    </div>
+    <div class="row2">
+      <div class="campo"><label>CPF do tutor</label><input data-dp-cpf value="${esc(cpfFmt(p.cpf||''))}" inputmode="numeric"></div>
+      <div class="campo"><label>Endereço</label><input data-dp-end value="${esc(p.endereco)}"></div>
+    </div>`;
+}
+/* le o que esta no editor. null = editor nao esta na tela. */
+function lerDadosPet(pre){
+  const cx=document.getElementById(pre+'-dp-corpo');
+  if(!cx||!cx.dataset.pet||!cx.innerHTML)return null;
+  const v=sel=>{const el=cx.querySelector(sel);return el?el.value:''};
+  const caes=[...cx.querySelectorAll('[data-dp-nome]')].map(inp=>{const i=inp.dataset.dpNome;
+    return {nome:inp.value.trim(),raca:v('[data-dp-raca="'+i+'"]'),porte:v('[data-dp-porte="'+i+'"]')||'M',peso:parseFloat(v('[data-dp-peso="'+i+'"]'))||0}});
+  return {petId:+cx.dataset.pet,caes,tutor:v('[data-dp-tutor]').trim(),telefone:v('[data-dp-tel]').replace(/\D/g,''),
+    cpf:cpfSo(v('[data-dp-cpf]')),endereco:v('[data-dp-end]').trim()};
+}
+/* confere antes de salvar; devolve o campo com problema */
+function validarDadosPet(pre,d){
+  if(!d)return true;
+  const cx=document.getElementById(pre+'-dp-corpo'), box=document.getElementById(pre+'-dp');
+  const marca=sel=>{if(box)box.open=true;const el=cx.querySelector(sel);if(el){el.focus();el.style.borderColor='var(--vermelho)'}return false};
+  for(let i=0;i<d.caes.length;i++)if(!d.caes[i].nome)return marca('[data-dp-nome="'+i+'"]');
+  if(!d.tutor)return marca('[data-dp-tutor]');
+  if(d.telefone.length<10)return marca('[data-dp-tel]');
+  return true;
+}
+/* grava no cadastro. Irmao que mudou de nome: as reservas que guardam
+   quem fica (r.caes) passam a usar o nome novo. */
+function aplicarDadosPet(p,d,semLog){
+  if(!p||!d)return;
+  const antes=[p.nome].concat(irmaosDe(p).map(x=>x.nome));
+  const c0=d.caes[0];
+  p.nome=c0.nome;p.raca=c0.raca||p.raca;p.porte=c0.porte;if(c0.peso>0)p.peso=c0.peso;
+  const irm=irmaosDe(p);
+  if(irm.length){
+    p.irmaos=irm.map((x,i)=>{const n=d.caes[i+1];if(!n)return x;const o=Object.assign({},x,{nome:n.nome,raca:n.raca||x.raca,porte:n.porte});if(n.peso>0)o.peso=n.peso;else delete o.peso;return o});
+    delete p.irmao;
+  }
+  p.tutor=d.tutor;p.telefone=d.telefone;
+  if(d.cpf)p.cpf=d.cpf;else delete p.cpf;
+  p.endereco=d.endereco;
+  const depois=[p.nome].concat(irmaosDe(p).map(x=>x.nome));
+  if(!semLog){
+    reservas.forEach(r=>{if(r.petId===p.id&&Array.isArray(r.caes))r.caes=r.caes.map(n=>{const i=antes.indexOf(n);return i>=0&&depois[i]?depois[i]:n})});
+    p.log=p.log||[];p.log.push({d:HOJE,h:horaAgora(),ico:'✏️',txt:'Dados do pet/tutor atualizados pelo hotel'});
+  }
+}
 function abrirReserva(id,diaSugerido){
   const r=id?reservas.find(x=>x.id===id):{petId:null,checkin:diaSugerido||HOJE,checkout:dAddS(diaSugerido||HOJE,1),transporteCidade:'',transporteVezes:0,sinalPago:false,status:'reservado'};
   const opt=p=>`<option value="${p.id}" ${r.petId===p.id?'selected':''}>${nomeCompleto(p)} · ${racasDoPet(p)} · tutor ${p.tutor}</option>`;
@@ -8330,8 +8439,8 @@ function abrirReserva(id,diaSugerido){
           <input id="r-pet-busca" placeholder="🔎 Digite o nome ou o tutor pra achar" autocomplete="off" style="margin-bottom:8px">
           <select id="r-pet" size="1">${alunos||'<option value="">Nenhum aluno ativo</option>'}</select>
           <small id="r-pet-n" style="display:block;margin-top:4px;font-weight:700;color:var(--texto-2)"></small>
-          ${id&&r.petId&&pets.some(x=>x.id===r.petId)?`<button type="button" class="btn-mini" id="r-editpet" style="margin-top:8px">👤 Editar dados do pet e do tutor</button>`:''}
         </div>
+        ${dadosPetHtml('r')}
         <div class="campo hidden" id="r-caes-box"><label>Quais aumigos vão ficar?</label>
           <div class="tipos-sel" id="r-caes"></div>
           <small style="display:block;margin-top:6px;font-weight:700;color:var(--texto-2)">A diária é multiplicada por quantos ficarem.</small>
@@ -8385,7 +8494,6 @@ function abrirReserva(id,diaSugerido){
     </div>
   </div>`;
   lock();
-  {const bep=$('#r-editpet');if(bep)bep.onclick=()=>{const sel=$('#r-pet');const pid=+(sel&&sel.value)||r.petId;fecharModal();abrirEditar(pid)}}
   // pertences
   /* aceita item torto sem derrubar a tela: backup antigo e importacao as
      vezes trazem so o nome em texto, e ai o modal da reserva nao abria mais */
@@ -8412,8 +8520,14 @@ function abrirReserva(id,diaSugerido){
   });
   const prev=()=>{
     const tmp=ler(false);if(!tmp)return;
-    const c=contaHotel(tmp);
-    $('#r-prev').innerHTML=`<div class="l"><span>${c.resumoDiarias} ${c.manual?'':(c.h.aluno?'(aluno)':(c.h.peso<=10?'(até 10 kg)':'(acima de 10 kg)'))}</span><b>${brl(c.subtotal)}</b></div><div class="l"><span>Sinal 30% na reserva</span><b>${brl(c.sinal)}</b></div>`;
+    const dp=tmp.petId?lerDadosPet('r'):null;
+    const pp=dp&&dp.petId===tmp.petId?pets.find(x=>x.id===tmp.petId):null;
+    let guarda=null;
+    if(pp){guarda=JSON.stringify(pp);aplicarDadosPet(pp,dp,true);
+      if(Array.isArray(tmp.caes)){const ant=JSON.parse(guarda);const a=[ant.nome].concat(irmaosDe(ant).map(x=>x.nome)),b=[pp.nome].concat(irmaosDe(pp).map(x=>x.nome));tmp.caes=tmp.caes.map(n=>{const i=a.indexOf(n);return i>=0&&b[i]?b[i]:n})}}
+    let c;
+    try{c=contaHotel(tmp)}finally{if(pp){const ant=JSON.parse(guarda);Object.keys(pp).forEach(k=>delete pp[k]);Object.assign(pp,ant)}}
+    $('#r-prev').innerHTML=`<div class="l"><span>${c.resumoDiarias} ${c.manual||c.misto?'':'('+c.porteCurto+')'}</span><b>${brl(c.subtotal)}</b></div><div class="l"><span>Sinal 30% na reserva</span><b>${brl(c.sinal)}</b></div>`;
   };
   const docsVis={};
   /* mostra uma caixinha por cachorro do cadastro; some quando so tem um */
@@ -8422,6 +8536,7 @@ function abrirReserva(id,diaSugerido){
     if(!cx||!lst)return;
     const sel=$('#r-pet');
     const p=sel&&sel.value?pets.find(x=>x.id===+sel.value):null;
+    pintarDadosPet('r',p);
     const todos=caesDoCadastro(p);
     if(todos.length<2){cx.classList.add('hidden');lst.innerHTML='';return}
     const jaEscolhidos=Array.isArray(r.caes)&&r.caes.length?r.caes:todos;
@@ -8548,6 +8663,8 @@ function abrirReserva(id,diaSugerido){
   ['r-pet','r-peso','r-in','r-out','r-transp'].forEach(x=>$('#'+x).addEventListener('input',prev));
   const selPet=$('#r-pet');
   if(selPet)selPet.addEventListener('change',()=>{pintarCaes();prev()});
+  const dpR=$('#r-dp');
+  if(dpR){dpR.addEventListener('input',prev);dpR.addEventListener('change',prev)}
   const lstCaes=$('#r-caes');
   if(lstCaes)lstCaes.addEventListener('change',e=>{
     const c=e.target.closest('[data-cao]');
@@ -8560,6 +8677,16 @@ function abrirReserva(id,diaSugerido){
   prev();
   $('#r-ok').onclick=()=>{
     const o=ler(true);if(!o)return;
+    const dp=o.petId?lerDadosPet('r'):null;
+    if(dp&&dp.petId===o.petId){
+      if(!validarDadosPet('r',dp))return;
+      const pp=pets.find(x=>x.id===o.petId);
+      const a=[pp.nome].concat(irmaosDe(pp).map(x=>x.nome));
+      aplicarDadosPet(pp,dp);
+      const b=[pp.nome].concat(irmaosDe(pp).map(x=>x.nome));
+      if(Array.isArray(o.caes))o.caes=o.caes.map(n=>{const i=a.indexOf(n);return i>=0&&b[i]?b[i]:n});
+      salvar();
+    }
     // visitante: entra na lista de Pets e a reserva passa a apontar pra ele
     let novoCad=null;
     if(!o.petId&&o.nome){novoCad=virarCadastro(o);if(novoCad)o.petId=novoCad.id}
@@ -8649,6 +8776,7 @@ function abrirCheckin(id){
       <div class="campo" style="margin-top:14px"><label>🎒 Pertences conferidos na entrada (${it.length})</label>
         ${it.length?`<div class="pert-card" style="margin:0">${it.map(i=>`<span class="th">${i.foto?`<img src="${i.foto}" alt="">`:'🎒'}</span>`).join('')}<small>${it.map(i=>i.nome).join(', ')}</small></div>`:`<small style="font-weight:700;color:var(--texto-2)">Nenhum item cadastrado — <button class="alterar" style="margin:0" data-hedit="${r.id}">adicionar agora</button></small>`}
       </div>
+      ${h.p?dadosPetHtml('ci'):''}
       <div class="campo"><label>✅ Checklist de entrada</label>${checklistHtml(CHECK_IN,Object.assign({pertences:it.length>0,sinal:!!r.sinalPago},(r.checklist||{}).checkin||{}),'ci')}</div>
       <div class="campo"><label for="ci-zap">Enviar pelo</label><select id="ci-zap">${opsZ}</select></div>
       <div class="campo"><label for="ci-msg">Mensagem automática de check-in</label><textarea id="ci-msg">${MSG_CHECKIN()}</textarea></div>
@@ -8658,7 +8786,10 @@ function abrirCheckin(id){
   </div>`;
   lock();
   $('#ov').addEventListener('change',e=>{const c=e.target.closest('[data-ck]');if(c)c.closest('label').classList.toggle('on',c.checked)});
+  if(h.p)pintarDadosPet('ci',h.p);
   $('#ci-ok').onclick=()=>{
+    const dp=h.p?lerDadosPet('ci'):null;
+    if(dp){if(!validarDadosPet('ci',dp))return;aplicarDadosPet(h.p,dp);salvar()}
     r.checklist=r.checklist||{};r.checklist.checkin=lerChecklist('ci');const falt=CHECK_IN.filter(([k])=>!r.checklist.checkin[k]).length;
     if(falt)setTimeout(()=>toast(h.p||{raca:h.raca},`Checklist: ${falt} ${falt===1?'item pendente':'itens pendentes'}`,'Dá pra completar depois no diário.'),600);
     r.status='hospedado';if(r.checkin>HOJE)r.checkin=HOJE;r.checkinFeito=`${HOJE} ${horaAgora()}`;
@@ -8705,7 +8836,7 @@ function abrirFatura(id,checkoutAgora,etapa){
   const podeJogarNaFatura=!!h.p;
   const tabela=`<table class="fat">
         <tr><th>Item</th><th class="r">Qtd</th><th class="r">Valor</th><th class="r">Total</th></tr>
-        <tr><td>Diária ${h.aluno?'aluno da creche':(h.peso<=10?'porte pequeno (até 10 kg)':'porte grande (acima de 10 kg)')}</td><td class="r">${c.n}</td><td class="r">${brl(c.v)}</td><td class="r">${brl(c.subtotal)}</td></tr>
+        <tr><td>Diária ${c.porteTxt}</td><td class="r">${c.n}</td><td class="r">${brl(c.v)}</td><td class="r">${brl(c.subtotal)}</td></tr>
         ${c.abatimento?`<tr class="descto"><td>🏷 Desconto${r.desconto.motivo?' · '+r.desconto.motivo:''}${r.desconto.tipo==='%'?` (${r.desconto.valor}%)`:''}</td><td class="r"></td><td class="r"></td><td class="r">− ${brl(c.abatimento)}</td></tr>`:''}
         <tr class="desc"><td>Sinal 30% ${r.sinalPago?'(pago na reserva)':'(não pago)'}</td><td class="r"></td><td class="r"></td><td class="r">${r.sinalPago?'− '+brl(c.sinal):'—'}</td></tr>
         <tr class="tot"><td>${r.sinalPago?'Restante a pagar':'Total a pagar'}</td><td></td><td></td><td class="r">${brl(c.restante)}</td></tr>
@@ -11050,9 +11181,9 @@ async function pdfCobranca(r,pixId){
   const doc=await novoDoc('Cobranca de hospedagem',`${h.nome} · ${dataBR(r.checkin)} a ${dataBR(r.checkout)} · emitido em ${dataBR(HOJE)}`);
   pfTitulo(doc,'Hospede');
   pfLinhaInfo(doc,[['Pet',`${h.nome} (${racaDe(h.raca).nome}, ${h.peso} kg)`],['Tutor',h.tutor+(h.telefone?' · '+telFmt(h.telefone):'')],['Tipo',h.aluno?'Aluno da creche':'Visitante'],['Periodo',`${dataBR(r.checkin)} ${r.checkinFeito?r.checkinFeito.slice(11):(r.horaIn||'09:00')} → ${dataBR(r.checkout)} ${r.checkoutFeito?r.checkoutFeito.slice(11):(r.horaOut||'17:00')}`]]);
-  pfKpis(doc,[{valor:String(c.n),rotulo:c.n===1?'diaria':'diarias'},{valor:brl(c.v),rotulo:'valor da diaria',sub:h.aluno?'aluno da creche':(h.peso<=10?'ate 10 kg':'acima de 10 kg')},{valor:String(r.transporteVezes||0),rotulo:'transporte',sub:r.transporteCidade?TRANSPORTE[r.transporteCidade].nome+' (a parte)':'nao usou'}]);
+  pfKpis(doc,[{valor:String(c.n),rotulo:c.n===1?'diaria':'diarias'},{valor:brl(c.v),rotulo:'valor da diaria',sub:semAcento(h.aluno?'aluno da creche':c.porteCurto)},{valor:String(r.transporteVezes||0),rotulo:'transporte',sub:r.transporteCidade?TRANSPORTE[r.transporteCidade].nome+' (a parte)':'nao usou'}]);
   pfTitulo(doc,'Resumo da conta');
-  const linhas=[{c:[`Diaria ${h.aluno?'aluno da creche':(h.peso<=10?'porte pequeno':'porte grande')}`,c.n,brl(c.v),brl(c.subtotal)]}];
+  const linhas=[{c:[semAcento(`Diaria ${c.porteTxt}`),c.n,brl(c.v),brl(c.subtotal)]}];
   /* transporte nao entra na conta: a van e cobrada a parte */
   if(c.abatimento)linhas.push({tipo:'desc',c:[`Desconto${r.desconto.motivo?' · '+r.desconto.motivo:''}`,'','','- '+brl(c.abatimento)]});
   if(r.sinalPago)linhas.push({tipo:'desc',c:['Sinal 30% pago na reserva','','','- '+brl(c.sinal)]});
