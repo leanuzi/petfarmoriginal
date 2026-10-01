@@ -7855,7 +7855,7 @@ function abrirEditar(id){
     if(JSON.stringify(p.descontoFixo||null)!==dAntes){p.log=p.log||[];p.log.push({d:HOJE,h:horaAgora(),ico:'🏷',txt:p.descontoFixo?`Desconto fixo: ${descTxt(p.descontoFixo)}`:'Desconto fixo removido'})}
     if(novaFoto)p.foto=novaFoto;else if(removeu)delete p.foto;
     p.log=p.log||[];if(planoAntes!==p.plano)p.log.push({d:HOJE,h:horaAgora(),ico:'🗓',txt:`Plano alterado: ${PLANOS[planoAntes].nome} → ${PLANOS[p.plano].nome}`});if(transpAntes!==p.transporte)p.log.push({d:HOJE,h:horaAgora(),ico:'🚐',txt:`Transporte: ${TRANSPORTE[transpAntes||''].nome} → ${TRANSPORTE[p.transporte||''].nome}`});
-    fecharModal();render();toast(p,`Perfil de ${p.nome} atualizado ✏️`,novaFoto?'Foto salva no perfil.':'Dados salvos.',true);
+    fecharModal();render();try{renderHotel()}catch(e){}toast(p,`Perfil de ${p.nome} atualizado ✏️`,novaFoto?'Foto salva no perfil.':'Dados salvos.',true);
   };
   $('#ov').onclick=e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()};
   document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
@@ -8247,6 +8247,7 @@ function abrirHMenu(id,btn){
   m.innerHTML=`<button data-hperfil="${id}"><span class="ic">📅</span> Perfil e calendário</button>
     ${r.status==='hospedado'||r.status==='reservado'?`<button data-hdatas="${id}"><span class="ic">🗓</span> ${r.status==='hospedado'?'Estender ou encurtar a estadia':'Alterar as datas'}</button>`:''}
     <button data-hedit="${id}"><span class="ic">✏️</span> Editar reserva e pertences</button>
+    ${r.petId&&pets.some(x=>x.id===r.petId)?`<button data-editar="${r.petId}"><span class="ic">👤</span> Editar dados do pet e do tutor</button>`:''}
     <button data-pdfpert="${id}"><span class="ic">🎒</span> Relatório de pertences (PDF)</button>
     ${r.status==='hospedado'?`<button data-remsg="${id}" data-tipo="checkin"><span class="ic">💬</span> Reenviar mensagem de check-in</button>`:''}
     <button data-fatura="${id}"><span class="ic">📄</span> Ver conta / fatura</button>
@@ -8329,6 +8330,7 @@ function abrirReserva(id,diaSugerido){
           <input id="r-pet-busca" placeholder="🔎 Digite o nome ou o tutor pra achar" autocomplete="off" style="margin-bottom:8px">
           <select id="r-pet" size="1">${alunos||'<option value="">Nenhum aluno ativo</option>'}</select>
           <small id="r-pet-n" style="display:block;margin-top:4px;font-weight:700;color:var(--texto-2)"></small>
+          ${id&&r.petId&&pets.some(x=>x.id===r.petId)?`<button type="button" class="btn-mini" id="r-editpet" style="margin-top:8px">👤 Editar dados do pet e do tutor</button>`:''}
         </div>
         <div class="campo hidden" id="r-caes-box"><label>Quais aumigos vão ficar?</label>
           <div class="tipos-sel" id="r-caes"></div>
@@ -8383,6 +8385,7 @@ function abrirReserva(id,diaSugerido){
     </div>
   </div>`;
   lock();
+  {const bep=$('#r-editpet');if(bep)bep.onclick=()=>{const sel=$('#r-pet');const pid=+(sel&&sel.value)||r.petId;fecharModal();abrirEditar(pid)}}
   // pertences
   /* aceita item torto sem derrubar a tela: backup antigo e importacao as
      vezes trazem so o nome em texto, e ai o modal da reserva nao abria mais */
@@ -11932,8 +11935,26 @@ function telaNuvem(erro){
     el.remove();document.body.classList.remove('travado');bootLocal();
   };
 }
+/* ---------- virada do dia ----------
+   Quando a data do aparelho passa de HOJE, recarrega o app pra tudo
+   (data do topo, mes atual, listas de meses, cobrancas) andar junto.
+   Espera nao ter janela aberta nem campo sendo digitado, pra nao perder nada. */
+function vigiarViradaDoDia(){
+  const checa=()=>{
+    if(isoLocal(new Date())===HOJE)return;
+    const m=document.getElementById('modais');
+    if(m&&m.innerHTML.trim())return;
+    const a=document.activeElement;
+    if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;
+    try{if(typeof nuvemOk!=='undefined'&&nuvemOk)nuvemFlushTudo()}catch(e){}
+    setTimeout(()=>location.reload(),1500);
+  };
+  setInterval(checa,30000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)checa()});
+  window.addEventListener('focus',checa);
+}
 /* ---------- inicialização ---------- */
-function bootLocal(){migrarParaUnidades();iniciar();iniciarPwa();iniciarAuth();try{vigiarTeclado()}catch(e){}}
+function bootLocal(){try{vigiarViradaDoDia()}catch(e){}migrarParaUnidades();iniciar();iniciarPwa();iniciarAuth();try{vigiarTeclado()}catch(e){}}
 async function bootNuvemOk(){
   nuvemOk=true;nuvemFilaCarregar();
   await nuvemCarregar();
