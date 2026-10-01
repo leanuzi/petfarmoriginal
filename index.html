@@ -6742,6 +6742,7 @@ document.addEventListener('click',e=>{
   // hotel
   if(b=g('hmenu')){e.stopPropagation();abrirHMenu(+b.dataset.hmenu,b);return}
   if(b=g('hedit')){fecharMenu();abrirReserva(+b.dataset.hedit);return}
+  if(b=g('hdados')){fecharMenu();abrirDadosHospede(+b.dataset.hdados);return}
   if(b=g('hdatas')){fecharMenu();abrirDatasHotel(+b.dataset.hdatas);return}
   if(b=g('checkout')){abrirFatura(+b.dataset.checkout,true);return}
   if(b=g('fatura')){fecharMenu();abrirFatura(+b.dataset.fatura,false,'cobranca');return}
@@ -8258,7 +8259,7 @@ function renderHotel(){
       ${r.status==='hospedado'?diarioChips(r):''}
       ${pode('financeiro')?`<div class="h-total"><span>${c.resumoDiarias}${c.transp?` · transporte ${r.transporteVezes}x à parte`:''}${r.sinalPago?' · sinal pago':''}${r.naFatura?' · 🧾 na fatura':''}</span><b>${brl(c.restante)}</b></div>`:''}
       ${r.aguardandoPgto&&r.status==='hospedado'?`<div class="msg-ok" style="background:var(--vermelho-bg);color:var(--vermelho-txt);margin:8px 0 0">💳 Aguardando pagamento</div>`:''}
-      <div class="h-acoes">${acao}${r.status==='hospedado'?`<button class="ico-btn" data-diario="${r.id}" title="Diário do dia">📋</button>`:''}<button class="ico-btn" data-pdfpert="${r.id}" title="Relatório de pertences (PDF)" style="background:var(--branco);color:var(--marrom-escuro);border:2px solid var(--marrom-escuro);box-shadow:0 3px 0 var(--marrom-escuro)">📄</button></div>
+      <div class="h-acoes">${acao}${r.status==='hospedado'?`<button class="ico-btn" data-diario="${r.id}" title="Diário do dia">📋</button>`:''}${r.status==='hospedado'&&h.p?`<button class="ico-btn" data-hdados="${r.id}" title="Editar dados do pet e do tutor" style="background:var(--branco);color:var(--marrom-escuro);border:2px solid var(--marrom-escuro);box-shadow:0 3px 0 var(--marrom-escuro)">✏️</button>`:''}<button class="ico-btn" data-pdfpert="${r.id}" title="Relatório de pertences (PDF)" style="background:var(--branco);color:var(--marrom-escuro);border:2px solid var(--marrom-escuro);box-shadow:0 3px 0 var(--marrom-escuro)">📄</button></div>
     </article>`;
   };
   $('#h-hospedados').innerHTML=hosp.length?hosp.map(card).join(''):'<div class="nada" style="grid-column:1/-1">Nenhum aumigo hospedado agora. 💤</div>';
@@ -8420,6 +8421,44 @@ function aplicarDadosPet(p,d,semLog){
     reservas.forEach(r=>{if(r.petId===p.id&&Array.isArray(r.caes))r.caes=r.caes.map(n=>{const i=antes.indexOf(n);return i>=0&&depois[i]?depois[i]:n})});
     p.log=p.log||[];p.log.push({d:HOJE,h:horaAgora(),ico:'✏️',txt:'Dados do pet/tutor atualizados pelo hotel'});
   }
+}
+/* hospedado: so os dados do pet e do tutor, sem passar pelo formulario da
+   reserva. A previa mostra a diaria nova se o peso mudar. */
+function abrirDadosHospede(id){
+  const r=reservas.find(x=>x.id===id);if(!r)return;
+  const h=hospede(r);if(!h.p)return;
+  $('#modais').innerHTML=`<div class="overlay" id="ov"><div class="modal form" role="dialog">
+    <button class="fechar" data-fechar aria-label="Fechar">✕</button>
+    <h2>✏️ Dados de ${h.nome}</h2>
+    <div class="nota" style="font-size:12px;font-weight:700;color:var(--texto-2);margin:4px 0 12px">Hospedado desde ${fmtData(r.checkin)} · saída ${fmtData(r.checkout)}. Datas e pertences ficam como estão.</div>
+    ${dadosPetHtml('dh')}
+    <div class="conta" id="dh-prev" style="margin-top:6px"></div>
+    <button class="btn primario" id="dh-ok" style="margin-top:6px">${st('check')} Salvar dados</button>
+  </div></div>`;
+  lock();
+  pintarDadosPet('dh',h.p);
+  $('#dh-dp').open=true;
+  const prev=()=>{
+    const d=lerDadosPet('dh');if(!d)return;
+    const guarda=JSON.stringify(h.p);let c;
+    const tmp=Object.assign({},r);
+    try{aplicarDadosPet(h.p,d,true);
+      if(Array.isArray(tmp.caes)){const ant=JSON.parse(guarda);const a=[ant.nome].concat(irmaosDe(ant).map(x=>x.nome)),b=[h.p.nome].concat(irmaosDe(h.p).map(x=>x.nome));tmp.caes=tmp.caes.map(n=>{const i=a.indexOf(n);return i>=0&&b[i]?b[i]:n})}
+      c=contaHotel(tmp)}
+    finally{const ant=JSON.parse(guarda);Object.keys(h.p).forEach(k=>delete h.p[k]);Object.assign(h.p,ant)}
+    $('#dh-prev').innerHTML=`<div class="l"><span>${c.resumoDiarias} ${c.manual||c.misto?'':'('+c.porteCurto+')'}</span><b>${brl(c.subtotal)}</b></div>`;
+  };
+  prev();
+  $('#dh-dp').addEventListener('input',prev);$('#dh-dp').addEventListener('change',prev);
+  $('#dh-ok').onclick=()=>{
+    const d=lerDadosPet('dh');
+    if(!validarDadosPet('dh',d))return;
+    aplicarDadosPet(h.p,d);
+    salvar();fecharModal();renderHotel();
+    toast(h.p,`Dados de ${nomeCompleto(h.p)} atualizados ✏️`,'Tutor, contato e porte salvos no cadastro.',true);
+  };
+  $('#ov').onclick=e=>{if(e.target.id==='ov'||e.target.closest('[data-fechar]'))fecharModal()};
+  document.onkeydown=e=>{if(e.key==='Escape')fecharModal()};
 }
 function abrirReserva(id,diaSugerido){
   const r=id?reservas.find(x=>x.id===id):{petId:null,checkin:diaSugerido||HOJE,checkout:dAddS(diaSugerido||HOJE,1),transporteCidade:'',transporteVezes:0,sinalPago:false,status:'reservado'};
