@@ -1172,6 +1172,18 @@ table.fat tr.descto td{color:var(--verde-txt)}
 .junta-tag{margin:-4px 0 10px;background:var(--verde-bg);border:1px solid var(--verde-borda);border-radius:999px;padding:5px 12px;font-size:11px;font-weight:800;color:var(--verde-txt);align-self:center}
 .lista-fin .st-pag.junto,.tabela-simples .st-pag.junto{background:var(--verde-bg);color:var(--verde-txt)}
 table.fat tr.hotel td{background:#FFFCF3}
+table.fat tr.grp td{background:var(--bege-claro);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--marrom-escuro);padding-top:8px;padding-bottom:8px}
+table.fat tr.sub td{font-weight:800;color:var(--marrom-escuro);border-top:2px solid var(--bege)}
+table.fat .qv{display:none}
+@media (max-width:760px){
+  table.fat.fat-cc{display:table;overflow:visible}
+  table.fat.fat-cc>tbody{min-width:0}
+  table.fat.fat-cc th:nth-child(2),table.fat.fat-cc th:nth-child(3),
+  table.fat.fat-cc td:nth-child(2),table.fat.fat-cc td:nth-child(3){display:none}
+  table.fat.fat-cc tr.grp td{display:table-cell}
+  table.fat.fat-cc td.r{white-space:nowrap;vertical-align:top}
+  table.fat.fat-cc .qv{display:block;font-size:11px;color:var(--texto-2);margin-top:2px}
+}
 .mes .rod .hotelx{color:#8C6BA8;font-weight:800}
 
 /* ===== card compacto (chamada) ===== */
@@ -9902,9 +9914,17 @@ function itensCreche(p,ym){
   else if(p.plano==='avulso'){if(m.vindas||!m.hosp.length)it.push({d:`Diária avulsa (${p.peso<=10?'até 10 kg':'acima de 10 kg'})${m.vindas?' · dias '+fmtDias(doMes(p.presencas,ym)):''}`,q:m.vindas,v:diaria,t:m.vindas*diaria})}
   else{it.push({d:`Plano ${pl.nome} (${m.vindas} de ${m.meta} dias)`,q:1,v:pl.preco,t:pl.preco});if(m.extras)it.push({d:'Dias extras além do plano',q:m.extras,v:diaria,t:m.extras*diaria})}
   /* transporte nao entra na fatura — fica em Financeiro do Transporte */
-  m.hosp.forEach(r=>{const c=contaHotel(r);it.push({hotel:true,d:`Hotel · dormiu ${c.n===1?'a noite':'as noites'} de ${fmtDias(c.dias.map(x=>x.iso))} (${c.n} ${c.n===1?'diária':'diárias'}${r.sinalPago?', sinal já pago':''})`,q:c.n,v:c.v,t:c.restante})});
+  m.hosp.forEach(r=>{const c=contaHotel(r);it.push({hotel:true,d:`Hotel · dormiu ${c.n===1?'a noite':'as noites'} de ${fmtDias(c.dias.map(x=>x.iso))} (${c.n} ${c.n===1?'diária':'diárias'}${r.sinalPago?` = ${brl(c.total)}, menos o sinal de ${brl(c.sinal)} já pago`:''})`,q:c.n,v:c.v,t:c.restante})});
   if(m.abatimento)it.push({desc:true,d:`Desconto${m.desconto.motivo?' · '+m.desconto.motivo:''}${m.desconto.tipo==='%'?` (${m.desconto.valor}%)`:''}`,q:1,v:-m.abatimento,t:-m.abatimento});
   return {it,total:m.total,m};
+}
+/* separa os itens da fatura em creche, hospedagem e desconto, com o
+   subtotal de cada um. So agrupa quando tem hospedagem na fatura. */
+function blocosFatura(it){
+  const r2=v=>Math.round(v*100)/100;
+  const hot=it.filter(x=>x.hotel), des=it.filter(x=>x.desc), cre=it.filter(x=>!x.hotel&&!x.desc);
+  return {cre,hot,des,junta:hot.length>0,
+    subC:r2(cre.reduce((a,x)=>a+x.t,0)),subH:r2(hot.reduce((a,x)=>a+x.t,0))};
 }
 /* nome da chave PIX do jeito que o tutor entende */
 const pixTipoTxt=px=>({email:'e-mail',cpf:'CPF',cnpj:'CNPJ',celular:'celular',aleatoria:'aleatória'})[px.tipo]||px.tipo;
@@ -9917,7 +9937,14 @@ function msgCobrancaCreche(p,ym){
     mes:NOMES_MES[+ym.split('-')[1]-1],
     dias:m.vindas,
     hotel:_h?` e ${_h} ${_h===1?'hospedagem no hotel':'hospedagens no hotel'}`:'',
-    itens:it.map(x=>x.hotel?`• ${x.d}: ${brl(x.t)}`:x.desc?`• ${x.d}: − ${brl(-x.t)}`:`• ${x.d}: ${x.q>1||p.plano==='avulso'?`${x.q} × ${brl(x.v)} = `:''}${brl(x.t)}`).join('\n'),
+    itens:(()=>{
+      const ln=x=>x.hotel?`• ${x.d}: ${brl(x.t)}`:x.desc?`• ${x.d}: − ${brl(-x.t)}`:`• ${x.d}: ${x.q>1||p.plano==='avulso'?`${x.q} × ${brl(x.v)} = `:''}${brl(x.t)}`;
+      const b=blocosFatura(it);
+      if(!b.junta)return it.map(ln).join('\n');
+      return ['🐶 *Creche*',...b.cre.map(ln),`Valor da creche: *${brl(b.subC)}*`,'',
+        '🏡 *Hospedagem*',...b.hot.map(ln),`Valor da hospedagem: *${brl(b.subH)}*`]
+        .concat(b.des.length?['',...b.des.map(ln)]:[]).concat(['']).join('\n');
+    })(),
     total:brl(total), vencimento:p.pagamentoDia
   },varsPix(px)));
 }
@@ -9988,9 +10015,19 @@ function abrirCobrancaCreche(id,ym){
         <div class="ciclo-h"><b>🔄 Pacote de ${fmtCurto(rc.inicio)} a ${fmtCurto(rc.fim)}</b><span>renova quando pagar</span></div>
         <div class="ciclo-n"><span><b>${rc.vindas}</b>de ${rc.esperadas} vindas</span>${rc.faltamNoPacote?`<span class="r"><b>${rc.faltamNoPacote}</b>${rc.faltamNoPacote===1?'dia pra fechar o pacote':'dias pra fechar o pacote'}</span>`:''}${rc.aMais?`<span class="m"><b>${rc.aMais}</b>${rc.aMais===1?'dia a mais':'dias a mais'} · ${brl(rc.valorAMais)}</span>`:''}${!rc.faltamNoPacote&&!rc.aMais?`<span class="v"><b>✓</b>pacote fechadinho</span>`:''}</div>
       </div>`:''})()}
-      <table class="fat">
+      <table class="fat fat-cc">
         <tr><th>Item</th><th class="r">Qtd</th><th class="r">Valor</th><th class="r">Total</th></tr>
-        ${it.map(x=>x.hotel?`<tr class="hotel"><td>🏡 ${x.d}</td><td class="r">${x.q}</td><td class="r">${brl(x.v)}</td><td class="r">${brl(x.t)}</td></tr>`:x.desc?`<tr class="descto"><td>🏷 ${x.d}</td><td class="r"></td><td class="r"></td><td class="r">− ${brl(-x.t)}</td></tr>`:`<tr><td>${x.d}</td><td class="r">${x.q}</td><td class="r">${brl(x.v)}</td><td class="r">${brl(x.t)}</td></tr>`).join('')}
+        ${(()=>{
+          const qv=x=>`<small class="qv">${x.q} × ${brl(x.v)}</small>`;
+          const ln=x=>x.hotel?`<tr class="hotel"><td>🏡 ${x.d}${qv(x)}</td><td class="r">${x.q}</td><td class="r">${brl(x.v)}</td><td class="r">${brl(x.t)}</td></tr>`:x.desc?`<tr class="descto"><td>🏷 ${x.d}</td><td class="r"></td><td class="r"></td><td class="r">− ${brl(-x.t)}</td></tr>`:`<tr><td>${x.d}${qv(x)}</td><td class="r">${x.q}</td><td class="r">${brl(x.v)}</td><td class="r">${brl(x.t)}</td></tr>`;
+          const b=blocosFatura(it);
+          if(!b.junta)return it.map(ln).join('');
+          const cab=t=>`<tr class="grp"><td colspan="4">${t}</td></tr>`;
+          const sub=(t,v)=>`<tr class="sub"><td>${t}</td><td></td><td></td><td class="r">${brl(v)}</td></tr>`;
+          return cab('🐶 Creche')+b.cre.map(ln).join('')+sub('Valor da creche',b.subC)
+            +cab('🏡 Hospedagem')+b.hot.map(ln).join('')+sub('Valor da hospedagem',b.subH)
+            +b.des.map(ln).join('');
+        })()}
         <tr class="tot"><td>Total a pagar</td><td></td><td></td><td class="r">${brl(total)}</td></tr>
       </table>
       <div class="sel-linha">
@@ -11240,7 +11277,12 @@ async function pdfCobrancaCreche(p,ym,pixId){
   pfLinhaInfo(doc,[['Pet',`${p.nome} (${racaDe(p.raca).nome}, ${p.peso} kg)`],['Tutor',p.tutor+(p.telefone?' · '+telFmt(p.telefone):'')],['Plano',nomePlano(p)],['Vencimento',`dia ${p.pagamentoDia}`]]);
   pfKpis(doc,[{valor:String(m.vindas),rotulo:'presencas',cor:PDF_COR.verdeTxt},{valor:String(m.faltas),rotulo:'faltas',cor:m.faltas?PDF_COR.vermelhoTxt:PDF_COR.escuro},{valor:String(m.transpVezes),rotulo:'van',sub:m.transpVezes?'cobrado a parte':''},{valor:String(m.hosp.length),rotulo:'hospedagens',sub:m.hosp.length?brl(m.valorHotel):''}]);
   pfTitulo(doc,'Resumo da fatura');
-  const linhas=it.map(x=>({tipo:x.hotel?'hotel':x.desc?'desc':'normal',c:[x.d,x.desc?'':x.q,x.desc?'':brl(x.v),x.desc?'- '+brl(-x.t):brl(x.t)]}));
+  const lp=x=>({tipo:x.hotel?'hotel':x.desc?'desc':'normal',c:[x.d,x.desc?'':x.q,x.desc?'':brl(x.v),x.desc?'- '+brl(-x.t):brl(x.t)]});
+  const bf=blocosFatura(it);
+  const linhas=!bf.junta?it.map(lp):[].concat(
+    [{tipo:'tot',alt:7,c:['CRECHE','','','']}],bf.cre.map(lp),[{tipo:'tot',alt:7,c:['Valor da creche','','',brl(bf.subC)]}],
+    [{tipo:'tot',alt:7,c:['HOSPEDAGEM','','','']}],bf.hot.map(lp),[{tipo:'tot',alt:7,c:['Valor da hospedagem','','',brl(bf.subH)]}],
+    bf.des.map(lp));
   pfTabela(doc,[{t:'Item',w:104},{t:'Qtd',w:20,al:'right'},{t:'Valor',w:28,al:'right'},{t:'Total',w:30,al:'right'}],linhas);
   pfTotal(doc,'Total a pagar',brl(total));
   pfPix(doc,px,total,'CRECHE'+p.id+ym.replace('-',''));
