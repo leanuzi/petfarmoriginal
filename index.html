@@ -8379,12 +8379,13 @@ function dadosPetHtml(pre){
     <div id="${pre}-dp-corpo" style="margin-top:10px"></div></details>`;
 }
 function pintarDadosPet(pre,p){
+  setTimeout(()=>{const cx=document.getElementById(pre+'-dp-corpo');if(cx&&cx.dataset.pet===String(p&&p.id)&&cx.dataset.orig==null){const d=lerDadosPet(pre);if(d)cx.dataset.orig=JSON.stringify(d)}},0);
   const cx=document.getElementById(pre+'-dp-corpo'), box=document.getElementById(pre+'-dp');
   if(!cx||!box)return;
   if(!p){box.classList.add('hidden');cx.innerHTML='';cx.dataset.pet='';return}
   box.classList.remove('hidden');
   if(cx.dataset.pet===String(p.id))return;
-  cx.dataset.pet=String(p.id);
+  cx.dataset.pet=String(p.id);delete cx.dataset.orig;
   const esc=t=>String(t==null?'':t).split('"').join('&quot;');
   const opsR=sel=>(RACAS[sel]||!sel?'':`<option value="${esc(sel)}" selected>${esc(sel)}</option>`)+
     Object.entries(RACAS).map(([k,v])=>`<option value="${k}" ${k===sel?'selected':''}>${v.nome}</option>`).join('');
@@ -8408,6 +8409,12 @@ function pintarDadosPet(pre,p){
       <div class="campo"><label>Endereço</label><input data-dp-end value="${esc(p.endereco)}"></div>
     </div>`;
 }
+/* a pessoa mexeu em alguma coisa do editor? */
+function dadosPetMudou(pre,d){
+  const cx=document.getElementById(pre+'-dp-corpo');
+  if(!cx||!d)return false;
+  return cx.dataset.orig!==JSON.stringify(d);
+}
 /* le o que esta no editor. null = editor nao esta na tela. */
 function lerDadosPet(pre){
   const cx=document.getElementById(pre+'-dp-corpo');
@@ -8423,9 +8430,11 @@ function validarDadosPet(pre,d){
   if(!d)return true;
   const cx=document.getElementById(pre+'-dp-corpo'), box=document.getElementById(pre+'-dp');
   const marca=sel=>{if(box)box.open=true;const el=cx.querySelector(sel);if(el){el.focus();el.style.borderColor='var(--vermelho)'}return false};
-  for(let i=0;i<d.caes.length;i++)if(!d.caes[i].nome)return marca('[data-dp-nome="'+i+'"]');
-  if(!d.tutor)return marca('[data-dp-tutor]');
-  if(d.telefone.length<10)return marca('[data-dp-tel]');
+  let orig=null;try{orig=JSON.parse(cx.dataset.orig||'null')}catch(e){}
+  const avisa=(sel,t)=>{try{toast(pets[0]||{raca:'golden'},'Confira os dados do pet',t)}catch(e){}return marca(sel)};
+  for(let i=0;i<d.caes.length;i++)if(!d.caes[i].nome)return avisa('[data-dp-nome="'+i+'"]','O nome do aumigo ficou vazio.');
+  if(!d.tutor&&(!orig||orig.tutor))return avisa('[data-dp-tutor]','O nome do tutor ficou vazio.');
+  if(d.telefone&&d.telefone.length<10&&(!orig||orig.telefone!==d.telefone))return avisa('[data-dp-tel]','O WhatsApp precisa ter DDD + número.');
   return true;
 }
 /* grava no cadastro. Irmao que mudou de nome: as reservas que guardam
@@ -8744,7 +8753,7 @@ function abrirReserva(id,diaSugerido){
   $('#r-ok').onclick=()=>{
     const o=ler(true);if(!o)return;
     const dp=o.petId?lerDadosPet('r'):null;
-    if(dp&&dp.petId===o.petId){
+    if(dp&&dp.petId===o.petId&&dadosPetMudou('r',dp)){
       if(!validarDadosPet('r',dp))return;
       const pp=pets.find(x=>x.id===o.petId);
       const a=[pp.nome].concat(irmaosDe(pp).map(x=>x.nome));
@@ -8855,7 +8864,7 @@ function abrirCheckin(id){
   if(h.p)pintarDadosPet('ci',h.p);
   $('#ci-ok').onclick=()=>{
     const dp=h.p?lerDadosPet('ci'):null;
-    if(dp){if(!validarDadosPet('ci',dp))return;aplicarDadosPet(h.p,dp);salvar()}
+    if(dp&&dadosPetMudou('ci',dp)){if(!validarDadosPet('ci',dp))return;aplicarDadosPet(h.p,dp);salvar()}
     r.checklist=r.checklist||{};r.checklist.checkin=lerChecklist('ci');const falt=CHECK_IN.filter(([k])=>!r.checklist.checkin[k]).length;
     if(falt)setTimeout(()=>toast(h.p||{raca:h.raca},`Checklist: ${falt} ${falt===1?'item pendente':'itens pendentes'}`,'Dá pra completar depois no diário.'),600);
     r.status='hospedado';if(r.checkin>HOJE)r.checkin=HOJE;r.checkinFeito=`${HOJE} ${horaAgora()}`;
