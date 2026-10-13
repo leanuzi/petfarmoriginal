@@ -8108,11 +8108,13 @@ function iniciarHotel(){
 let _hotelBase=null;
 function hotelSnap(r){const o={};for(const k in r)if(k!=='_em')o[k]=r[k];return JSON.stringify(o)}
 function hotelMarcarBase(lista){const m={};(lista||[]).forEach(r=>{if(r&&r.id!=null)m[r.id]=hotelSnap(r)});_hotelBase=m}
+/* marca com a hora atual as reservas mexidas aqui desde o ultimo salvar */
+function hotelCarimbar(){
+  try{if(_hotelBase){const agora=Date.now();reservas.forEach(r=>{if(r&&r.id!=null&&_hotelBase[r.id]!==hotelSnap(r))r._em=agora})}}catch(e){}
+}
 function salvarHotel(){
-  try{
-    if(_hotelBase){const agora=Date.now();reservas.forEach(r=>{if(r&&r.id!=null&&_hotelBase[r.id]!==hotelSnap(r))r._em=agora})}
-    hotelMarcarBase(reservas);
-  }catch(e){}
+  hotelCarimbar();
+  try{hotelMarcarBase(reservas)}catch(e){}
   salvarSeguro('petfarm.hotel',JSON.stringify(reservas));
 }
 function hospede(r){ // dados do pet (da creche ou visitante)
@@ -8764,7 +8766,7 @@ function abrirReserva(id,diaSugerido){
     }
     // visitante: entra na lista de Pets e a reserva passa a apontar pra ele
     let novoCad=null;
-    if(!o.petId&&o.nome){novoCad=virarCadastro(o);if(novoCad)o.petId=novoCad.id}
+    if(!o.petId&&o.nome){novoCad=virarCadastro(o);if(novoCad){o.petId=novoCad.id;salvar()}}
     if(id){Object.assign(r,o)}else{o.id=Date.now();o.status='reservado';reservas.push(o)}
     fecharModal();renderHotel();
     if(novoCad)setTimeout(()=>toast(novoCad,`${novoCad.nome} entrou na lista de Pets 🧳`,'Filtro "Visitante de hotel". Não entra na chamada da creche.',true),1400);
@@ -11992,11 +11994,12 @@ function juntarPorData(meu,daNuvem){
   Object.keys(daNuvem).forEach(d=>{if(!(d in meu)){soLa[d]=daNuvem[d];achou++}});
   return achou?Object.assign(soLa,meu):meu;
 }
-function juntarReservas(meu,daNuvem){
+function juntarReservas(meu,daNuvem,empateNuvem){
   if(!Array.isArray(meu)||!Array.isArray(daNuvem))return meu;
   const la={};daNuvem.forEach(x=>{if(x&&x.id!=null)la[x.id]=x});
   let mudou=false;
-  const out=meu.map(r=>{const n=r&&la[r.id];if(n&&(+n._em||0)>(+r._em||0)){mudou=true;return n}return r});
+  const out=meu.map(r=>{const n=r&&la[r.id];if(!n)return r;const a=+r._em||0,b=+n._em||0;
+    if(b>a||(empateNuvem&&b===a&&JSON.stringify(n)!==JSON.stringify(r))){mudou=true;return n}return r});
   const tenho=new Set(meu.map(x=>x&&x.id));
   const soLa=daNuvem.filter(x=>x&&x.id!=null&&!tenho.has(x.id)&&!foiApagado(x.id));
   return (mudou||soLa.length)?out.concat(soLa):meu;
@@ -12013,10 +12016,13 @@ const JUNTA=['petfarm.turma','petfarm.hotel','petfarm.rotas'];
 /* ---------- fila local (aguenta ficar sem internet) ---------- */
 function nuvemFilaSalvar(){try{localStorage.setItem('petfarm.fila',JSON.stringify(Object.keys(nuvemPend)))}catch(e){}}
 function nuvemFilaCarregar(){try{(JSON.parse(localStorage.getItem('petfarm.fila')||'[]')).forEach(ch=>{const v=localStorage.getItem(ch);if(v!=null)nuvemPend[ch]=v})}catch(e){}}
+let _nuvemDesde={};
 function nuvemEnviar(chave,valor){
   nuvemPend[chave]=valor;nuvemFilaSalvar();nuvemStatus(nuvemOk);
   clearTimeout(_nuvemTimers[chave]);
-  _nuvemTimers[chave]=setTimeout(()=>nuvemFlush(chave),700);
+  if(!_nuvemDesde[chave])_nuvemDesde[chave]=Date.now();
+  const espera=Math.max(0,Math.min(700,2000-(Date.now()-_nuvemDesde[chave])));
+  _nuvemTimers[chave]=setTimeout(()=>{delete _nuvemDesde[chave];nuvemFlush(chave)},espera);
 }
 async function nuvemFlush(chave){
   const cli=nuvemCliente();if(!cli||!nuvemOk)return;
@@ -12099,7 +12105,17 @@ function nuvemAplicar(chaveCompleta,dados){
     const chave=chaveBase(chaveCompleta);
     if(ehTransporte()&&chave==='petfarm.turma'){pets=turmaDasUnidades();pets.forEach(p=>{try{sincronizarHoje(p)}catch(e){}});nuvemRender();return}
     if(chave==='petfarm.turma'&&typeof pets!=='undefined'){pets=dados;pets.forEach(p=>{try{sincronizarHoje(p)}catch(e){}})}
-    else if(chave==='petfarm.hotel'&&typeof reservas!=='undefined'){reservas=dados;try{hotelMarcarBase(reservas)}catch(e){}}
+    else if(chave==='petfarm.hotel'&&typeof reservas!=='undefined'){
+      let lista=dados;
+      try{
+        hotelCarimbar();                                   // o que mexi aqui e ainda nao salvei conta como mais novo
+        if(Array.isArray(reservas)&&Array.isArray(dados)){
+          const j=juntarReservas(dados,reservas,false);    // da nuvem + o que so eu tenho / o que e mais novo aqui
+          if(j!==dados){lista=j;const v=JSON.stringify(j);try{localStorage.setItem(chaveCompleta,v)}catch(e){}nuvemEnviar(chaveCompleta,v)}
+        }
+      }catch(e){}
+      reservas=lista;try{hotelMarcarBase(reservas)}catch(e){}
+    }
     else if(chave==='petfarm.rotas'&&typeof rotas!=='undefined')rotas=dados;
     else if(chave==='petfarm.cfg'&&typeof cfg!=='undefined'){cfg=Object.assign(cfg,dados);try{aplicarPrecos()}catch(e){}}
     else if(chave==='petfarm.msgs'&&typeof msgLog!=='undefined')msgLog=dados;
@@ -12232,7 +12248,10 @@ window.addEventListener('load',()=>{
   // 1) todo salvamento também vai pra nuvem
   if(typeof salvarSeguro==='function'){
     const _salvarLocal=salvarSeguro;
-    salvarSeguro=function(chave,valor){const ok=_salvarLocal(chave,valor);const real=chaveReal(chave);if(NUVEM_CHAVES.indexOf(chaveBase(real))>=0)nuvemEnviar(real,valor);return ok};
+    salvarSeguro=function(chave,valor){const real=chaveReal(chave);let antes=null;try{antes=localStorage.getItem(real)}catch(e){}
+      const ok=_salvarLocal(chave,valor);
+      if(NUVEM_CHAVES.indexOf(chaveBase(real))>=0&&(antes!==valor||nuvemPend[real]!=null))nuvemEnviar(real,valor);
+      return ok};
   }
   // 2) mensagens: com o envio automático ligado, entram na fila do robô em vez de abrir o WhatsApp
   if(typeof abrirZap==='function'){
@@ -12255,7 +12274,9 @@ window.addEventListener('load',()=>{
   // 3) modal fechou: aplica atualizações que chegaram enquanto estava aberto
   if(typeof fecharModal==='function'){
     const _fechar=fecharModal;
-    fecharModal=function(){_fechar();const ad=_aplicarDepois;_aplicarDepois={};Object.entries(ad).forEach(([c,d])=>{
+    fecharModal=function(){_fechar();const ad=_aplicarDepois;_aplicarDepois={};
+      try{Object.keys(ad).forEach(c=>{const b=chaveBase(c);if(b==='petfarm.hotel')salvarHotel();else if(b==='petfarm.turma')salvar()})}catch(e){}
+      Object.entries(ad).forEach(([c,d])=>{
       if(nuvemPend[c]!=null){
         let meu=null;try{meu=JSON.parse(nuvemPend[c])}catch(e){}
         if(meu==null)return;
